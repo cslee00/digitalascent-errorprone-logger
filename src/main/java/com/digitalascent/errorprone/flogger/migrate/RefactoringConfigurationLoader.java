@@ -1,0 +1,84 @@
+package com.digitalascent.errorprone.flogger.migrate;
+
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingApiConverter;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULLoggingApiConverter;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jLoggingApiConverter;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2LoggingApiConverter;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4JLoggingApiConverter;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogLoggingApiConverter;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2LoggingApiConverter;
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteSource;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Properties;
+import java.util.function.Function;
+
+@SuppressWarnings("UnstableApiUsage")
+final class RefactoringConfigurationLoader {
+
+    private static final Splitter SPLITTER = Splitter.on(CharMatcher.anyOf(", \t")).omitEmptyStrings().trimResults();
+
+    RefactoringConfiguration loadRefactoringConfiguration(String userProvidedPropertyPath, String sourceApi) {
+
+        FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator();
+
+        ImmutableRefactoringConfiguration.Builder builder = ImmutableRefactoringConfiguration.builder();
+
+        Function<String, TargetLogLevel> targetLogLevelFunction = new TargetLogLevelMapper();
+
+        Map<String,LoggingApiConverter> converterMap = buildConverterMap(floggerSuggestedFixGenerator, targetLogLevelFunction);
+
+        LoggingApiConverter converter = converterMap.get( sourceApi.toLowerCase().trim() );
+
+        if( converter == null ) {
+            throw new IllegalArgumentException("Unknown source API specified: " + sourceApi );
+        }
+
+        builder.loggingApiConverter(converter);
+
+        return builder.build();
+//
+//        URL url = Resources.getResource(getClass(), "logger-api-refactoring.properties");
+//        Properties baseProperties = load(Resources.asByteSource(url));
+//        Properties userProperties = new Properties();
+//        if (!Strings.isNullOrEmpty(userProvidedPropertyPath)) {
+//            userProperties = load(Files.asByteSource(new File(userProvidedPropertyPath)));
+//        }
+//
+//        Properties finalProperties = new Properties();
+//        finalProperties.putAll(baseProperties);
+//        finalProperties.putAll(userProperties);
+//
+//        return createRefactoringConfiguration(finalProperties, sourceApis);
+    }
+
+    private ImmutableMap<String, LoggingApiConverter> buildConverterMap(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+        ImmutableMap.Builder<String, LoggingApiConverter> converterMapBuilder = ImmutableMap.builder();
+
+        converterMapBuilder.put("slf4j", new Slf4JLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
+        converterMapBuilder.put("log4j", new Log4jLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
+        converterMapBuilder.put("log4j2", new Log4j2LoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
+        converterMapBuilder.put("commons-logging", new CommonsLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
+        converterMapBuilder.put("tinylog", new TinyLogLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
+        converterMapBuilder.put("tinylog2", new TinyLog2LoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
+        converterMapBuilder.put("jul", new JULLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
+
+        return converterMapBuilder.build();
+    }
+
+    private Properties load(ByteSource byteSource) {
+        final Properties props = new Properties();
+        try (InputStream inputStream = byteSource.openBufferedStream()) {
+            props.load(inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return props;
+    }
+
+}
