@@ -32,6 +32,7 @@ public class TestClassUsingTinyLog_0 {
         logger.atInfo().log("6. Double-escaped anchor, no parameter: \\\\{}");
         logger.atInfo().log("7. Single parameter, double-escaped anchor: %s \\\\%s", "abc");
         logger.atInfo().log("8. Percent sign: 5%% of %s", "abc");
+        logger.atInfo().log( "9. Object[] %s %s %s", "abc", "def", "ghi" );
     }
 
     public void testException() {

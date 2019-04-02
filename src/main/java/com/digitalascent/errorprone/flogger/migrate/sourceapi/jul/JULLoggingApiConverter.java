@@ -159,6 +159,7 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
                 String messageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
                 JULMessageFormatConverter.ConvertedMessageFormat convertedMessageFormat = JULMessageFormatConverter.convertMessageFormat(messageFormat, remainingArguments);
                 builder.messageFormatString(convertedMessageFormat.messageFormat());
+                builder.addAllComments(convertedMessageFormat.migrationIssues());
                 remainingArguments = convertedMessageFormat.arguments();
             } else {
                 // if there are arguments to the message format & we were unable to convert the message format

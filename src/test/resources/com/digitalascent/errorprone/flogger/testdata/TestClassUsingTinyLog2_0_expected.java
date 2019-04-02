@@ -23,15 +23,16 @@ public class TestClassUsingTinyLog2_0 {
 
 
     public void testMessageFormat() {
-        logger.atInfo().log( "Test %s argument", "some" );
+        logger.atInfo().log("1. Single parameter: %s","abc");
+        logger.atInfo().log("2. Escaped formatting anchor: \\{}");
+        logger.atInfo().log("3. Escaped anchor and single parameter: \\%s %s", "abc");
+        logger.atInfo().log("4. Escaped anchors and single parameter: \\%s %s \\%s", "abc");
+        logger.atInfo().log("5. Double-escaped anchor, single parameter: \\\\%s", "abc");
+        logger.atInfo().log("6. Double-escaped anchor, no parameter: \\\\{}");
+        logger.atInfo().log("7. Single parameter, double-escaped anchor: %s \\\\%s", "abc");
+        logger.atInfo().log("8. Percent sign: 5%% of %s", "abc");
+        logger.atInfo().log( "9. Object[] %s %s %s", "abc", "def", "ghi" );
 
-        logger.atInfo().log( "Test %s argument %s", "some", "other" );
-
-        logger.atInfo().log( "Test %s argument %s 5%%", "some", "other" );
-
-        logger.atInfo().log( "Test \\%s argument %s", "other" );
-
-        logger.atInfo().log( "Test \\%s argument %s", "some", "other" );
     }
 
     public void testException() {
@@ -49,5 +50,8 @@ public class TestClassUsingTinyLog2_0 {
         logger.atInfo().withCause(new Throwable()).log( "a" + 1 + "b {}", "argument" );
 
         logger.atFine().log( "message" );
+        logger.atInfo().withCause(new Throwable()).log( "Exception" );
+        logger.atInfo().log( "%s", new Object() );
+
     }
 }

@@ -121,8 +121,9 @@ public final class TinyLogLoggingApiConverter implements LoggingApiConverter {
                 if (!stringType().matches(argument, state)) {
                     throw new SkipCompilationUnitException("Unable to handle " + argument);
                 }
-                remainingArguments = Arguments.removeFirst(remainingArguments);
                 builder.messageFormatArgument( argument );
+                remainingArguments = Arguments.findRemainingAfter(remainingArguments, state, argument );
+
                 if (!remainingArguments.isEmpty()) {
                     if (argument instanceof JCTree.JCLiteral) {
                         String messageFormatStr = (String) ((JCTree.JCLiteral) argument).value;
