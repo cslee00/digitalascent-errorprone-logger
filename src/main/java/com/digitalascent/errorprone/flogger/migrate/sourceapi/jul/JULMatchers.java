@@ -6,6 +6,7 @@ import com.sun.source.tree.Tree;
 
 import static com.google.errorprone.matchers.Matchers.anyOf;
 import static com.google.errorprone.matchers.Matchers.instanceMethod;
+import static com.google.errorprone.matchers.Matchers.isSameType;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 import static com.google.errorprone.matchers.Matchers.methodInvocation;
 import static com.google.errorprone.matchers.Matchers.staticMethod;
@@ -28,7 +29,7 @@ final class JULMatchers {
     private static final Matcher<ExpressionTree> IS_ENABLED_METHODS = instanceMethod()
             .onDescendantOf(LOGGER_CLASS)
             .namedAnyOf("isLoggable");
-    private static final Matcher<Tree> LOG_LEVEL_TYPE = isSubtypeOf("java.util.logging.Level");
+    private static final Matcher<Tree> LOG_LEVEL_TYPE = isSameType("java.util.logging.Level");
     private static final Matcher<Tree> IMPORT_TYPES = anyOf( LOGGER_TYPE_MATCHER, LOGGER_FACTORY_TYPE_MATCHER, LOG_LEVEL_TYPE );
 
     static Matcher<Tree> logLevelType() { return LOG_LEVEL_TYPE; }
