@@ -1,4 +1,4 @@
-package com.digitalascent.errorprone.support;
+package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
 import com.sun.source.tree.ExpressionTree;
 

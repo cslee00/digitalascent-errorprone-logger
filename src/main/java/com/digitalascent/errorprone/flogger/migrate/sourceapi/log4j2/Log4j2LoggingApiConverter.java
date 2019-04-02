@@ -5,6 +5,7 @@ import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
+import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.google.errorprone.VisitorState;
@@ -159,7 +160,7 @@ public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
             messageFormatString = "%s";
         } else {
             if (!stringType().matches(messageFormatArgument, state)) {
-                throw new SkipCompilationUnitException("Unable to convert message format: " + messageFormatArgument);
+                throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
             }
         }
 

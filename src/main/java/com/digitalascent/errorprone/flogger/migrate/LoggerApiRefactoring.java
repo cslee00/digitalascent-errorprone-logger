@@ -98,7 +98,11 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
         return scanTree(classTree, state, new FixCollectingTreeScanner() {
             @Override
             public Void visitMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState visitorState) {
-                addSuggestedFix(loggingApiConverter.migrateLoggingMethodInvocation(methodInvocationTree, state, migrationContext));
+                try {
+                    addSuggestedFix(loggingApiConverter.migrateLoggingMethodInvocation(methodInvocationTree, state, migrationContext));
+                } catch( SkipLogMethodException e ) {
+                    // TODO - diag message
+                }
                 return super.visitMethodInvocation(methodInvocationTree, visitorState);
             }
         });
