@@ -5,9 +5,10 @@ import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
+import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.support.MatchResult;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Matchers;
@@ -30,7 +31,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.Tin
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.stringType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.throwableType;
-import static com.digitalascent.errorprone.support.ExpressionMatchers.matchAtIndex;
+import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.matchAtIndex;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -119,7 +120,7 @@ public final class TinyLogLoggingApiConverter implements LoggingApiConverter {
                 messageFormat = "%s";
             } else {
                 if (!stringType().matches(argument, state)) {
-                    throw new SkipCompilationUnitException("Unable to handle " + argument);
+                    throw new SkipLogMethodException("Unable to handle " + argument);
                 }
                 builder.messageFormatArgument( argument );
                 remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state );

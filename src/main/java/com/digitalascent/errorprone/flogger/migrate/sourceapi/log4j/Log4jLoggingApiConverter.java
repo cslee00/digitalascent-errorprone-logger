@@ -7,8 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.support.MatchResult;
-import com.digitalascent.errorprone.support.ExpressionMatchers;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
@@ -168,7 +167,7 @@ public final class Log4jLoggingApiConverter implements LoggingApiConverter {
 
     private ExpressionTree findLogLevelArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
         Optional<MatchResult> optionalArgumentMatchResult =
-                ExpressionMatchers.firstMatching(arguments, state, isSubtypeOf("org.apache.log4j.Priority"));
+                Arguments.firstMatching(arguments, state, isSubtypeOf("org.apache.log4j.Priority"));
         MatchResult matchResult = optionalArgumentMatchResult.orElseThrow(() -> new IllegalArgumentException("Unable to locate required Priority parameter"));
         if (matchResult.index() > 1) {
             throw new IllegalArgumentException("Unable to locate required Priority parameter");

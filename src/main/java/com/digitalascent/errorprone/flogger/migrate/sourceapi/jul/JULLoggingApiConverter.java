@@ -5,12 +5,11 @@ import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
+import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.support.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -32,7 +31,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatc
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.stringType;
-import static com.digitalascent.errorprone.support.ExpressionMatchers.matchAtIndex;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -127,7 +125,7 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
                 targetLogLevel = resolveLogLevel(logLevelArgument);
                 remainingArguments = Arguments.removeFirst(remainingArguments);
             } else {
-                return SuggestedFix.builder().build();
+                throw new SkipLogMethodException("Unable to determine log level");
             }
         } else {
             targetLogLevel = targetLogLevelFunction.apply(methodName);
@@ -148,7 +146,7 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
         }
 
         if (!stringType().matches(messageFormatArgument, state)) {
-            throw new SkipCompilationUnitException("Unable to convert message format: " + messageFormatArgument);
+            throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
         }
 
         if (!remainingArguments.isEmpty()) {

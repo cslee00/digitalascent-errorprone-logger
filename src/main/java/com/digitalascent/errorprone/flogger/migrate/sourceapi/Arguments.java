@@ -1,6 +1,5 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
-import com.digitalascent.errorprone.support.MatchResult;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matcher;
@@ -13,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.digitalascent.errorprone.support.ExpressionMatchers.trailing;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 
 public final class Arguments {
@@ -46,16 +44,7 @@ public final class Arguments {
             }
             remainingArguments.add(argument);
         }
-        if (remainingArguments.size() == 1) {
-            ExpressionTree argument = remainingArguments.get(0);
-            // if Object[] unpack
-            if (Matchers.isArrayType().matches(argument, state)) {
-                JCTree.JCNewArray newArray = (JCTree.JCNewArray) argument;
-                return newArray.elems;
-            }
-        }
-
-        return remainingArguments;
+        return maybeUnpackVarArgs( remainingArguments, state );
     }
 
     private static List<? extends ExpressionTree> maybeUnpackVarArgs(List<? extends ExpressionTree> arguments, VisitorState state) {
@@ -93,5 +82,31 @@ public final class Arguments {
     public static List<? extends ExpressionTree> findMessageFormatArguments( List<? extends ExpressionTree> arguments, VisitorState state ) {
         List<? extends ExpressionTree> remainingArguments = removeFirst(arguments);
         return maybeUnpackVarArgs(remainingArguments, state);
+    }
+
+    private static Optional<MatchResult> trailing(List<? extends ExpressionTree> expressions, VisitorState state, Matcher<ExpressionTree> expressionTreeMatcher) {
+        return matchAtIndex(expressions, state, expressionTreeMatcher, expressions.size() - 1 );
+    }
+
+    public static Optional<MatchResult> matchAtIndex(List<? extends ExpressionTree> expressions, VisitorState state, Matcher<ExpressionTree> expressionTreeMatcher, int index ) {
+        if( index < 0  || index > expressions.size() - 1 ) {
+            return Optional.empty();
+        }
+
+        ExpressionTree candidateArgument = expressions.get(index);
+        if (expressionTreeMatcher.matches(candidateArgument, state)) {
+            return Optional.of(new MatchResult(index, candidateArgument));
+        }
+        return Optional.empty();
+    }
+
+    public static Optional<MatchResult> firstMatching(List<? extends ExpressionTree> expressions, VisitorState state, Matcher<ExpressionTree> expressionTreeMatcher ) {
+        for( int i = 0; i < expressions.size(); i++ ) {
+            ExpressionTree candidate = expressions.get(i);
+            if (expressionTreeMatcher.matches(candidate, state)) {
+                return Optional.of(new MatchResult(i, candidate));
+            }
+        }
+        return Optional.empty();
     }
 }
