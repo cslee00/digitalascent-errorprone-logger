@@ -19,18 +19,4 @@ public abstract class AbstractFloggerLogContext {
     @Nullable
     public abstract ExpressionTree thrown();
 
-    /*
-    @Value.Default
-    public List<? extends ExpressionTree> formatArguments() {
-        return ImmutableList.of();
-    }
-
-    @Nullable
-    public abstract ExpressionTree messageFormatArgument();
-
-    @Nullable
-    public abstract String messageFormatString();
-
-
-    public abstract List<String> comments();*/
 }

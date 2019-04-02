@@ -66,7 +66,6 @@ public abstract class AbstractLogMessageHandler {
         return null;
     }
 
-
     protected abstract LogMessageModel convertMessageFormat(String sourceMessageFormat, List<? extends ExpressionTree> formatArguments, MigrationContext migrationContext);
 
     private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = Matchers.staticMethod().onClass("java.lang.String").named("format");
@@ -84,5 +83,4 @@ public abstract class AbstractLogMessageHandler {
 
         return null;
     }
-
 }
