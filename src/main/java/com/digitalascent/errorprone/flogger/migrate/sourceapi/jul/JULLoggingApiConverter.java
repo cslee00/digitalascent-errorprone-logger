@@ -118,16 +118,14 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
 
     private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                               VisitorState state, MigrationContext migrationContext) {
-        int messageArgumentIndex = 0;
-
-        List<? extends ExpressionTree> arguments = methodInvocationTree.getArguments();
+        List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
 
         TargetLogLevel targetLogLevel;
         if (methodName.equals("log")) {
-            ExpressionTree logLevelArgument = arguments.get(0);
+            ExpressionTree logLevelArgument = remainingArguments.get(0);
             if (logLevelType().matches(logLevelArgument, state)) {
                 targetLogLevel = resolveLogLevel(logLevelArgument);
-                messageArgumentIndex++;
+                remainingArguments = Arguments.removeFirst(remainingArguments);
             } else {
                 return SuggestedFix.builder().build();
             }
@@ -139,10 +137,9 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
 
         builder.targetLogLevel(targetLogLevel);
 
-        ExpressionTree messageFormatArgument = findMessageFormatArgument(arguments, messageArgumentIndex, state);
+        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments, state);
         builder.messageFormatArgument(messageFormatArgument);
-
-        List<? extends ExpressionTree> remainingArguments = Arguments.findRemainingAfter(arguments, state, messageFormatArgument);
+        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
         if (throwableArgument != null) {
@@ -168,12 +165,13 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
         }
         builder.formatArguments(remainingArguments);
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod2(methodInvocationTree, state, builder.build(), migrationContext);
+        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
-    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments, int messageArgumentIndex, VisitorState state) {
-        Optional<MatchResult> optionalMessageFormatArgumentMatchResult = matchAtIndex(arguments, state, Matchers.anything(), messageArgumentIndex);
-        MatchResult messageFormatMatchResult = optionalMessageFormatArgumentMatchResult.orElseThrow(() -> new IllegalArgumentException("Unable to locate message format"));
-        return messageFormatMatchResult.argument();
+    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+        if( arguments.isEmpty()) {
+            throw new IllegalStateException("Missing required message format argument");
+        }
+        return arguments.get(0);
     }
 }

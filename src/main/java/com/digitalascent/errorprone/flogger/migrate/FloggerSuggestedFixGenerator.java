@@ -38,62 +38,7 @@ public class FloggerSuggestedFixGenerator {
         return methodInvocation;
     }
 
-    @Deprecated
     public SuggestedFix generateLoggingMethod(MethodInvocationTree loggerMethodInvocation, VisitorState state,
-                                              ImmutableSuggestionContext suggestionContext, MigrationContext migrationContext) {
-
-        String loggerVariableName = determineLoggerVariableName(migrationContext);
-
-        String methodInvocation = generateMethodInvocation(suggestionContext.targetLogLevel(), state);
-
-        String loggingCall = String.format("%s.%s", loggerVariableName, methodInvocation);
-
-        if (suggestionContext.thrown() != null) {
-            String thrownCode = state.getSourceForNode(suggestionContext.thrown());
-            loggingCall += String.format(".withCause(%s)", thrownCode);
-        }
-
-        StringBuilder sb = new StringBuilder(200);
-        if (!suggestionContext.comments().isEmpty()) {
-            sb.append("\n");
-        }
-
-        for (String comment : suggestionContext.comments()) {
-            sb.append("// TODO [LoggerApiRefactoring] ");
-            sb.append(comment);
-            sb.append("\n");
-        }
-
-        sb.append(loggingCall);
-        sb.append(".log( ");
-
-        if (suggestionContext.messageFormatString() != null) {
-            String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(suggestionContext.messageFormatString()) + "\"";
-            if (suggestionContext.forceMissingMessageFormat()) {
-                argumentSrc += ", ";
-                argumentSrc += state.getSourceForNode(suggestionContext.messageFormatArgument());
-            }
-            sb.append( argumentSrc );
-        } else {
-            sb.append( state.getSourceForNode(suggestionContext.messageFormatArgument()));
-        }
-
-        boolean firstArgument = true;
-        for (ExpressionTree argument : suggestionContext.formatArguments()) {
-            if (sb.length() > 0) {
-                sb.append(", ");
-            }
-            String argumentSrc = state.getSourceForNode(argument);
-            sb.append(argumentSrc);
-        }
-        sb.append(" )");
-
-        return SuggestedFix.builder()
-                .replace(loggerMethodInvocation, sb.toString())
-                .build();
-    }
-
-    public SuggestedFix generateLoggingMethod2(MethodInvocationTree loggerMethodInvocation, VisitorState state,
                                               ImmutableFloggerLogContext floggerLogContext, MigrationContext migrationContext) {
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);

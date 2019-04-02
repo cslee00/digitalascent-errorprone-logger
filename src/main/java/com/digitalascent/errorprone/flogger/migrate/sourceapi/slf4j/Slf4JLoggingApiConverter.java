@@ -7,10 +7,8 @@ import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.support.MatchResult;
-import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -110,12 +108,17 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        List<? extends ExpressionTree> arguments = methodInvocationTree.getArguments();
+        List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
 
-        ExpressionTree messageFormatArgument = findMesageFormatArgument(arguments, state);
+        if( hasMarkerArgument(remainingArguments,state)) {
+            remainingArguments = Arguments.removeFirst(remainingArguments);
+        }
+
+        ExpressionTree messageFormatArgument = findMesageFormatArgument(remainingArguments, state);
 
         // process everything past the message format; this includes unpacking Object[] parameter
-        List<? extends ExpressionTree> remainingArguments = Arguments.findRemainingAfter(arguments, state, messageFormatArgument);
+        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state );
+
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast( remainingArguments );
@@ -135,18 +138,21 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
             }
         }
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod2(methodInvocationTree, state, builder.build(), migrationContext);
+        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
     private ExpressionTree findMesageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
-        int messageFormatIndex = hasMarkerArgument(arguments, state) ? 1 : 0;
-        Optional<MatchResult> optionalMessageFormatMatchResult = matchAtIndex(arguments, state, stringType(), messageFormatIndex);
-        MatchResult messageFormatMatchResult = optionalMessageFormatMatchResult.orElseThrow(() -> new IllegalStateException("Missing message format parameter"));
-        return messageFormatMatchResult.argument();
+        if( arguments.isEmpty() ) {
+            throw new IllegalStateException("Unable to locate required message format argument");
+        }
+        return arguments.get(0);
     }
 
     private boolean hasMarkerArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
-        return arguments.stream().limit(1).anyMatch( x -> markerType().matches(x,state));
+        if( arguments.isEmpty() ) {
+            return false;
+        }
+        return markerType().matches(arguments.get(0),state);
     }
 
 

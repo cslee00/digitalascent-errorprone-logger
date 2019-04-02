@@ -122,7 +122,7 @@ public final class TinyLogLoggingApiConverter implements LoggingApiConverter {
                     throw new SkipCompilationUnitException("Unable to handle " + argument);
                 }
                 builder.messageFormatArgument( argument );
-                remainingArguments = Arguments.findRemainingAfter(remainingArguments, state, argument );
+                remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state );
 
                 if (!remainingArguments.isEmpty()) {
                     if (argument instanceof JCTree.JCLiteral) {
@@ -138,7 +138,7 @@ public final class TinyLogLoggingApiConverter implements LoggingApiConverter {
         builder.messageFormatString(messageFormat);
         builder.formatArguments(remainingArguments);
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod2(methodInvocationTree, state, builder.build(), migrationContext);
+        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
     @Nullable

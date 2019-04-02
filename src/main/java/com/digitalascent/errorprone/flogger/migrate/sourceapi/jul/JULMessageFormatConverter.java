@@ -3,7 +3,6 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.jul;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableList;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.tools.javac.tree.JCTree;
 
 import java.util.ArrayList;
 import java.util.List;

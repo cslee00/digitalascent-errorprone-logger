@@ -2,9 +2,6 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
 import com.digitalascent.errorprone.support.MatchResult;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.matchers.Matchers;
@@ -61,6 +58,19 @@ public final class Arguments {
         return remainingArguments;
     }
 
+    private static List<? extends ExpressionTree> maybeUnpackVarArgs(List<? extends ExpressionTree> arguments, VisitorState state) {
+        if (arguments.size() == 1) {
+            ExpressionTree argument = arguments.get(0);
+            // if Object[] unpack
+            if (Matchers.isArrayType().matches(argument, state)) {
+                JCTree.JCNewArray newArray = (JCTree.JCNewArray) argument;
+                return newArray.elems;
+            }
+        }
+
+        return arguments;
+    }
+
     private Arguments() {
         throw new AssertionError("Cannot instantiate " + getClass());
     }
@@ -78,5 +88,10 @@ public final class Arguments {
             return arguments;
         }
         return arguments.subList(1, arguments.size());
+    }
+
+    public static List<? extends ExpressionTree> findMessageFormatArguments( List<? extends ExpressionTree> arguments, VisitorState state ) {
+        List<? extends ExpressionTree> remainingArguments = removeFirst(arguments);
+        return maybeUnpackVarArgs(remainingArguments, state);
     }
 }

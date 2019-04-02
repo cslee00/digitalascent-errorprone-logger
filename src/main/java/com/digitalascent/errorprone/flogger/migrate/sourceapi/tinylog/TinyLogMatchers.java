@@ -5,9 +5,7 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 
 import static com.google.errorprone.matchers.Matchers.anyOf;
-import static com.google.errorprone.matchers.Matchers.instanceMethod;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
-import static com.google.errorprone.matchers.Matchers.methodInvocation;
 import static com.google.errorprone.matchers.Matchers.staticMethod;
 
 final class TinyLogMatchers {

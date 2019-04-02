@@ -1,16 +1,16 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
-import com.digitalascent.errorprone.flogger.migrate.ImmutableSuggestionContext;
+import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.support.MatchResult;
 import com.digitalascent.errorprone.support.ExpressionMatchers;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -31,9 +31,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4j
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.stringType;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.throwableType;
-import static com.digitalascent.errorprone.support.ExpressionMatchers.matchAtIndex;
-import static com.digitalascent.errorprone.support.ExpressionMatchers.trailing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 import static java.util.Objects.requireNonNull;
@@ -128,37 +125,54 @@ public final class Log4jLoggingApiConverter implements LoggingApiConverter {
 
     private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                               VisitorState state, MigrationContext migrationContext) {
-        int messageArgumentIndex = 0;
 
-        ImmutableSuggestionContext.Builder builder = ImmutableSuggestionContext.builder();
-        List<? extends ExpressionTree> arguments = methodInvocationTree.getArguments();
+        List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
         TargetLogLevel targetLogLevel;
         if (methodName.equals("log")) {
-            Optional<MatchResult> optionalArgumentMatchResult =
-                    ExpressionMatchers.firstMatching(arguments, state, isSubtypeOf("org.apache.log4j.Priority"));
-            MatchResult matchResult = optionalArgumentMatchResult.orElseThrow(() -> new IllegalArgumentException("Unable to locate required Priority parameter"));
-
-            targetLogLevel = resolveLogLevel(matchResult.argument());
-            messageArgumentIndex = matchResult.index() + 1;
+            ExpressionTree logLevelArgument = findLogLevelArgument(remainingArguments, state);
+            targetLogLevel = resolveLogLevel(logLevelArgument);
+            remainingArguments = Arguments.findRemainingAfter(remainingArguments, state, logLevelArgument);
         } else {
             targetLogLevel = targetLogLevelFunction.apply(methodName);
         }
 
+        ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
-        Optional<MatchResult> matchResult = trailing(arguments, state, throwableType());
-        matchResult.ifPresent(thrownMatchResult -> builder.thrown(thrownMatchResult.argument()));
 
-        Optional<MatchResult> optionalMessageFormatArgumentMatchResult = matchAtIndex(arguments, state, Matchers.anything(), messageArgumentIndex);
-        MatchResult messageFormatMatchResult = optionalMessageFormatArgumentMatchResult.orElseThrow(
-                () -> new IllegalArgumentException("Unable to locate message format"));
-        ExpressionTree messageFormatArgument = messageFormatMatchResult.argument();
+        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments, state);
         builder.messageFormatArgument(messageFormatArgument);
+        remainingArguments = Arguments.removeFirst(remainingArguments);
+
+        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
+        if (throwableArgument != null) {
+            remainingArguments = Arguments.removeLast(remainingArguments);
+            builder.thrown(throwableArgument);
+        }
 
         if (!stringType().matches(messageFormatArgument, state)) {
             builder.messageFormatString("%s");
-            builder.forceMissingMessageFormat(true);
+            remainingArguments = Arguments.prependArgument(remainingArguments, messageFormatArgument);
         }
 
+        builder.formatArguments(remainingArguments);
+
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+    }
+
+    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+        if (arguments.isEmpty()) {
+            throw new IllegalStateException("Unable to find required message format argument");
+        }
+        return arguments.get(0);
+    }
+
+    private ExpressionTree findLogLevelArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+        Optional<MatchResult> optionalArgumentMatchResult =
+                ExpressionMatchers.firstMatching(arguments, state, isSubtypeOf("org.apache.log4j.Priority"));
+        MatchResult matchResult = optionalArgumentMatchResult.orElseThrow(() -> new IllegalArgumentException("Unable to locate required Priority parameter"));
+        if (matchResult.index() > 1) {
+            throw new IllegalArgumentException("Unable to locate required Priority parameter");
+        }
+        return matchResult.argument();
     }
 }

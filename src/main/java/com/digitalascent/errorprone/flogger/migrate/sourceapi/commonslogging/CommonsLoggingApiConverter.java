@@ -1,15 +1,14 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
-import com.digitalascent.errorprone.flogger.migrate.ImmutableSuggestionContext;
+import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
-import com.digitalascent.errorprone.support.MatchResult;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -30,11 +29,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.stringType;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.throwableType;
-import static com.digitalascent.errorprone.support.ExpressionMatchers.matchAtIndex;
-import static com.digitalascent.errorprone.support.ExpressionMatchers.trailing;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -123,26 +118,36 @@ public final class CommonsLoggingApiConverter implements LoggingApiConverter {
 
     private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                               VisitorState state, MigrationContext migrationContext) {
-        ImmutableSuggestionContext.Builder builder = ImmutableSuggestionContext.builder();
-
         TargetLogLevel targetLogLevel;
         targetLogLevel = targetLogLevelFunction.apply(methodName);
 
+        ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
-        List<? extends ExpressionTree> arguments = methodInvocationTree.getArguments();
-        Optional<MatchResult> matchResult = trailing(arguments, state, throwableType());
-        matchResult.ifPresent(thrownMatchResult -> builder.thrown(thrownMatchResult.argument()));
 
-        Optional<MatchResult> optionalMessageFormatArgumentMatchResult = matchAtIndex(arguments, state, Matchers.anything(), 0);
-        MatchResult messageFormatMatchResult = optionalMessageFormatArgumentMatchResult.orElseThrow(
-                () -> new IllegalArgumentException("Unable to locate message format"));
-        ExpressionTree messageFormatArgument = messageFormatMatchResult.argument();
-        builder.messageFormatArgument(messageFormatArgument);
-
-        if (!stringType().matches(messageFormatArgument, state)) {
-            builder.messageFormatString("%s");
-            builder.forceMissingMessageFormat(true);
+        List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
+        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
+        if (throwableArgument != null) {
+            remainingArguments = Arguments.removeLast( remainingArguments );
+            builder.thrown(throwableArgument);
         }
+
+        String messageFormat = null;
+        if( remainingArguments.isEmpty() ) {
+            if( throwableArgument != null ) {
+                // throwable was only argument
+                messageFormat = "Exception";
+            }
+        } else {
+            ExpressionTree argument = remainingArguments.get(0);
+            if (!stringType().matches(argument, state)) {
+                messageFormat = "%s";
+            } else {
+                builder.messageFormatArgument(argument);
+                remainingArguments = Arguments.removeFirst(remainingArguments);
+            }
+        }
+        builder.messageFormatString(messageFormat);
+        builder.formatArguments(remainingArguments);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }

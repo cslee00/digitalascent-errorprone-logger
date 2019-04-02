@@ -3,7 +3,6 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.jul;
 import com.google.errorprone.matchers.Matcher;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
-import difflib.Delta;
 
 import static com.google.errorprone.matchers.Matchers.anyOf;
 import static com.google.errorprone.matchers.Matchers.instanceMethod;

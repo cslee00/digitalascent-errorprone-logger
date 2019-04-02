@@ -41,4 +41,10 @@ public class TestClassUsingCommonsLogging_0 {
             someLogger.atSevere().withCause(e).log( "The message" );
         }
     }
+
+    public void testOther() {
+        someLogger.atInfo().log( "%s", new Object() );
+        someLogger.atInfo().withCause(new Throwable()).log( "%s", new Object() );
+        someLogger.atInfo().withCause(new Throwable()).log( "Exception" );
+    }
 }

@@ -41,5 +41,11 @@ public class TestClassUsingCommonsLogging_0 {
         }
     }
 
+    public void testOther() {
+        someLogger.info(new Object());
+        someLogger.info(new Object(), new Throwable());
+        someLogger.info(new Throwable());
+    }
+
     private final Log someLogger = LogFactory.getLog(getClass());
 }

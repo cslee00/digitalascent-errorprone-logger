@@ -2,8 +2,6 @@ package com.digitalascent.errorprone.flogger.migrate;
 
 import com.sun.source.tree.ExpressionTree;
 
-import java.lang.annotation.Target;
-
 public final class TargetLogLevel {
     private final String methodName;
     private final ExpressionTree customLogLevel;
