@@ -133,6 +133,13 @@ public final class TinyLogLoggingApiConverter implements LoggingApiConverter {
                         // if there are arguments to the message format & we were unable to convert the message format
                         builder.addComment("Unable to convert message format expression - not a string literal");
                     }
+                } else {
+                    // no arguments left after message format; check for String.format
+                    Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( argument, state);
+                    if( logMessageFormatSpec != null ) {
+                        messageFormat = logMessageFormatSpec.formatString();
+                        remainingArguments = logMessageFormatSpec.arguments();
+                    }
                 }
             }
         }

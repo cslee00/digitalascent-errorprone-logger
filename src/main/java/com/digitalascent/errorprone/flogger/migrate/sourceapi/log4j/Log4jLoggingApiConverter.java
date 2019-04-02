@@ -148,11 +148,20 @@ public final class Log4jLoggingApiConverter implements LoggingApiConverter {
             builder.thrown(throwableArgument);
         }
 
+        String messageFormat = null;
         if (!stringType().matches(messageFormatArgument, state)) {
-            builder.messageFormatString("%s");
+            messageFormat = "%s";
             remainingArguments = Arguments.prependArgument(remainingArguments, messageFormatArgument);
+        } else {
+            // no arguments left after message format; check for String.format
+            Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( messageFormatArgument, state);
+            if( logMessageFormatSpec != null ) {
+                messageFormat = logMessageFormatSpec.formatString();
+                remainingArguments = logMessageFormatSpec.arguments();
+            }
         }
 
+        builder.messageFormatString(messageFormat);
         builder.formatArguments(remainingArguments);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);

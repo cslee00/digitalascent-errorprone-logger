@@ -51,6 +51,7 @@ public class TestClassUsingLog4j_0 {
         someLogger.info("some string");
         someLogger.info(10);
         someLogger.info("a" + 1 + "b");
+        someLogger.info(String.format("%s","abc"));
     }
 
     public void testException() {

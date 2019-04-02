@@ -43,7 +43,7 @@ public class TestClassUsingSlf4j_0 {
 
     public void testMessageFormat() {
         // see Slf4jOutput for runtime examples
-        logger.info("1. Single parameter: {}","abc");
+        logger.info("1. Single parameter: {}", "abc");
         logger.info("2. Escaped formatting anchor: \\{}");
         logger.info("3. Escaped anchor and single parameter: \\{} {}", "abc");
         logger.info("4. Escaped anchors and single parameter: \\{} {} \\{}", "abc");
@@ -51,8 +51,8 @@ public class TestClassUsingSlf4j_0 {
         logger.info("6. Double-escaped anchor, no parameter: \\\\{}");
         logger.info("7. Single parameter, double-escaped anchor: {} \\\\{}", "abc");
         logger.info("8. Percent sign: 5% of {}", "abc");
-        logger.info("9. Explicit Object[] {} {} {}", new Object[] { "abc", "def", "ghi"});
-        logger.info("10. Explicit Object[] with exception {} {}", new Object[] { "abc", "def", new Throwable()});
+        logger.info("9. Explicit Object[] {} {} {}", new Object[]{"abc", "def", "ghi"});
+        logger.info("10. Explicit Object[] with exception {} {}", new Object[]{"abc", "def", new Throwable()});
     }
 
     public void testException() {
@@ -67,6 +67,7 @@ public class TestClassUsingSlf4j_0 {
     public void testOther() {
         logger.info("a" + 1 + "b");
         logger.info("a" + 1 + "b {}", "argument", new Throwable());
+        logger.info(String.format("%s", "abc"));
     }
 
     private final Logger logger = LoggerFactory.getLogger(getClass());

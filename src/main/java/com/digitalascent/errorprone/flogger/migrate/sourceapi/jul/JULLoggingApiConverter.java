@@ -10,6 +10,7 @@ import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
+import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -136,7 +137,6 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
         builder.targetLogLevel(targetLogLevel);
 
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments, state);
-        builder.messageFormatArgument(messageFormatArgument);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
@@ -160,7 +160,15 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
                 // if there are arguments to the message format & we were unable to convert the message format
                 builder.addComment("Unable to convert message format expression - not a string literal");
             }
+        } else {
+            // no arguments left after message format; check for String.format
+            Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( messageFormatArgument, state);
+            if( logMessageFormatSpec != null ) {
+                builder.messageFormatString(logMessageFormatSpec.formatString());
+                remainingArguments = logMessageFormatSpec.arguments();
+            }
         }
+        builder.messageFormatArgument(messageFormatArgument);
         builder.formatArguments(remainingArguments);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);

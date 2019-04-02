@@ -45,5 +45,6 @@ public class TestClassUsingTinyLog_0 {
         Logger.info( new Throwable(), "a" + 1 + "b {}", "argument");
         Logger.info( new Throwable() );
         Logger.info( new Object() );
+        Logger.info( String.format("%s", "abc") );
     }
 }

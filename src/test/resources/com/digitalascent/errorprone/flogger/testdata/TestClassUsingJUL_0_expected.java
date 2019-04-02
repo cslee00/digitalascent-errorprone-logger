@@ -72,6 +72,7 @@ public class TestClassUsingJUL_0 {
 
     public void testOther() {
         someLogger.atInfo().log( "a" + 1 + "b" );
+        someLogger.atInfo().log( "%s", "abc" );
     }
 
 

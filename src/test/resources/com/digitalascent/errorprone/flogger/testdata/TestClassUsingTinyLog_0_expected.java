@@ -50,5 +50,6 @@ public class TestClassUsingTinyLog_0 {
         logger.atInfo().withCause(new Throwable()).log( "a" + 1 + "b {}", "argument" );
         logger.atInfo().withCause(new Throwable()).log( "Exception" );
         logger.atInfo().log( "%s", new Object() );
+        logger.atInfo().log( "%s", "abc" );
     }
 }

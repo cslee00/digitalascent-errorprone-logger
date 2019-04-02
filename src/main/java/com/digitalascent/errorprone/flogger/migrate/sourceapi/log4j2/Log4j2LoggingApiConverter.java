@@ -172,6 +172,13 @@ public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
                 // if there are arguments to the message format & we were unable to convert the message format
                 builder.addComment("Unable to convert message format expression - not a string literal");
             }
+        } else {
+            // no arguments left after message format; check for String.format
+            Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( messageFormatArgument, state);
+            if( logMessageFormatSpec != null ) {
+                messageFormatString = logMessageFormatSpec.formatString();
+                remainingArguments = logMessageFormatSpec.arguments();
+            }
         }
         builder.formatArguments(remainingArguments);
         builder.messageFormatString(messageFormatString);

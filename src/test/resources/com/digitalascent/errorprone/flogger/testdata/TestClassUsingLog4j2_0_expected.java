@@ -104,5 +104,6 @@ public class TestClassUsingLog4j2_0 {
         someLogger.atInfo().withCause(new Throwable()).log( "a" + 1 + "b {}", "argument" );
         someLogger.atInfo().log( "%s", new Object() );
         someLogger.atInfo().withCause(new Throwable()).log( "%s", new Object() );
+        someLogger.atInfo().log( "%s", "abc" );
     }
 }

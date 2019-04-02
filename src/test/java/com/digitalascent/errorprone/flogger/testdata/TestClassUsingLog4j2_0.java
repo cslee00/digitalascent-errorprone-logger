@@ -103,6 +103,7 @@ public class TestClassUsingLog4j2_0 {
         someLogger.info("a" + 1 + "b {}", "argument", new Throwable());
         someLogger.info(new Object());
         someLogger.info(new Object(), new Throwable());
+        someLogger.info(String.format("%s","abc"));
     }
 
     private final Logger someLogger = LogManager.getLogger(getClass());

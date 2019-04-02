@@ -52,6 +52,7 @@ public class TestClassUsingTinyLog2_0 {
         logger.atFine().log( "message" );
         logger.atInfo().withCause(new Throwable()).log( "Exception" );
         logger.atInfo().log( "%s", new Object() );
+        logger.atInfo().log( "%s", "abc" );
 
     }
 }

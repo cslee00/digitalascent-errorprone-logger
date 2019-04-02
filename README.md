@@ -107,7 +107,7 @@ force the resolution to be 'braces' (for `LogManager.getLogger()`) or 'printf' (
 | Methods `logp, logrb` | *Not migrated* |
 | Method `throwing` | *Not migrated* |
 | Method `log( LogRecord )` | *Not migrated* |
-| Methods taking a `Supplier<String>` parmameter | *Not migrated* |
+| Methods taking a `Supplier<String>` parameter | *Not migrated* |
 
 Notes:
 * Classes with multiple logger member variables are not migrated

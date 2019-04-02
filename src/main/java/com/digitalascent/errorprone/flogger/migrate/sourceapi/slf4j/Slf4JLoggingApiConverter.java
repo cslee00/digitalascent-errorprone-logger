@@ -121,19 +121,26 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
             remainingArguments = Arguments.removeLast( remainingArguments );
             builder.thrown(throwableArgument);
         }
-
-        builder.formatArguments(remainingArguments);
-        builder.messageFormatArgument(messageFormatArgument);
-
+        String messageFormatString = null;
         if (!remainingArguments.isEmpty()) {
             if (messageFormatArgument instanceof JCTree.JCLiteral) {
                 String messageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
-                builder.messageFormatString(Slf4jMessageFormatConverter.convertMessageFormat(messageFormat));
+                messageFormatString = Slf4jMessageFormatConverter.convertMessageFormat(messageFormat);
             } else {
                 // if there are arguments to the message format & we were unable to convert the message format
                 builder.addComment("Unable to convert message format expression - not a string literal");
             }
+        } else {
+            // no arguments left after message format; check for String.format
+            Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( messageFormatArgument, state);
+            if( logMessageFormatSpec != null ) {
+                messageFormatString = logMessageFormatSpec.formatString();
+                remainingArguments = logMessageFormatSpec.arguments();
+            }
         }
+        builder.messageFormatString(messageFormatString);
+        builder.formatArguments(remainingArguments);
+        builder.messageFormatArgument(messageFormatArgument);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }

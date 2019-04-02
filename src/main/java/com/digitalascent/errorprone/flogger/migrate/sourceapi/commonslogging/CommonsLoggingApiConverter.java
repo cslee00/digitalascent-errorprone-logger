@@ -7,6 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
@@ -143,7 +144,14 @@ public final class CommonsLoggingApiConverter implements LoggingApiConverter {
                 messageFormat = "%s";
             } else {
                 builder.messageFormatArgument(argument);
-                remainingArguments = Arguments.removeFirst(remainingArguments);
+                remainingArguments = ImmutableList.of();
+
+                // no arguments left after message format; check for String.format
+                Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( argument, state);
+                if( logMessageFormatSpec != null ) {
+                    messageFormat = logMessageFormatSpec.formatString();
+                    remainingArguments = logMessageFormatSpec.arguments();
+                }
             }
         }
         builder.messageFormatString(messageFormat);

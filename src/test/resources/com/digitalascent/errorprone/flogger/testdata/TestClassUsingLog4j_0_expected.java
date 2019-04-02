@@ -51,6 +51,7 @@ public class TestClassUsingLog4j_0 {
         someLogger.atInfo().log( "some string" );
         someLogger.atInfo().log( "%s", 10 );
         someLogger.atInfo().log( "a" + 1 + "b" );
+        someLogger.atInfo().log( "%s", "abc" );
     }
 
     public void testException() {

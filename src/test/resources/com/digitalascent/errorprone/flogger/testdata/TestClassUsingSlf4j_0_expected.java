@@ -68,5 +68,7 @@ public class TestClassUsingSlf4j_0 {
 
         // TODO [LoggerApiRefactoring] Unable to convert message format expression - not a string literal
         logger.atInfo().withCause(new Throwable()).log( "a" + 1 + "b {}", "argument" );
+
+        logger.atInfo().log( "%s", "abc" );
     }
 }

@@ -71,6 +71,7 @@ public class TestClassUsingJUL_0 {
 
     public void testOther() {
         someLogger.info("a" + 1 + "b");
+        someLogger.info(String.format("%s", "abc"));
     }
 
     private final Logger someLogger = Logger.getLogger(getClass().getName());
