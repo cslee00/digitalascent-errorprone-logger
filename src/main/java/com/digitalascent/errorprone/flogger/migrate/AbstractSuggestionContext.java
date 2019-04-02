@@ -2,6 +2,7 @@ package com.digitalascent.errorprone.flogger.migrate;
 
 import com.digitalascent.errorprone.flogger.ImmutableStyle;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.google.common.collect.ImmutableList;
 import com.sun.source.tree.ExpressionTree;
 import org.immutables.value.Value;
 
@@ -14,6 +15,11 @@ import java.util.Set;
 public abstract class AbstractSuggestionContext {
 
     public abstract TargetLogLevel targetLogLevel();
+
+    @Value.Default
+    public List<? extends ExpressionTree> formatArguments() {
+        return ImmutableList.of();
+    }
 
     @Nullable
     public abstract ExpressionTree messageFormatArgument();
@@ -29,6 +35,5 @@ public abstract class AbstractSuggestionContext {
     @Nullable
     public abstract ExpressionTree thrown();
 
-    public abstract Set<ExpressionTree> ignoredArguments();
     public abstract List<String> comments();
 }

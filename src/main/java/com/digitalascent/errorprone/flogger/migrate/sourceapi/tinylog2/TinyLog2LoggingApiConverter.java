@@ -6,7 +6,7 @@ import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
-import com.digitalascent.errorprone.support.ArgumentMatchResult;
+import com.digitalascent.errorprone.support.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Matchers;
@@ -19,6 +19,7 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -28,7 +29,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.Ti
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.stringType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.throwableType;
-import static com.digitalascent.errorprone.support.MethodArgumentMatchers.matchArgumentAtIndex;
+import static com.digitalascent.errorprone.support.ExpressionMatchers.matchAtIndex;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -101,18 +102,19 @@ public final class TinyLog2LoggingApiConverter implements LoggingApiConverter {
         targetLogLevel = targetLogLevelFunction.apply(methodName);
 
         builder.targetLogLevel(targetLogLevel);
-        Optional<ArgumentMatchResult> optionalThrownMatchResult = matchArgumentAtIndex(methodInvocationTree, state, throwableType(), 0);
+        List<? extends ExpressionTree> arguments = methodInvocationTree.getArguments();
+        Optional<MatchResult> optionalThrownMatchResult = matchAtIndex(arguments, state, throwableType(), 0);
         if( optionalThrownMatchResult.isPresent() ) {
             remainingArguments--;
             optionalThrownMatchResult.ifPresent(thrownMatchResult -> builder.thrown(thrownMatchResult.argument()));
         }
 
-        Optional<ArgumentMatchResult> optionalMessageFormatArgumentMatchResult =
-                matchArgumentAtIndex(methodInvocationTree, state, Matchers.anything(),
+        Optional<MatchResult> optionalMessageFormatArgumentMatchResult =
+                matchAtIndex(arguments, state, Matchers.anything(),
                         optionalThrownMatchResult.isPresent() ? 1 : 0);
         if( optionalMessageFormatArgumentMatchResult.isPresent() ) {
             remainingArguments--;
-            ArgumentMatchResult matchResult = optionalMessageFormatArgumentMatchResult.get();
+            MatchResult matchResult = optionalMessageFormatArgumentMatchResult.get();
             ExpressionTree messageFormatArgument = matchResult.argument();
             builder.messageFormatArgument(messageFormatArgument);
 

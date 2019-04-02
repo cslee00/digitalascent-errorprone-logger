@@ -56,6 +56,7 @@ public class TestClassUsingJUL_0 {
         someLogger.log(Level.INFO, "5. Double-escaped anchor, single parameter: \\\\{0}", "abc");
         someLogger.log(Level.INFO, "6. Double-escaped anchor, no parameter: \\\\{0}");
         someLogger.log(Level.INFO, "7. Single parameter, double-escaped anchor: {0} \\\\{0}", "abc");
+        someLogger.log(Level.INFO, "8. Multi parameters: {1} {0} {0}", new Object[] {"abc", "def"});
     }
 
     public void testException() {

@@ -6,8 +6,7 @@ import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
-import com.digitalascent.errorprone.support.ArgumentMatchResult;
-import com.digitalascent.errorprone.support.MethodArgumentMatchers;
+import com.digitalascent.errorprone.support.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Matchers;
@@ -20,6 +19,7 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -31,8 +31,8 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.stringType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.throwableType;
-import static com.digitalascent.errorprone.support.MethodArgumentMatchers.matchArgumentAtIndex;
-import static com.digitalascent.errorprone.support.MethodArgumentMatchers.trailingArgument;
+import static com.digitalascent.errorprone.support.ExpressionMatchers.matchAtIndex;
+import static com.digitalascent.errorprone.support.ExpressionMatchers.trailing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 import static java.util.Objects.requireNonNull;
@@ -129,13 +129,14 @@ public final class CommonsLoggingApiConverter implements LoggingApiConverter {
         targetLogLevel = targetLogLevelFunction.apply(methodName);
 
         builder.targetLogLevel(targetLogLevel);
-        Optional<ArgumentMatchResult> matchResult = trailingArgument(methodInvocationTree, state, throwableType());
+        List<? extends ExpressionTree> arguments = methodInvocationTree.getArguments();
+        Optional<MatchResult> matchResult = trailing(arguments, state, throwableType());
         matchResult.ifPresent(thrownMatchResult -> builder.thrown(thrownMatchResult.argument()));
 
-        Optional<ArgumentMatchResult> optionalMessageFormatArgumentMatchResult = matchArgumentAtIndex(methodInvocationTree, state, Matchers.anything(), 0);
-        ArgumentMatchResult messageFormatArgumentMatchResult = optionalMessageFormatArgumentMatchResult.orElseThrow(
+        Optional<MatchResult> optionalMessageFormatArgumentMatchResult = matchAtIndex(arguments, state, Matchers.anything(), 0);
+        MatchResult messageFormatMatchResult = optionalMessageFormatArgumentMatchResult.orElseThrow(
                 () -> new IllegalArgumentException("Unable to locate message format"));
-        ExpressionTree messageFormatArgument = messageFormatArgumentMatchResult.argument();
+        ExpressionTree messageFormatArgument = messageFormatMatchResult.argument();
         builder.messageFormatArgument(messageFormatArgument);
 
         if (!stringType().matches(messageFormatArgument, state)) {

@@ -51,6 +51,8 @@ public class TestClassUsingSlf4j_0 {
         logger.atInfo().log("6. Double-escaped anchor, no parameter: \\\\{}");
         logger.atInfo().log("7. Single parameter, double-escaped anchor: %s \\%s", "abc");
         logger.atInfo().log("8. Percent sign: 5%% of %s", "abc");
+        logger.atInfo().log( "9. Explicit Object[] %s %s %s", "abc", "def", "ghi" );
+        logger.atInfo().withCause(new Throwable()).log( "10. Explicit Object[] with exception %s %s", "abc", "def" );
     }
 
     public void testException() {

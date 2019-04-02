@@ -1,14 +1,16 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
-import com.digitalascent.errorprone.flogger.migrate.ImmutableSuggestionContext;
+import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
-import com.digitalascent.errorprone.support.ArgumentMatchResult;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.support.MatchResult;
+import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matchers;
+import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -18,8 +20,10 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.classType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerFactoryMethod;
@@ -29,10 +33,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4j
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.markerType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.stringType;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.throwableType;
-import static com.digitalascent.errorprone.support.MethodArgumentMatchers.firstMatchingArgument;
-import static com.digitalascent.errorprone.support.MethodArgumentMatchers.matchArgumentAtIndex;
-import static com.digitalascent.errorprone.support.MethodArgumentMatchers.trailingArgument;
+import static com.digitalascent.errorprone.support.ExpressionMatchers.matchAtIndex;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -106,36 +107,26 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
     }
 
     private SuggestedFix migrateLoggingMethod(TargetLogLevel targetLogLevel, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
-        // always have message format
-        int messageFormatIndex = 0;
-        int remainingArguments = methodInvocationTree.getArguments().size();
-
-        ImmutableSuggestionContext.Builder builder = ImmutableSuggestionContext.builder();
+        ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
-        Optional<ArgumentMatchResult> optionalThrowableMatchResult = trailingArgument(methodInvocationTree, state, throwableType());
-        if (optionalThrowableMatchResult.isPresent()) {
-            remainingArguments--;
-            builder.thrown(optionalThrowableMatchResult.get().argument());
+
+        List<? extends ExpressionTree> arguments = methodInvocationTree.getArguments();
+
+        ExpressionTree messageFormatArgument = findMesageFormatArgument(arguments, state);
+
+        // process everything past the message format; this includes unpacking Object[] parameter
+        List<? extends ExpressionTree> remainingArguments = Arguments.findRemainingAfter(arguments, state, messageFormatArgument);
+        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
+        if (throwableArgument != null) {
+            remainingArguments = Arguments.removeLast( remainingArguments );
+            builder.thrown(throwableArgument);
         }
 
-        Optional<ArgumentMatchResult> optionalMarkerMatchResult = firstMatchingArgument(methodInvocationTree, state, markerType());
-        if (optionalMarkerMatchResult.isPresent()) {
-            ArgumentMatchResult result = optionalMarkerMatchResult.get();
-            // we're looking for the Marker that may be the firstMatchingArgument parameter
-            if (result.index() == 0) {
-                remainingArguments--;
-                builder.addIgnoredArgument(result.argument());
-                messageFormatIndex++;
-            }
-        }
-
-        Optional<ArgumentMatchResult> optionalMessageFormatMatchResult = matchArgumentAtIndex(methodInvocationTree, state, Matchers.anything(), messageFormatIndex);
-        ArgumentMatchResult messageFormatArgumentMatchResult = optionalMessageFormatMatchResult.orElseThrow(() -> new IllegalStateException("Missing message format parameter"));
-        ExpressionTree messageFormatArgument = messageFormatArgumentMatchResult.argument();
+        builder.formatArguments(remainingArguments);
         builder.messageFormatArgument(messageFormatArgument);
-        remainingArguments--;
-        if (remainingArguments > 0) {
-            if (messageFormatArgument instanceof JCTree.JCLiteral && stringType().matches(messageFormatArgument, state)) {
+
+        if (!remainingArguments.isEmpty()) {
+            if (messageFormatArgument instanceof JCTree.JCLiteral) {
                 String messageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
                 builder.messageFormatString(Slf4jMessageFormatConverter.convertMessageFormat(messageFormat));
             } else {
@@ -144,6 +135,23 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
             }
         }
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return floggerSuggestedFixGenerator.generateLoggingMethod2(methodInvocationTree, state, builder.build(), migrationContext);
+    }
+
+    private ExpressionTree findMesageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+        int messageFormatIndex = hasMarkerArgument(arguments, state) ? 1 : 0;
+        Optional<MatchResult> optionalMessageFormatMatchResult = matchAtIndex(arguments, state, stringType(), messageFormatIndex);
+        MatchResult messageFormatMatchResult = optionalMessageFormatMatchResult.orElseThrow(() -> new IllegalStateException("Missing message format parameter"));
+        return messageFormatMatchResult.argument();
+    }
+
+    private boolean hasMarkerArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+        return arguments.stream().limit(1).anyMatch( x -> markerType().matches(x,state));
+    }
+
+
+
+    private void something(List<? extends ExpressionTree> arguments, Predicate<ExpressionTree> skipPredicate) {
+
     }
 }

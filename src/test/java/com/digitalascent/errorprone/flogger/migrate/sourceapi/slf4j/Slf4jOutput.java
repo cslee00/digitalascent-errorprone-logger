@@ -15,5 +15,6 @@ public class Slf4jOutput {
         logger.info("5. Double-escaped anchor, single parameter: \\\\{}", "abc");
         logger.info("6. Double-escaped anchor, no parameter: \\\\{}");
         logger.info("7. Single parameter, double-escaped anchor: {} \\\\{}", "abc");
+        logger.info("9. Explicit Object[] {} {} {}", new Object[] { "abc", "def", "ghi"});
     }
 }

@@ -1,80 +1,51 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.jul;
 
-/**
- * Converts SLF4J parameter placeholder '{}' into printf-style parameter '%s'.
- * Based on SLF4J org.slf4j.helpers.MessageFormatter to ensure accuracy of parsing
- */
+import com.google.common.base.CharMatcher;
+import com.sun.source.tree.ExpressionTree;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 final class JULMessageFormatConverter {
 
-    private static final char DELIM_START = '{';
-    private static final char DELIM_STOP = '}';
-    private static final String DELIM_STR = "{}";
-    private static final char ESCAPE_CHAR = '\\';
+    private static final Pattern PARAM_PATTERN = Pattern.compile("(\\{[0-9]})");
+    private static final CharMatcher PARAM_PATTERN_DELIMITERS = CharMatcher.anyOf("{}");
+    public static ConvertedMessageFormat convertMessageFormat(String messageFormat, List<? extends ExpressionTree> remainingArguments ) {
+        List<ExpressionTree> argumentList = new ArrayList<>();
+        Matcher matcher = PARAM_PATTERN.matcher(messageFormat);
+        StringBuffer sb = new StringBuffer();
+        while( matcher.find() ) {
+            String text = matcher.group(1);
+            text = PARAM_PATTERN_DELIMITERS.removeFrom(text);
 
-    static String convertMessageFormat(String messagePattern ) {
-
-        if (messagePattern == null) {
-            return null;
-        }
-
-        // escape '%' sign in incoming format
-        messagePattern = messagePattern.replace("%", "%%");
-
-        int nextIndex = 0;
-        int delimiterIndex;
-        StringBuilder sbuf = new StringBuilder(messagePattern.length() + 50);
-
-        int argumentIndex;
-        while( true ) {
-            delimiterIndex = messagePattern.indexOf(DELIM_STR, nextIndex);
-
-            if (delimiterIndex == -1) {
-                // no more variables
-                if (nextIndex == 0) { // this is a simple string
-                    return messagePattern;
-                } else { // add the tail string which contains no variables and return
-                    // the result.
-                    sbuf.append(messagePattern, nextIndex, messagePattern.length());
-                    return sbuf.toString();
-                }
-            } else {
-                if (isEscapedDelimeter(messagePattern, delimiterIndex)) {
-                    if (isDoubleEscaped(messagePattern, delimiterIndex)) {
-                        // The escape character preceding the delimiter start is
-                        // itself escaped: "abc x:\\{}"
-                        // we have to consume one backward slash
-                        sbuf.append(messagePattern, nextIndex, delimiterIndex - 1 );
-                        appendPrintfPlaceholder(sbuf);
-                        nextIndex = delimiterIndex + 2;
-                    } else {
-                        sbuf.append(messagePattern, nextIndex, delimiterIndex - 1);
-                        sbuf.append("{}");
-                        nextIndex = delimiterIndex + 2;
-                    }
-                } else {
-                    // normal case
-                    sbuf.append(messagePattern, nextIndex, delimiterIndex);
-                    appendPrintfPlaceholder(sbuf);
-                    nextIndex = delimiterIndex + 2;
-                }
+            int index = Integer.parseInt(text);
+            if( index < remainingArguments.size() ) {
+                argumentList.add(remainingArguments.get(index));
             }
+            matcher.appendReplacement(sb,"%s");
         }
+        matcher.appendTail(sb);
+
+        return new ConvertedMessageFormat(sb.toString(),argumentList);
     }
 
-    private static void appendPrintfPlaceholder(StringBuilder sbuf) {
-        sbuf.append("%s");
-    }
+    public static final class ConvertedMessageFormat {
+        private final String messageFormat;
+        private final List<ExpressionTree> arguments;
 
-    private static boolean isEscapedDelimeter(String messagePattern, int delimeterStartIndex) {
-
-        if (delimeterStartIndex == 0) {
-            return false;
+        ConvertedMessageFormat(String messageFormat, List<ExpressionTree> arguments) {
+            this.messageFormat = messageFormat;
+            this.arguments = arguments;
         }
-        char potentialEscape = messagePattern.charAt(delimeterStartIndex - 1);
-        return potentialEscape == ESCAPE_CHAR;
-    }
 
-    private static boolean isDoubleEscaped(String messagePattern, int delimeterStartIndex) {
-        return delimeterStartIndex >= 2 && messagePattern.charAt(delimeterStartIndex - 2) == ESCAPE_CHAR;
+        String messageFormat() {
+            return messageFormat;
+        }
+
+        List<ExpressionTree> arguments() {
+            return arguments;
+        }
     }
 }

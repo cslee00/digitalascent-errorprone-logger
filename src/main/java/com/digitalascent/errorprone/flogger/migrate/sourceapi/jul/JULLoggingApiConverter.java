@@ -1,12 +1,13 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.jul;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
-import com.digitalascent.errorprone.flogger.migrate.ImmutableSuggestionContext;
+import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
-import com.digitalascent.errorprone.support.ArgumentMatchResult;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.support.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Matchers;
@@ -19,7 +20,7 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -31,9 +32,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatc
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.stringType;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.throwableType;
-import static com.digitalascent.errorprone.support.MethodArgumentMatchers.matchArgumentAtIndex;
-import static com.digitalascent.errorprone.support.MethodArgumentMatchers.trailingArgument;
+import static com.digitalascent.errorprone.support.ExpressionMatchers.matchAtIndex;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -120,18 +119,15 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
     private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                               VisitorState state, MigrationContext migrationContext) {
         int messageArgumentIndex = 0;
-        int remainingArguments = methodInvocationTree.getArguments().size();
 
-        ImmutableSuggestionContext.Builder builder = ImmutableSuggestionContext.builder();
+        List<? extends ExpressionTree> arguments = methodInvocationTree.getArguments();
 
         TargetLogLevel targetLogLevel;
         if (methodName.equals("log")) {
-            ExpressionTree logLevelArgument = methodInvocationTree.getArguments().get(0);
+            ExpressionTree logLevelArgument = arguments.get(0);
             if (logLevelType().matches(logLevelArgument, state)) {
                 targetLogLevel = resolveLogLevel(logLevelArgument);
-                builder.addIgnoredArgument(logLevelArgument);
                 messageArgumentIndex++;
-                remainingArguments--;
             } else {
                 return SuggestedFix.builder().build();
             }
@@ -139,39 +135,44 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
             targetLogLevel = targetLogLevelFunction.apply(methodName);
         }
 
-        builder.targetLogLevel(targetLogLevel);
-        Optional<ArgumentMatchResult> matchResult = trailingArgument(methodInvocationTree, state, throwableType());
-        if (matchResult.isPresent()) {
-            remainingArguments--;
-            builder.thrown(matchResult.get().argument());
-        }
+        ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
 
-        Optional<ArgumentMatchResult> optionalMessageFormatArgumentMatchResult = matchArgumentAtIndex(methodInvocationTree, state, Matchers.anything(), messageArgumentIndex);
-        ArgumentMatchResult messageFormatArgumentMatchResult = optionalMessageFormatArgumentMatchResult.orElseThrow(() -> new IllegalArgumentException("Unable to locate message format"));
-        ExpressionTree messageFormatArgument = messageFormatArgumentMatchResult.argument();
+        builder.targetLogLevel(targetLogLevel);
+
+        ExpressionTree messageFormatArgument = findMessageFormatArgument(arguments, messageArgumentIndex, state);
         builder.messageFormatArgument(messageFormatArgument);
-        remainingArguments--;
+
+        List<? extends ExpressionTree> remainingArguments = Arguments.findRemainingAfter(arguments, state, messageFormatArgument);
+
+        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
+        if (throwableArgument != null) {
+            remainingArguments = Arguments.removeLast(remainingArguments);
+            builder.thrown(throwableArgument);
+        }
 
         if (!stringType().matches(messageFormatArgument, state)) {
             throw new SkipCompilationUnitException("Unable to convert message format: " + messageFormatArgument);
         }
 
-        if (remainingArguments > 0) {
+        if (!remainingArguments.isEmpty()) {
             if (messageFormatArgument instanceof JCTree.JCLiteral) {
                 String messageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
-                builder.messageFormatString(convertMessageFormat(messageFormat, remainingArguments));
+                JULMessageFormatConverter.ConvertedMessageFormat convertedMessageFormat = JULMessageFormatConverter.convertMessageFormat(messageFormat, remainingArguments);
+                builder.messageFormatString(convertedMessageFormat.messageFormat());
+                remainingArguments = convertedMessageFormat.arguments();
             } else {
                 // if there are arguments to the message format & we were unable to convert the message format
                 builder.addComment("Unable to convert message format expression - not a string literal");
             }
         }
+        builder.formatArguments(remainingArguments);
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return floggerSuggestedFixGenerator.generateLoggingMethod2(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
-    private String convertMessageFormat(String messageFormat, int remainingArguments ) {
-        Object[] args = new Object[ remainingArguments ];
-        Arrays.fill(args, "%s");
-        return java.text.MessageFormat.format( messageFormat, args );
+    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments, int messageArgumentIndex, VisitorState state) {
+        Optional<MatchResult> optionalMessageFormatArgumentMatchResult = matchAtIndex(arguments, state, Matchers.anything(), messageArgumentIndex);
+        MatchResult messageFormatMatchResult = optionalMessageFormatArgumentMatchResult.orElseThrow(() -> new IllegalArgumentException("Unable to locate message format"));
+        return messageFormatMatchResult.argument();
     }
 }

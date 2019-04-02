@@ -78,7 +78,7 @@ public class TestClassUsingLog4j2_0 {
     }
 
     public void testMessageFormat() {
-        someLogger.info("1. Single parameter: {}","abc");
+        someLogger.info("1. Single parameter: {}", "abc");
         someLogger.info("2. Escaped formatting anchor: \\{}");
         someLogger.info("3. Escaped anchor and single parameter: \\{} {}", "abc");
         someLogger.info("4. Escaped anchors and single parameter: \\{} {} \\{}", "abc");
@@ -86,19 +86,23 @@ public class TestClassUsingLog4j2_0 {
         someLogger.info("6. Double-escaped anchor, no parameter: \\\\{}");
         someLogger.info("7. Single parameter, double-escaped anchor: {} \\\\{}", "abc");
         someLogger.info("8. Percent sign: 5% of {}", "abc");
+        someLogger.info("9. Object[] {} {}", new Object[] { "abc", "def" });
     }
 
     public void testException() {
         try {
             String s = null;
             s.trim();
-        } catch( NullPointerException e ) {
+        } catch (NullPointerException e) {
             someLogger.error("The {} message", "exception", e);
         }
     }
+
     public void testOther() {
-        someLogger.info( "a" + 1 + "b");
-        someLogger.info( "a" + 1 + "b {}", "argument", new Throwable());
+        someLogger.info("a" + 1 + "b");
+        someLogger.info("a" + 1 + "b {}", "argument", new Throwable());
+        someLogger.info(new Object());
+        someLogger.info(new Object(), new Throwable());
     }
 
     private final Logger someLogger = LogManager.getLogger(getClass());

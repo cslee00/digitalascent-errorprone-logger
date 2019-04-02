@@ -38,6 +38,7 @@ public class FloggerSuggestedFixGenerator {
         return methodInvocation;
     }
 
+    @Deprecated
     public SuggestedFix generateLoggingMethod(MethodInvocationTree loggerMethodInvocation, VisitorState state,
                                               ImmutableSuggestionContext suggestionContext, MigrationContext migrationContext) {
 
@@ -65,27 +66,74 @@ public class FloggerSuggestedFixGenerator {
 
         sb.append(loggingCall);
         sb.append(".log( ");
+
+        if (suggestionContext.messageFormatString() != null) {
+            String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(suggestionContext.messageFormatString()) + "\"";
+            if (suggestionContext.forceMissingMessageFormat()) {
+                argumentSrc += ", ";
+                argumentSrc += state.getSourceForNode(suggestionContext.messageFormatArgument());
+            }
+            sb.append( argumentSrc );
+        } else {
+            sb.append( state.getSourceForNode(suggestionContext.messageFormatArgument()));
+        }
+
         boolean firstArgument = true;
-        for (ExpressionTree argument : loggerMethodInvocation.getArguments()) {
-            if (argument == suggestionContext.thrown()) {
-                continue;
-            }
-            if (suggestionContext.ignoredArguments().contains(argument)) {
-                continue;
-            }
-            if (firstArgument) {
-                firstArgument = false;
-            } else {
+        for (ExpressionTree argument : suggestionContext.formatArguments()) {
+            if (sb.length() > 0) {
                 sb.append(", ");
             }
             String argumentSrc = state.getSourceForNode(argument);
-            if (argument == suggestionContext.messageFormatArgument() && suggestionContext.messageFormatString() != null) {
-                argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(suggestionContext.messageFormatString()) + "\"";
-                if (suggestionContext.forceMissingMessageFormat()) {
-                    argumentSrc += ", ";
-                    argumentSrc += state.getSourceForNode(argument);
-                }
+            sb.append(argumentSrc);
+        }
+        sb.append(" )");
+
+        return SuggestedFix.builder()
+                .replace(loggerMethodInvocation, sb.toString())
+                .build();
+    }
+
+    public SuggestedFix generateLoggingMethod2(MethodInvocationTree loggerMethodInvocation, VisitorState state,
+                                              ImmutableFloggerLogContext floggerLogContext, MigrationContext migrationContext) {
+
+        String loggerVariableName = determineLoggerVariableName(migrationContext);
+
+        String methodInvocation = generateMethodInvocation(floggerLogContext.targetLogLevel(), state);
+
+        String loggingCall = String.format("%s.%s", loggerVariableName, methodInvocation);
+
+        if (floggerLogContext.thrown() != null) {
+            String thrownCode = state.getSourceForNode(floggerLogContext.thrown());
+            loggingCall += String.format(".withCause(%s)", thrownCode);
+        }
+
+        StringBuilder sb = new StringBuilder(200);
+        if (!floggerLogContext.comments().isEmpty()) {
+            sb.append("\n");
+        }
+
+        for (String comment : floggerLogContext.comments()) {
+            sb.append("// TODO [LoggerApiRefactoring] ");
+            sb.append(comment);
+            sb.append("\n");
+        }
+
+        sb.append(loggingCall);
+        sb.append(".log( ");
+
+        if (floggerLogContext.messageFormatString() != null) {
+            String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(floggerLogContext.messageFormatString()) + "\"";
+            sb.append( argumentSrc );
+        } else {
+            sb.append( state.getSourceForNode(floggerLogContext.messageFormatArgument()));
+        }
+
+        boolean firstArgument = true;
+        for (ExpressionTree argument : floggerLogContext.formatArguments()) {
+            if (sb.length() > 0) {
+                sb.append(", ");
             }
+            String argumentSrc = state.getSourceForNode(argument);
             sb.append(argumentSrc);
         }
         sb.append(" )");
