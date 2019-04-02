@@ -8,6 +8,7 @@ import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException
 import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Matchers;
@@ -139,12 +140,11 @@ public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        if( hasMarkerArgument(remainingArguments,state)) {
+        if (hasMarkerArgument(remainingArguments, state)) {
             remainingArguments = Arguments.removeFirst(remainingArguments);
         }
 
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments, state);
-        builder.messageFormatArgument(messageFormatArgument);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
@@ -153,70 +153,24 @@ public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
             builder.thrown(throwableArgument);
         }
 
-        String messageFormatString = null;
-        if (isMessageFormatObject(state, messageFormatArgument)) {
-            // object as format string - push it as an argument
-            remainingArguments = Arguments.prependArgument(remainingArguments, messageFormatArgument);
-            messageFormatString = "%s";
-        } else {
-            if (!stringType().matches(messageFormatArgument, state)) {
-                throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
-            }
-        }
-
-        if (!remainingArguments.isEmpty() && messageFormatString == null) {
-            if ( messageFormatArgument instanceof JCTree.JCLiteral) {
-                String messageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
-                messageFormatString = convertMessageFormat(messageFormat, migrationContext, builder);
-            } else {
-                // if there are arguments to the message format & we were unable to convert the message format
-                builder.addComment("Unable to convert message format expression - not a string literal");
-            }
-        } else {
-            // no arguments left after message format; check for String.format
-            Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( messageFormatArgument, state);
-            if( logMessageFormatSpec != null ) {
-                messageFormatString = logMessageFormatSpec.formatString();
-                remainingArguments = logMessageFormatSpec.arguments();
-            }
-        }
-        builder.formatArguments(remainingArguments);
-        builder.messageFormatString(messageFormatString);
+        LogMessageModel logMessageModel = new Log4j2LogMessageHandler().processLogMessage(messageFormatArgument,
+                remainingArguments, state, throwableArgument, migrationContext);
+        builder.logMessageModel(logMessageModel);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
-    private boolean isMessageFormatObject(VisitorState state, ExpressionTree messageFormatArgument) {
-        return Matchers.isSameType("java.lang.Object").matches(messageFormatArgument, state);
-    }
-
     private boolean hasMarkerArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
-        if( arguments.isEmpty() ) {
+        if (arguments.isEmpty()) {
             return false;
         }
-        return markerType().matches(arguments.get(0),state);
+        return markerType().matches(arguments.get(0), state);
     }
 
-    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments,  VisitorState state) {
-        if( arguments.isEmpty() ) {
+    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+        if (arguments.isEmpty()) {
             throw new IllegalStateException("Unable to find required message format argument");
         }
         return arguments.get(0);
-    }
-
-    private String convertMessageFormat(String messageFormat, MigrationContext migrationContext, ImmutableFloggerLogContext.Builder builder) {
-        if (migrationContext.sourceLoggerMemberVariables().size() != 1) {
-            // no existing variable definition (likely from a superclass or elsewhere)
-            // assume default
-            builder.addComment("Unable to determine parameter format type; assuming default (brace style)");
-            return Log4j2BraceMessageFormatConverter.convertMessageFormat(messageFormat);
-        }
-        MethodInvocationTree logFactoryMethodInvocationTree = (MethodInvocationTree) migrationContext.sourceLoggerMemberVariables().get(0).getInitializer();
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(logFactoryMethodInvocationTree);
-        String methodName = sym.getSimpleName().toString();
-        if ("getLogger".equals(methodName)) {
-            return Log4j2BraceMessageFormatConverter.convertMessageFormat(messageFormat);
-        }
-        return messageFormat;
     }
 }

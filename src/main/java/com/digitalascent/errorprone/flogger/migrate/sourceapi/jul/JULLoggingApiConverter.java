@@ -8,9 +8,12 @@ import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException
 import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
+import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Matchers;
+import com.google.errorprone.matchers.method.MethodMatchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -20,6 +23,8 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -149,33 +154,14 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
             throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
         }
 
-        if (!remainingArguments.isEmpty()) {
-            if (messageFormatArgument instanceof JCTree.JCLiteral) {
-                String messageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
-                JULMessageFormatConverter.ConvertedMessageFormat convertedMessageFormat = JULMessageFormatConverter.convertMessageFormat(messageFormat, remainingArguments);
-                builder.messageFormatString(convertedMessageFormat.messageFormat());
-                builder.addAllComments(convertedMessageFormat.migrationIssues());
-                remainingArguments = convertedMessageFormat.arguments();
-            } else {
-                // if there are arguments to the message format & we were unable to convert the message format
-                builder.addComment("Unable to convert message format expression - not a string literal");
-            }
-        } else {
-            // no arguments left after message format; check for String.format
-            Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( messageFormatArgument, state);
-            if( logMessageFormatSpec != null ) {
-                builder.messageFormatString(logMessageFormatSpec.formatString());
-                remainingArguments = logMessageFormatSpec.arguments();
-            }
-        }
-        builder.messageFormatArgument(messageFormatArgument);
-        builder.formatArguments(remainingArguments);
+        LogMessageModel logMessageModel = new JULLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext );
+        builder.logMessageModel(logMessageModel);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
     private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
-        if( arguments.isEmpty()) {
+        if (arguments.isEmpty()) {
             throw new IllegalStateException("Missing required message format argument");
         }
         return arguments.get(0);

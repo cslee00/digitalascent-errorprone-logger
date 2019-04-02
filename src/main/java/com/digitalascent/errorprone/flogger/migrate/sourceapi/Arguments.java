@@ -19,7 +19,7 @@ import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 public final class Arguments {
 
     private static final Matcher<ExpressionTree> THROWABLE_MATCHER = isSubtypeOf(Throwable.class);
-    public static final MethodMatchers.MethodNameMatcher STRING_FORMAT = Matchers.staticMethod().onClass("java.lang.String").named("format");
+    private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = Matchers.staticMethod().onClass("java.lang.String").named("format");
 
     public static List<? extends ExpressionTree> removeLast(List<? extends ExpressionTree> expressions) {
         if (expressions.size() <= 1) {
@@ -50,7 +50,7 @@ public final class Arguments {
         return maybeUnpackVarArgs( remainingArguments, state );
     }
 
-    private static List<? extends ExpressionTree> maybeUnpackVarArgs(List<? extends ExpressionTree> arguments, VisitorState state) {
+    public static List<? extends ExpressionTree> maybeUnpackVarArgs(List<? extends ExpressionTree> arguments, VisitorState state) {
         if (arguments.size() == 1) {
             ExpressionTree argument = arguments.get(0);
             // if Object[] unpack

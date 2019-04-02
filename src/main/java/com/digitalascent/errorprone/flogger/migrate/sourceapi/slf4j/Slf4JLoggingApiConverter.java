@@ -6,6 +6,7 @@ import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
@@ -121,26 +122,9 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
             remainingArguments = Arguments.removeLast( remainingArguments );
             builder.thrown(throwableArgument);
         }
-        String messageFormatString = null;
-        if (!remainingArguments.isEmpty()) {
-            if (messageFormatArgument instanceof JCTree.JCLiteral) {
-                String messageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
-                messageFormatString = Slf4jMessageFormatConverter.convertMessageFormat(messageFormat);
-            } else {
-                // if there are arguments to the message format & we were unable to convert the message format
-                builder.addComment("Unable to convert message format expression - not a string literal");
-            }
-        } else {
-            // no arguments left after message format; check for String.format
-            Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( messageFormatArgument, state);
-            if( logMessageFormatSpec != null ) {
-                messageFormatString = logMessageFormatSpec.formatString();
-                remainingArguments = logMessageFormatSpec.arguments();
-            }
-        }
-        builder.messageFormatString(messageFormatString);
-        builder.formatArguments(remainingArguments);
-        builder.messageFormatArgument(messageFormatArgument);
+
+        LogMessageModel logMessageModel = new Slf4jLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
+        builder.logMessageModel(logMessageModel);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
@@ -159,9 +143,4 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
         return markerType().matches(arguments.get(0),state);
     }
 
-
-
-    private void something(List<? extends ExpressionTree> arguments, Predicate<ExpressionTree> skipPredicate) {
-
-    }
 }

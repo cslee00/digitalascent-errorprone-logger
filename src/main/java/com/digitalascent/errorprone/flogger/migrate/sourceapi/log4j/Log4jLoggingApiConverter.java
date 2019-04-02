@@ -7,6 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -29,7 +30,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4j
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggerType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingMethod;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.stringType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 import static java.util.Objects.requireNonNull;
@@ -139,7 +139,6 @@ public final class Log4jLoggingApiConverter implements LoggingApiConverter {
         builder.targetLogLevel(targetLogLevel);
 
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments, state);
-        builder.messageFormatArgument(messageFormatArgument);
         remainingArguments = Arguments.removeFirst(remainingArguments);
 
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
@@ -148,21 +147,9 @@ public final class Log4jLoggingApiConverter implements LoggingApiConverter {
             builder.thrown(throwableArgument);
         }
 
-        String messageFormat = null;
-        if (!stringType().matches(messageFormatArgument, state)) {
-            messageFormat = "%s";
-            remainingArguments = Arguments.prependArgument(remainingArguments, messageFormatArgument);
-        } else {
-            // no arguments left after message format; check for String.format
-            Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( messageFormatArgument, state);
-            if( logMessageFormatSpec != null ) {
-                messageFormat = logMessageFormatSpec.formatString();
-                remainingArguments = logMessageFormatSpec.arguments();
-            }
-        }
-
-        builder.messageFormatString(messageFormat);
-        builder.formatArguments(remainingArguments);
+        LogMessageModel logMessageModel = new Log4jLogMessageHandler().processLogMessage(messageFormatArgument,
+                remainingArguments, state, throwableArgument, migrationContext);
+        builder.logMessageModel(logMessageModel);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }

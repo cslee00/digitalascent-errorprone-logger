@@ -5,13 +5,12 @@ import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
-import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -26,12 +25,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.matchAtIndex;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.logType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggingMethod;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.stringType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.throwableType;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.matchAtIndex;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -109,42 +107,12 @@ public final class TinyLogLoggingApiConverter implements LoggingApiConverter {
             remainingArguments = Arguments.removeFirst( remainingArguments );
         }
 
-        String messageFormat = null;
-        if( remainingArguments.isEmpty() ) {
-            if( throwableArgument != null ) {
-                messageFormat = "Exception";
-            }
-        } else {
-            ExpressionTree argument = remainingArguments.get(0);
-            if( Matchers.isSameType("java.lang.Object").matches(argument,state)) {
-                messageFormat = "%s";
-            } else {
-                if (!stringType().matches(argument, state)) {
-                    throw new SkipLogMethodException("Unable to handle " + argument);
-                }
-                builder.messageFormatArgument( argument );
-                remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state );
+        ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
+        remainingArguments = Arguments.removeFirst(remainingArguments);
 
-                if (!remainingArguments.isEmpty()) {
-                    if (argument instanceof JCTree.JCLiteral) {
-                        String messageFormatStr = (String) ((JCTree.JCLiteral) argument).value;
-                        messageFormat = TinyLogMessageFormatter.format(messageFormatStr);
-                    } else {
-                        // if there are arguments to the message format & we were unable to convert the message format
-                        builder.addComment("Unable to convert message format expression - not a string literal");
-                    }
-                } else {
-                    // no arguments left after message format; check for String.format
-                    Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( argument, state);
-                    if( logMessageFormatSpec != null ) {
-                        messageFormat = logMessageFormatSpec.formatString();
-                        remainingArguments = logMessageFormatSpec.arguments();
-                    }
-                }
-            }
-        }
-        builder.messageFormatString(messageFormat);
-        builder.formatArguments(remainingArguments);
+        LogMessageModel logMessageModel = new TinyLogLogMessageHandler().processLogMessage(messageFormatArgument,
+                remainingArguments, state, throwableArgument, migrationContext);
+        builder.logMessageModel(logMessageModel);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }

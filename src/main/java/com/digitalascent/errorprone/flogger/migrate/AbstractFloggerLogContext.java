@@ -1,6 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
 import com.digitalascent.errorprone.flogger.ImmutableStyle;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.common.collect.ImmutableList;
 import com.sun.source.tree.ExpressionTree;
 import org.immutables.value.Value;
@@ -12,8 +13,13 @@ import java.util.List;
 @Value.Immutable
 public abstract class AbstractFloggerLogContext {
 
+    public abstract LogMessageModel logMessageModel();
     public abstract TargetLogLevel targetLogLevel();
 
+    @Nullable
+    public abstract ExpressionTree thrown();
+
+    /*
     @Value.Default
     public List<? extends ExpressionTree> formatArguments() {
         return ImmutableList.of();
@@ -25,8 +31,6 @@ public abstract class AbstractFloggerLogContext {
     @Nullable
     public abstract String messageFormatString();
 
-    @Nullable
-    public abstract ExpressionTree thrown();
 
-    public abstract List<String> comments();
+    public abstract List<String> comments();*/
 }

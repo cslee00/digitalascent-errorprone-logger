@@ -7,7 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.google.common.collect.ImmutableList;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
@@ -29,7 +29,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingMethod;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.stringType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -128,34 +127,15 @@ public final class CommonsLoggingApiConverter implements LoggingApiConverter {
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
         if (throwableArgument != null) {
-            remainingArguments = Arguments.removeLast( remainingArguments );
+            remainingArguments = Arguments.removeLast(remainingArguments);
             builder.thrown(throwableArgument);
         }
 
-        String messageFormat = null;
-        if( remainingArguments.isEmpty() ) {
-            if( throwableArgument != null ) {
-                // throwable was only argument
-                messageFormat = "Exception";
-            }
-        } else {
-            ExpressionTree argument = remainingArguments.get(0);
-            if (!stringType().matches(argument, state)) {
-                messageFormat = "%s";
-            } else {
-                builder.messageFormatArgument(argument);
-                remainingArguments = ImmutableList.of();
+        ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
+        remainingArguments = Arguments.removeFirst(remainingArguments);
 
-                // no arguments left after message format; check for String.format
-                Arguments.LogMessageFormatSpec logMessageFormatSpec = Arguments.maybeUnpackStringFormat( argument, state);
-                if( logMessageFormatSpec != null ) {
-                    messageFormat = logMessageFormatSpec.formatString();
-                    remainingArguments = logMessageFormatSpec.arguments();
-                }
-            }
-        }
-        builder.messageFormatString(messageFormat);
-        builder.formatArguments(remainingArguments);
+        LogMessageModel logMessageModel = new CommonsLoggingLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
+        builder.logMessageModel(logMessageModel);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }

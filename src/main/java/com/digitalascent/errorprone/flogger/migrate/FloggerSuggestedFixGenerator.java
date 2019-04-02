@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.common.base.Verify;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -41,6 +42,8 @@ public class FloggerSuggestedFixGenerator {
     public SuggestedFix generateLoggingMethod(MethodInvocationTree loggerMethodInvocation, VisitorState state,
                                               ImmutableFloggerLogContext floggerLogContext, MigrationContext migrationContext) {
 
+        LogMessageModel logMessageModel = floggerLogContext.logMessageModel();
+
         String loggerVariableName = determineLoggerVariableName(migrationContext);
 
         String methodInvocation = generateMethodInvocation(floggerLogContext.targetLogLevel(), state);
@@ -53,11 +56,11 @@ public class FloggerSuggestedFixGenerator {
         }
 
         StringBuilder sb = new StringBuilder(200);
-        if (!floggerLogContext.comments().isEmpty()) {
+        if (!logMessageModel.migrationIssues().isEmpty()) {
             sb.append("\n");
         }
 
-        for (String comment : floggerLogContext.comments()) {
+        for (String comment : logMessageModel.migrationIssues()) {
             sb.append("// TODO [LoggerApiRefactoring] ");
             sb.append(comment);
             sb.append("\n");
@@ -66,15 +69,15 @@ public class FloggerSuggestedFixGenerator {
         sb.append(loggingCall);
         sb.append(".log( ");
 
-        if (floggerLogContext.messageFormatString() != null) {
-            String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(floggerLogContext.messageFormatString()) + "\"";
+        if (logMessageModel.messageFormat() != null) {
+            String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(logMessageModel.messageFormat()) + "\"";
             sb.append( argumentSrc );
         } else {
-            sb.append( state.getSourceForNode(floggerLogContext.messageFormatArgument()));
+            sb.append( state.getSourceForNode(logMessageModel.messageFormatArgument()));
         }
 
         boolean firstArgument = true;
-        for (ExpressionTree argument : floggerLogContext.formatArguments()) {
+        for (ExpressionTree argument : logMessageModel.arguments()) {
             if (sb.length() > 0) {
                 sb.append(", ");
             }
