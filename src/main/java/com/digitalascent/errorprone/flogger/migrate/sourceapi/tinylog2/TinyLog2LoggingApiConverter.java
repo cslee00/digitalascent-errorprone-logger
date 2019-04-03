@@ -74,7 +74,7 @@ public final class TinyLog2LoggingApiConverter implements LoggingApiConverter {
     @Override
     public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
         if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree, visitorState));
+            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
         }
 
         return Optional.empty();

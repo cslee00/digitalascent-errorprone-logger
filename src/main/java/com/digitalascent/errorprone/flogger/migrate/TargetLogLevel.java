@@ -22,7 +22,7 @@ public final class TargetLogLevel {
         return methodName;
     }
 
-    public ExpressionTree customLogLevel() {
+    ExpressionTree customLogLevel() {
         return customLogLevel;
     }
 }

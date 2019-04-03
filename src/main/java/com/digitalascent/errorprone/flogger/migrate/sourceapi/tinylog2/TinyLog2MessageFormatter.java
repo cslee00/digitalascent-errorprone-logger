@@ -6,7 +6,7 @@ import java.text.DecimalFormatSymbols;
 import java.text.Format;
 import java.util.Locale;
 
-public final class TinyLog2MessageFormatter {
+final class TinyLog2MessageFormatter {
 
     private TinyLog2MessageFormatter() {
         throw new AssertionError("Cannot instantiate " + getClass());

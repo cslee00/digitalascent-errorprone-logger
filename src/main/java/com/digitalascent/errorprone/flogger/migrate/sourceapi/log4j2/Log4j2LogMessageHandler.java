@@ -23,14 +23,9 @@ final class Log4j2LogMessageHandler extends AbstractLogMessageHandler {
             Matchers.isSubtypeOf("org.apache.logging.log4j.util.Supplier")
     );
 
-    @Nullable
     @Override
-    protected LogMessageModel customProcessing(ExpressionTree messageFormatArgument, VisitorState state, @Nullable ExpressionTree thrownArgument) {
-        if( INVALID_MSG_FORMAT_TYPES.matches( messageFormatArgument, state)) {
-            throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
-        }
-
-        return null;
+    protected boolean skipMessageFormat(ExpressionTree messageFormatArgument, VisitorState state) {
+        return INVALID_MSG_FORMAT_TYPES.matches( messageFormatArgument, state);
     }
 
     @Override

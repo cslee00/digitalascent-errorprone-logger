@@ -28,9 +28,7 @@ final class Log4j2Matchers {
             .namedAnyOf("getLogger", "getFormatterLogger"));
 
     private static final Matcher<ExpressionTree> MARKER_MATCHER = isSubtypeOf(LOG4J2_MARKER_CLASS);
-    private static final Matcher<ExpressionTree> THROWABLE_MATCHER = isSubtypeOf(Throwable.class);
     private static final Matcher<ExpressionTree> CLASS_MATCHER = isSubtypeOf(Class.class);
-    private static final Matcher<ExpressionTree> STRING_MATCHER = isSubtypeOf(String.class);
     private static final Matcher<Tree> LOGGER_TYPE_MATCHER = isSubtypeOf(LOG4J2_LOGGER_CLASS);
     private static final Matcher<Tree> LOGGER_FACTORY_TYPE_MATCHER = isSubtypeOf(LOG4J2_LOG_MANAGER_CLASS);
     private static final Matcher<Tree> LOG4J2_LOGGER_TYPES = anyOf( LOGGER_TYPE_MATCHER, LOGGER_FACTORY_TYPE_MATCHER, isSubtypeOf("org.apache.logging.log4j.Level") );
@@ -47,15 +45,8 @@ final class Log4j2Matchers {
         return MARKER_MATCHER;
     }
 
-    static Matcher<ExpressionTree> throwableType() {
-        return THROWABLE_MATCHER;
-    }
     static Matcher<ExpressionTree> classType() {
         return CLASS_MATCHER;
-    }
-
-    static Matcher<ExpressionTree> stringType() {
-        return STRING_MATCHER;
     }
 
     static Matcher<ExpressionTree> logManagerMethod() {

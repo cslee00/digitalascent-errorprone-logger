@@ -15,8 +15,6 @@ final class JULMatchers {
     private static final String LOGGER_CLASS = "java.util.logging.Logger";
     private static String LOGGER_FACTORY_CLASS = "java.util.logging.Logger";
 
-    private static final Matcher<ExpressionTree> THROWABLE_MATCHER = isSubtypeOf(Throwable.class);
-    private static final Matcher<ExpressionTree> CLASS_MATCHER = isSubtypeOf(Class.class);
     private static final Matcher<ExpressionTree> STRING_MATCHER = isSubtypeOf(String.class);
     private static final Matcher<ExpressionTree> LOGGER_FACTORY_MATCHER = methodInvocation(staticMethod()
             .onClass(LOGGER_FACTORY_CLASS)
@@ -39,13 +37,6 @@ final class JULMatchers {
 
     static Matcher<ExpressionTree> loggingEnabledMethod() {
         return IS_ENABLED_METHODS;
-    }
-
-    static Matcher<ExpressionTree> throwableType() {
-        return THROWABLE_MATCHER;
-    }
-    static Matcher<ExpressionTree> classType() {
-        return CLASS_MATCHER;
     }
 
     static Matcher<ExpressionTree> stringType() {

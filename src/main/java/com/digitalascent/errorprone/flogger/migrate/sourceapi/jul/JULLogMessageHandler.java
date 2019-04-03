@@ -23,13 +23,9 @@ final class JULLogMessageHandler extends AbstractLogMessageHandler {
             Matchers.isSubtypeOf("java.util.function.Supplier")
     );
 
-    @Nullable
     @Override
-    protected LogMessageModel customProcessing(ExpressionTree messageFormatArgument, VisitorState state, @Nullable ExpressionTree thrownArgument) {
-        if(INVALID_MSG_FORMAT_TYPES.matches(messageFormatArgument,state)) {
-            throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
-        }
-        return null;
+    protected boolean skipMessageFormat(ExpressionTree messageFormatArgument, VisitorState state) {
+       return INVALID_MSG_FORMAT_TYPES.matches(messageFormatArgument,state);
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
@@ -17,7 +16,6 @@ import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.tree.JCTree;
 
 import java.util.List;
 import java.util.Optional;
@@ -70,17 +68,13 @@ public final class CommonsLoggingApiConverter implements LoggingApiConverter {
         }
 
         MethodInvocationTree logManagerMethodInvocationTree = (MethodInvocationTree) variableTree.getInitializer();
-        // getLog(getClass())
-        if (hasClassParameter(logManagerMethodInvocationTree, state)) {
+        if( Arguments.isLoggerNamedAfterClass(classTree, logManagerMethodInvocationTree.getArguments().get(0), state )) {
             return Optional.of(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, variableTree, state, migrationContext));
         }
 
         return Optional.empty();
     }
 
-    private boolean hasClassParameter(MethodInvocationTree methodInvocationTree, VisitorState state) {
-        return classType().matches(methodInvocationTree.getArguments().get(0), state);
-    }
 
     @Override
     public boolean isLoggerVariable(VariableTree tree, VisitorState state) {
@@ -90,23 +84,11 @@ public final class CommonsLoggingApiConverter implements LoggingApiConverter {
     @Override
     public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
         if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree, visitorState));
+            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
         }
 
         return Optional.empty();
     }
-
-    private TargetLogLevel resolveLogLevel(ExpressionTree levelArgument) {
-        try {
-            if (levelArgument instanceof JCTree.JCFieldAccess) {
-                JCTree.JCFieldAccess fieldAccess = (JCTree.JCFieldAccess) levelArgument;
-                return targetLogLevelFunction.apply(fieldAccess.name.toString());
-            }
-        } catch (IllegalArgumentException ignored) {
-        }
-        throw new SkipCompilationUnitException("Custom log level not supported: " + levelArgument);
-    }
-
 
     private SuggestedFix migrateConditionalMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                                   VisitorState state, MigrationContext migrationContext) {

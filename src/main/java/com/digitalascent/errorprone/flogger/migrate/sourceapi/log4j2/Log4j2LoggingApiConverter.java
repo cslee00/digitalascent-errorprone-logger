@@ -5,13 +5,11 @@ import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
-import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -32,7 +30,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.markerType;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.stringType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -73,17 +70,13 @@ public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
             return Optional.empty();
         }
 
+        // getLogger(), getLogger( Class ), getLogger( String ) (and getFormatterLogger)
         MethodInvocationTree logManagerMethodInvocationTree = (MethodInvocationTree) variableTree.getInitializer();
-        // getLogger() or getLogger(getClass())
-        if (logManagerMethodInvocationTree.getArguments().size() == 0 || hasClassParameter(logManagerMethodInvocationTree, state)) {
+        if (logManagerMethodInvocationTree.getArguments().isEmpty() || Arguments.isLoggerNamedAfterClass(classTree, logManagerMethodInvocationTree.getArguments().get(0), state)) {
             return Optional.of(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, variableTree, state, migrationContext));
         }
 
         return Optional.empty();
-    }
-
-    private boolean hasClassParameter(MethodInvocationTree methodInvocationTree, VisitorState state) {
-        return classType().matches(methodInvocationTree.getArguments().get(0), state);
     }
 
     @Override
@@ -94,7 +87,7 @@ public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
     @Override
     public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
         if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree, visitorState));
+            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
         }
 
         return Optional.empty();
@@ -144,7 +137,7 @@ public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
             remainingArguments = Arguments.removeFirst(remainingArguments);
         }
 
-        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments, state);
+        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
@@ -167,7 +160,7 @@ public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
         return markerType().matches(arguments.get(0), state);
     }
 
-    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {
         if (arguments.isEmpty()) {
             throw new IllegalStateException("Unable to find required message format argument");
         }

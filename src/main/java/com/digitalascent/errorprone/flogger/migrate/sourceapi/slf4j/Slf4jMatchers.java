@@ -16,9 +16,7 @@ final class Slf4jMatchers {
     private static String SLF4J_LOGGER_FACTORY_CLASS = "org.slf4j.LoggerFactory";
 
     private static final Matcher<ExpressionTree> MARKER_MATCHER = isSubtypeOf(SLF4J_MARKER_CLASS);
-    private static final Matcher<ExpressionTree> THROWABLE_MATCHER = isSubtypeOf(Throwable.class);
     private static final Matcher<ExpressionTree> CLASS_MATCHER = isSubtypeOf(Class.class);
-    private static final Matcher<ExpressionTree> STRING_MATCHER = isSubtypeOf(String.class);
     private static final Matcher<ExpressionTree> LOGGER_FACTORY_MATCHER = methodInvocation(staticMethod()
             .onClass(SLF4J_LOGGER_FACTORY_CLASS)
             .named("getLogger"));
@@ -44,15 +42,8 @@ final class Slf4jMatchers {
         return MARKER_MATCHER;
     }
 
-    static Matcher<ExpressionTree> throwableType() {
-        return THROWABLE_MATCHER;
-    }
     static Matcher<ExpressionTree> classType() {
         return CLASS_MATCHER;
-    }
-
-    static Matcher<ExpressionTree> stringType() {
-        return STRING_MATCHER;
     }
 
     static Matcher<ExpressionTree> loggerFactoryMethod() {

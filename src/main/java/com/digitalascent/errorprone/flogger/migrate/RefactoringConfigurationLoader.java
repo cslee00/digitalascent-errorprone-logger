@@ -21,8 +21,6 @@ import java.util.function.Function;
 @SuppressWarnings("UnstableApiUsage")
 final class RefactoringConfigurationLoader {
 
-    private static final Splitter SPLITTER = Splitter.on(CharMatcher.anyOf(", \t")).omitEmptyStrings().trimResults();
-
     RefactoringConfiguration loadRefactoringConfiguration(String userProvidedPropertyPath, String sourceApi) {
 
         FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator();
@@ -71,7 +69,7 @@ final class RefactoringConfigurationLoader {
         return converterMapBuilder.build();
     }
 
-    private Properties load(ByteSource byteSource) {
+/*    private Properties load(ByteSource byteSource) {
         final Properties props = new Properties();
         try (InputStream inputStream = byteSource.openBufferedStream()) {
             props.load(inputStream);
@@ -79,6 +77,6 @@ final class RefactoringConfigurationLoader {
             throw new RuntimeException(e);
         }
         return props;
-    }
+    }*/
 
 }

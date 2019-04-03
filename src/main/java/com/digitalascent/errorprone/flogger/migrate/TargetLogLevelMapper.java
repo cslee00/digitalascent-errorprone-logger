@@ -2,8 +2,7 @@ package com.digitalascent.errorprone.flogger.migrate;
 
 import java.util.function.Function;
 
-// TODO - make configurable
-class TargetLogLevelMapper implements Function<String, TargetLogLevel> {
+final class TargetLogLevelMapper implements Function<String, TargetLogLevel> {
     @Override
     public TargetLogLevel apply(String level) {
         switch (level.toLowerCase().trim()) {

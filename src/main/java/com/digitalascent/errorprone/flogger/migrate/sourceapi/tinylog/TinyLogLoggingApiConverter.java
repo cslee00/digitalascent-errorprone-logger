@@ -75,21 +75,10 @@ public final class TinyLogLoggingApiConverter implements LoggingApiConverter {
     @Override
     public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
         if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree, visitorState));
+            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
         }
 
         return Optional.empty();
-    }
-
-    private TargetLogLevel resolveLogLevel(ExpressionTree levelArgument) {
-        try {
-            if (levelArgument instanceof JCTree.JCFieldAccess) {
-                JCTree.JCFieldAccess fieldAccess = (JCTree.JCFieldAccess) levelArgument;
-                return targetLogLevelFunction.apply(fieldAccess.name.toString());
-            }
-        } catch (IllegalArgumentException ignored) {
-        }
-        throw new SkipCompilationUnitException("Custom log level not supported: " + levelArgument);
     }
 
     private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,

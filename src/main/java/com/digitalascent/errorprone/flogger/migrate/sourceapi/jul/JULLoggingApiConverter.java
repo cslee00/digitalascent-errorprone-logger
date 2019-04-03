@@ -9,11 +9,8 @@ import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
-import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matchers;
-import com.google.errorprone.matchers.method.MethodMatchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -23,13 +20,10 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 
-import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.classType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.logLevelType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggerFactoryMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggerImports;
@@ -62,7 +56,7 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
         }
 
         if (loggingEnabledMethod().matches(methodInvocationTree, state)) {
-            return Optional.of(migrateConditionalMethod(methodName, methodInvocationTree, state, migrationContext));
+            return Optional.of(migrateConditionalMethod(methodInvocationTree, state, migrationContext));
         }
 
         return Optional.empty();
@@ -78,11 +72,11 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
         }
 
         MethodInvocationTree logManagerMethodInvocationTree = (MethodInvocationTree) variableTree.getInitializer();
-        return Optional.of(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, variableTree, state, migrationContext));
-    }
+        if (Arguments.isLoggerNamedAfterClass(classTree, logManagerMethodInvocationTree.getArguments().get(0), state)) {
+            return Optional.of(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, variableTree, state, migrationContext));
+        }
 
-    private boolean hasClassParameter(MethodInvocationTree methodInvocationTree, VisitorState state) {
-        return classType().matches(methodInvocationTree.getArguments().get(0), state);
+        return Optional.empty();
     }
 
     @Override
@@ -93,7 +87,7 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
     @Override
     public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
         if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree, visitorState));
+            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
         }
 
         return Optional.empty();
@@ -113,7 +107,7 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
         throw new SkipCompilationUnitException("Custom log level not supported: " + levelArgument);
     }
 
-    private SuggestedFix migrateConditionalMethod(String methodName, MethodInvocationTree methodInvocationTree,
+    private SuggestedFix migrateConditionalMethod(MethodInvocationTree methodInvocationTree,
                                                   VisitorState state, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel;
         targetLogLevel = resolveLogLevel(methodInvocationTree.getArguments().get(0));
@@ -141,7 +135,7 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
 
         builder.targetLogLevel(targetLogLevel);
 
-        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments, state);
+        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
@@ -154,13 +148,13 @@ public final class JULLoggingApiConverter implements LoggingApiConverter {
             throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
         }
 
-        LogMessageModel logMessageModel = new JULLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext );
+        LogMessageModel logMessageModel = new JULLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
-    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {
         if (arguments.isEmpty()) {
             throw new IllegalStateException("Missing required message format argument");
         }

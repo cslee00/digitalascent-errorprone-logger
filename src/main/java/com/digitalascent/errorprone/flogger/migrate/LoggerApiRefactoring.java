@@ -36,8 +36,6 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator();
 
     public LoggerApiRefactoring(ErrorProneFlags flags) {
-
-//        String userPropertiesFile = flags.get(CONFIGURATION_NAMESPACE + ":Properties").orElse(null);
         String sourceApi = flags.get(SOURCE_API_FLAG).orElseThrow(() -> new IllegalArgumentException("Missing source api for option " + SOURCE_API_FLAG));
 
         this.refactoringConfiguration = new RefactoringConfigurationLoader().loadRefactoringConfiguration("", sourceApi);

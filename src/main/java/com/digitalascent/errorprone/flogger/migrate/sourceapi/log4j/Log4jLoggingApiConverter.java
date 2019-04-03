@@ -71,17 +71,13 @@ public final class Log4jLoggingApiConverter implements LoggingApiConverter {
             return Optional.empty();
         }
 
+        // getLogger( Class ), getLogger( String ), getLogger( String, LoggerFactory )
         MethodInvocationTree logManagerMethodInvocationTree = (MethodInvocationTree) variableTree.getInitializer();
-        // getLogger() or getLogger(getClass())
-        if (logManagerMethodInvocationTree.getArguments().size() == 0 || hasClassParameter(logManagerMethodInvocationTree, state)) {
+        if (Arguments.isLoggerNamedAfterClass(classTree, logManagerMethodInvocationTree.getArguments().get(0), state)) {
             return Optional.of(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, variableTree, state, migrationContext));
         }
 
         return Optional.empty();
-    }
-
-    private boolean hasClassParameter(MethodInvocationTree methodInvocationTree, VisitorState state) {
-        return classType().matches(methodInvocationTree.getArguments().get(0), state);
     }
 
     @Override
@@ -92,7 +88,7 @@ public final class Log4jLoggingApiConverter implements LoggingApiConverter {
     @Override
     public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
         if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree, visitorState));
+            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
         }
 
         return Optional.empty();
@@ -138,7 +134,7 @@ public final class Log4jLoggingApiConverter implements LoggingApiConverter {
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments, state);
+        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
         remainingArguments = Arguments.removeFirst(remainingArguments);
 
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
@@ -154,7 +150,7 @@ public final class Log4jLoggingApiConverter implements LoggingApiConverter {
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
-    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {
         if (arguments.isEmpty()) {
             throw new IllegalStateException("Unable to find required message format argument");
         }

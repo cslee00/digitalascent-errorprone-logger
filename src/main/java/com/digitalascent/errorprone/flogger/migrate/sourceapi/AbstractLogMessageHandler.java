@@ -1,9 +1,9 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
-import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.matchers.method.MethodMatchers;
 import com.sun.source.tree.ExpressionTree;
@@ -11,13 +11,10 @@ import com.sun.source.tree.MethodInvocationTree;
 import com.sun.tools.javac.tree.JCTree;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
-
 public abstract class AbstractLogMessageHandler {
-    private static final Matcher<ExpressionTree> STRING_MATCHER = isSubtypeOf(String.class);
+
 
     public final LogMessageModel processLogMessage(ExpressionTree messageFormatArgument,
                                                    List<? extends ExpressionTree> remainingArguments,
@@ -25,9 +22,8 @@ public abstract class AbstractLogMessageHandler {
                                                    @Nullable ExpressionTree thrownArgument,
                                                    MigrationContext migrationContext) {
 
-        LogMessageModel result1 = customProcessing(messageFormatArgument, state, thrownArgument);
-        if (result1 != null) {
-            return result1;
+        if( skipMessageFormat(messageFormatArgument, state) ) {
+            throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
         }
 
         if (thrownArgument == messageFormatArgument) {
@@ -35,11 +31,10 @@ public abstract class AbstractLogMessageHandler {
             return LogMessageModel.fromStringFormat("Exception", ImmutableList.of());
         }
 
-        if (!STRING_MATCHER.matches(messageFormatArgument, state)) {
+        if (!Arguments.isStringType(messageFormatArgument, state)) {
             return LogMessageModel.fromStringFormat("%s", Arguments.prependArgument(remainingArguments, messageFormatArgument));
         }
 
-        List<String> migrationIssues = new ArrayList<>();
         if (remainingArguments.isEmpty()) {
             // no arguments left after message format; check if message format argument is String.format
             LogMessageModel result = maybeUnpackStringFormat(messageFormatArgument, state);
@@ -51,7 +46,7 @@ public abstract class AbstractLogMessageHandler {
         }
 
         // handle remaining format arguments
-        if (messageFormatArgument instanceof JCTree.JCLiteral && STRING_MATCHER.matches(messageFormatArgument, state)) {
+        if (Arguments.isStringLiteral(messageFormatArgument, state)) {
             // handle common case of string literal format string
             String sourceMessageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
             return convertMessageFormat(sourceMessageFormat, remainingArguments, migrationContext);
@@ -60,9 +55,9 @@ public abstract class AbstractLogMessageHandler {
         return LogMessageModel.unableToConvert(messageFormatArgument, remainingArguments);
     }
 
-    @Nullable
-    protected LogMessageModel customProcessing(ExpressionTree messageFormatArgument, VisitorState state, @Nullable ExpressionTree thrownArgument) {
-        return null;
+
+    protected boolean skipMessageFormat(ExpressionTree messageFormatArgument, VisitorState state) {
+        return false;
     }
 
     protected abstract LogMessageModel convertMessageFormat(String sourceMessageFormat, List<? extends ExpressionTree> formatArguments, MigrationContext migrationContext);

@@ -6,8 +6,6 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j;
  */
 final class Slf4jMessageFormatConverter {
 
-    private static final char DELIM_START = '{';
-    private static final char DELIM_STOP = '}';
     private static final String DELIM_STR = "{}";
     private static final char ESCAPE_CHAR = '\\';
 
@@ -24,25 +22,19 @@ final class Slf4jMessageFormatConverter {
         int delimiterIndex;
         StringBuilder sbuf = new StringBuilder(messagePattern.length() + 50);
 
-        int argumentIndex;
         while( true ) {
             delimiterIndex = messagePattern.indexOf(DELIM_STR, nextIndex);
 
             if (delimiterIndex == -1) {
-                // no more variables
-                if (nextIndex == 0) { // this is a simple string
+                if (nextIndex == 0) {
                     return messagePattern;
-                } else { // add the tail string which contains no variables and return
-                    // the result.
+                } else {
                     sbuf.append(messagePattern, nextIndex, messagePattern.length());
                     return sbuf.toString();
                 }
             } else {
                 if (isEscapedDelimeter(messagePattern, delimiterIndex)) {
                     if (isDoubleEscaped(messagePattern, delimiterIndex)) {
-                        // The escape character preceding the delimiter start is
-                        // itself escaped: "abc x:\\{}"
-                        // we have to consume one backward slash
                         sbuf.append(messagePattern, nextIndex, delimiterIndex - 1 );
                         appendPrintfPlaceholder(sbuf);
                         nextIndex = delimiterIndex + 2;
@@ -52,7 +44,6 @@ final class Slf4jMessageFormatConverter {
                         nextIndex = delimiterIndex + 2;
                     }
                 } else {
-                    // normal case
                     sbuf.append(messagePattern, nextIndex, delimiterIndex);
                     appendPrintfPlaceholder(sbuf);
                     nextIndex = delimiterIndex + 2;

@@ -24,18 +24,19 @@ public class FloggerSuggestedFixGenerator {
 
     // TODO - configurable
     private static final String FLOGGER_CLASSNAME = "com.google.common.flogger.FluentLogger";
-    public static final String LOGGER_API_REFACTORING_MARKER = "[LoggerApiRefactoring]";
+    private static final String LOGGER_API_REFACTORING_MARKER = "[LoggerApiRefactoring]";
     private final String targetLoggerName = "logger";
 
     public SuggestedFix generateConditional(MethodInvocationTree tree, VisitorState state, TargetLogLevel targetLogLevel, MigrationContext migrationContext) {
+
         String loggerVariableName = determineLoggerVariableName(migrationContext);
-        String methodInvocation = generateMethodInvocation(targetLogLevel, state);
+        String selectorMethod = generateSelector(targetLogLevel, state);
         return SuggestedFix.builder()
-                .replace(tree, String.format("%s.%s.isEnabled()", loggerVariableName, methodInvocation))
+                .replace(tree, String.format("%s.%s.isEnabled()", loggerVariableName, selectorMethod))
                 .build();
     }
 
-    private String generateMethodInvocation(TargetLogLevel targetLogLevel, VisitorState state) {
+    private String generateSelector(TargetLogLevel targetLogLevel, VisitorState state) {
         String methodInvocation = targetLogLevel.methodName() + "()";
         if (targetLogLevel.customLogLevel() != null) {
             methodInvocation = String.format("%s(%s)", targetLogLevel.methodName(), state.getSourceForNode(targetLogLevel.customLogLevel()));
@@ -50,7 +51,7 @@ public class FloggerSuggestedFixGenerator {
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);
 
-        String methodInvocation = generateMethodInvocation(floggerLogContext.targetLogLevel(), state);
+        String methodInvocation = generateSelector(floggerLogContext.targetLogLevel(), state);
 
         String loggingCall = String.format("%s.%s", loggerVariableName, methodInvocation);
 
@@ -78,7 +79,6 @@ public class FloggerSuggestedFixGenerator {
             sb.append(state.getSourceForNode(logMessageModel.messageFormatArgument()));
         }
 
-        boolean firstArgument = true;
         for (ExpressionTree argument : logMessageModel.arguments()) {
             if (sb.length() > 0) {
                 sb.append(", ");
@@ -130,13 +130,12 @@ public class FloggerSuggestedFixGenerator {
         return suggestedFix;
     }
 
-    public SuggestedFix removeImport(ImportTree importTree, VisitorState visitorState) {
+    public SuggestedFix removeImport(ImportTree importTree) {
         return SuggestedFix.builder()
                 .removeImport(importTree.getQualifiedIdentifier().toString())
                 .build();
     }
 
-    @Nullable
     private CharSequence determineIndent(Tree tree, VisitorState state) {
         JCTree node = (JCTree) tree;
         int nodeStartPosition = node.getStartPosition();
@@ -146,6 +145,4 @@ public class FloggerSuggestedFixGenerator {
         int lastIdx = PREV_LINE_MATCHER.lastIndexIn(charSequence);
         return charSequence.subSequence(lastIdx + 1, charSequence.length());
     }
-
-
 }

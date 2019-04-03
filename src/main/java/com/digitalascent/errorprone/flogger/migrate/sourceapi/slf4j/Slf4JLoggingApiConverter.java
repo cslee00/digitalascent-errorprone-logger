@@ -16,12 +16,10 @@ import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.tree.JCTree;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.classType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerFactoryMethod;
@@ -92,7 +90,7 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
     @Override
     public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
         if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree, visitorState));
+            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
         }
 
         return Optional.empty();
