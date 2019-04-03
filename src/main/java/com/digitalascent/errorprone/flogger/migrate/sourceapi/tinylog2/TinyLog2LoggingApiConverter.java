@@ -67,8 +67,8 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
     }
 
     @Override
-    protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
-                                              VisitorState state, MigrationContext migrationContext) {
+    protected ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+                                                              VisitorState state, MigrationContext migrationContext) {
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
 
         TargetLogLevel targetLogLevel;
@@ -88,8 +88,7 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
                 remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel( logMessageModel );
-
-        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return builder.build();
     }
 
     @Nullable

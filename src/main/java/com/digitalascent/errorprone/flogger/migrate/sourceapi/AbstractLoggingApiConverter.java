@@ -1,6 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
+import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
@@ -15,7 +16,6 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
 
-import java.lang.annotation.Target;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -69,7 +69,8 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
         Symbol.MethodSymbol sym = ASTHelpers.getSymbol(methodInvocationTree);
         String methodName = sym.getSimpleName().toString();
         if( matchLoggingMethod( methodInvocationTree, state )) {
-            return Optional.of(migrateLoggingMethod(methodName, methodInvocationTree, state, migrationContext));
+            ImmutableFloggerLogContext floggerLogContext = migrateLoggingMethod(methodName, methodInvocationTree, state, migrationContext);
+            return Optional.of(getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, floggerLogContext, migrationContext));
         }
 
         if( matchLoggingEnabledMethod( methodInvocationTree, state )) {
@@ -91,7 +92,7 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
     protected abstract boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state);
     protected abstract boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state);
 
-    protected abstract SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext);
+    protected abstract ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext);
     protected abstract SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext);
 
 }

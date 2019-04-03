@@ -85,8 +85,8 @@ public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
         throw new SkipCompilationUnitException("Custom log level not supported: " + levelArgument);
     }
 
-    protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
-                                              VisitorState state, MigrationContext migrationContext) {
+    protected ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+                                                              VisitorState state, MigrationContext migrationContext) {
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
 
         TargetLogLevel targetLogLevel;
@@ -121,8 +121,7 @@ public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
 
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
-
-        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return builder.build();
     }
 
     private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {

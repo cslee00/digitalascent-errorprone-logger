@@ -68,7 +68,7 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
     }
 
     @Override
-    protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    protected ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel = mapLogLevel(methodName);
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
@@ -91,7 +91,7 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
-        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return builder.build();
     }
 
     private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {

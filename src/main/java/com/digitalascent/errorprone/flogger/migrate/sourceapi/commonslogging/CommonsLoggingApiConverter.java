@@ -67,8 +67,8 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
         return loggerImports().matches(qualifiedIdentifier, visitorState);
     }
 
-    protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
-                                                VisitorState state, MigrationContext migrationContext) {
+    protected ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+                                                              VisitorState state, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel;
         targetLogLevel = mapLogLevel(methodName);
 
@@ -87,7 +87,6 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
 
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
-
-        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return builder.build();
     }
 }
