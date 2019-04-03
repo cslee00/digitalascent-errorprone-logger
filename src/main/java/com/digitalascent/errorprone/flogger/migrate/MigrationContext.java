@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MigrationContext {
+    boolean debug();
 
     List<VariableTree> sourceLoggerMemberVariables();
     List<VariableTree> floggerMemberVariables();

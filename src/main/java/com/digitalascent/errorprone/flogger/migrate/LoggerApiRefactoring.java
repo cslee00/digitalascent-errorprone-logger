@@ -30,15 +30,18 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
 
     private static final String CONFIGURATION_NAMESPACE = "LoggerApiRefactoring";
     private static final String SOURCE_API_FLAG = String.format("%s:%s",CONFIGURATION_NAMESPACE, "SourceApi" );
+    private static final String DEBUG_FLAG = String.format("%s:%s",CONFIGURATION_NAMESPACE, "Debug" );
 
     private final RefactoringConfiguration refactoringConfiguration;
     private final LoggingApiConverter loggingApiConverter;
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator();
+    private final boolean debug;
 
     public LoggerApiRefactoring(ErrorProneFlags flags) {
 
 //        String userPropertiesFile = flags.get(CONFIGURATION_NAMESPACE + ":Properties").orElse(null);
         String sourceApi = flags.get(SOURCE_API_FLAG).orElseThrow(() -> new IllegalArgumentException("Missing source api for option " + SOURCE_API_FLAG));
+        this.debug = flags.getBoolean(DEBUG_FLAG).orElse(false);
 
         this.refactoringConfiguration = new RefactoringConfigurationLoader().loadRefactoringConfiguration("", sourceApi);
         this.loggingApiConverter = refactoringConfiguration.loggingApiConverter();
@@ -157,6 +160,7 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
             builder.floggerMemberVariableName( floggerMemberVariables.get(0).getName().toString() );
         }
 
+        builder.debug(debug);
         return builder.build();
     }
 }

@@ -1,6 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Verify;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -13,6 +14,7 @@ import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
+import com.sun.tools.javac.tree.JCTree;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -21,6 +23,7 @@ public class FloggerSuggestedFixGenerator {
 
     // TODO - configurable
     private static final String FLOGGER_CLASSNAME = "com.google.common.flogger.FluentLogger";
+    public static final String LOGGER_API_REFACTORING_MARKER = "[LoggerApiRefactoring]";
     private final String targetLoggerName = "logger";
 
     public SuggestedFix generateConditional(MethodInvocationTree tree, VisitorState state, TargetLogLevel targetLogLevel, MigrationContext migrationContext) {
@@ -56,14 +59,32 @@ public class FloggerSuggestedFixGenerator {
         }
 
         StringBuilder sb = new StringBuilder(200);
-        if (!logMessageModel.migrationIssues().isEmpty()) {
-            sb.append("\n");
+
+        if( migrationContext.debug() ) {
+            String source = state.getSourceForNode(loggerMethodInvocation);
+            boolean blockComment =  source.contains("\r") || source.contains("\n");
+            if( blockComment ) {
+                source = source.replace( "*/", "* /");
+                sb.append("/*\n");
+                sb.append( source );
+                sb.append("\n*/\n");
+                sb.append( determineIndent(loggerMethodInvocation,state));
+            } else {
+                sb.append( "// DEBUG ");
+                sb.append( LOGGER_API_REFACTORING_MARKER );
+                sb.append( " ");
+                sb.append( source );
+                sb.append( "\n");
+                sb.append( determineIndent(loggerMethodInvocation,state));
+            }
         }
 
+
         for (String comment : logMessageModel.migrationIssues()) {
-            sb.append("// TODO [LoggerApiRefactoring] ");
+            sb.append("// TODO " + LOGGER_API_REFACTORING_MARKER + " ");
             sb.append(comment);
             sb.append("\n");
+            sb.append( determineIndent(loggerMethodInvocation,state));
         }
 
         sb.append(loggingCall);
@@ -130,4 +151,18 @@ public class FloggerSuggestedFixGenerator {
                 .removeImport(importTree.getQualifiedIdentifier().toString())
                 .build();
     }
+
+    @Nullable
+    public CharSequence determineIndent(Tree tree, VisitorState state) {
+        JCTree node = (JCTree) tree;
+        int nodeStartPosition = node.getStartPosition();
+
+        int startPosition = Math.max( nodeStartPosition - 100, 0);
+        CharSequence charSequence = state.getSourceCode().subSequence(startPosition, nodeStartPosition).toString();
+        int lastIdx = PREV_LINE_MATCHER.lastIndexIn(charSequence);
+        return charSequence.subSequence(lastIdx + 1, charSequence.length());
+    }
+
+    private static final CharMatcher PREV_LINE_MATCHER = CharMatcher.anyOf("\r\n");
+//    private static final CharMatcher WHITESPACE = CharMatcher.anyOf("\t ");
 }

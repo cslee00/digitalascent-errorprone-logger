@@ -118,4 +118,5 @@ Notes:
 | Command Line Option | Arguments |
 | --- | --- |
 | LoggerApiRefactoring:SourceApi=<api name> | slf4j,log4j,log4j2,tinylog,tinylog2,commons-logging,jul |
+| LoggerApiRefactoring:Debug | true, false |
 
