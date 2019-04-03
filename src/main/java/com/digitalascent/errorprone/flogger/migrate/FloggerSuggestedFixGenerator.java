@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class FloggerSuggestedFixGenerator {
+    private static final CharMatcher PREV_LINE_MATCHER = CharMatcher.anyOf("\r\n");
 
     // TODO - configurable
     private static final String FLOGGER_CLASSNAME = "com.google.common.flogger.FluentLogger";
@@ -60,31 +61,11 @@ public class FloggerSuggestedFixGenerator {
 
         StringBuilder sb = new StringBuilder(200);
 
-        if( migrationContext.debug() ) {
-            String source = state.getSourceForNode(loggerMethodInvocation);
-            boolean blockComment =  source.contains("\r") || source.contains("\n");
-            if( blockComment ) {
-                source = source.replace( "*/", "* /");
-                sb.append("/*\n");
-                sb.append( source );
-                sb.append("\n*/\n");
-                sb.append( determineIndent(loggerMethodInvocation,state));
-            } else {
-                sb.append( "// DEBUG ");
-                sb.append( LOGGER_API_REFACTORING_MARKER );
-                sb.append( " ");
-                sb.append( source );
-                sb.append( "\n");
-                sb.append( determineIndent(loggerMethodInvocation,state));
-            }
-        }
-
-
         for (String comment : logMessageModel.migrationIssues()) {
             sb.append("// TODO " + LOGGER_API_REFACTORING_MARKER + " ");
             sb.append(comment);
             sb.append("\n");
-            sb.append( determineIndent(loggerMethodInvocation,state));
+            sb.append(determineIndent(loggerMethodInvocation, state));
         }
 
         sb.append(loggingCall);
@@ -92,9 +73,9 @@ public class FloggerSuggestedFixGenerator {
 
         if (logMessageModel.messageFormat() != null) {
             String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(logMessageModel.messageFormat()) + "\"";
-            sb.append( argumentSrc );
+            sb.append(argumentSrc);
         } else {
-            sb.append( state.getSourceForNode(logMessageModel.messageFormatArgument()));
+            sb.append(state.getSourceForNode(logMessageModel.messageFormatArgument()));
         }
 
         boolean firstArgument = true;
@@ -125,14 +106,17 @@ public class FloggerSuggestedFixGenerator {
 
     public SuggestedFix generateLoggerVariable(ClassTree classTree, @Nullable VariableTree variableTree, VisitorState state, MigrationContext migrationContext) {
         // TODO - pull from configuration
-        String loggerVariableName = determineLoggerVariableName(migrationContext);
-        String loggerVariable = String.format("private static final %s %s = %s.%s();", "FluentLogger", loggerVariableName, "FluentLogger", "forEnclosingClass");
-
-        String code = state.getSourceForNode(classTree);
         Tree firstMember = findFirstMember(classTree.getMembers());
         Verify.verify(firstMember != null);
+
+        StringBuilder stringBuilder = new StringBuilder(200);
+        String loggerVariableName = determineLoggerVariableName(migrationContext);
+        stringBuilder.append(String.format("private static final %s %s = %s.%s();", "FluentLogger", loggerVariableName, "FluentLogger", "forEnclosingClass"));
+        stringBuilder.append("\n\n");
+        stringBuilder.append(determineIndent(firstMember, state));
+
         SuggestedFix suggestedFix = SuggestedFix.builder()
-                .prefixWith(firstMember, loggerVariable + "\n\n")
+                .prefixWith(firstMember, stringBuilder.toString())
                 .addImport(FLOGGER_CLASSNAME)
                 .build();
 
@@ -153,16 +137,15 @@ public class FloggerSuggestedFixGenerator {
     }
 
     @Nullable
-    public CharSequence determineIndent(Tree tree, VisitorState state) {
+    private CharSequence determineIndent(Tree tree, VisitorState state) {
         JCTree node = (JCTree) tree;
         int nodeStartPosition = node.getStartPosition();
 
-        int startPosition = Math.max( nodeStartPosition - 100, 0);
+        int startPosition = Math.max(nodeStartPosition - 100, 0);
         CharSequence charSequence = state.getSourceCode().subSequence(startPosition, nodeStartPosition).toString();
         int lastIdx = PREV_LINE_MATCHER.lastIndexIn(charSequence);
         return charSequence.subSequence(lastIdx + 1, charSequence.length());
     }
 
-    private static final CharMatcher PREV_LINE_MATCHER = CharMatcher.anyOf("\r\n");
-//    private static final CharMatcher WHITESPACE = CharMatcher.anyOf("\t ");
+
 }
