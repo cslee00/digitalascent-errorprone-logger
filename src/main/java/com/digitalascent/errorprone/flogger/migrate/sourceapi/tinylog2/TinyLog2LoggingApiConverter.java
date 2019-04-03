@@ -10,12 +10,10 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import com.sun.tools.javac.code.Symbol;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -41,15 +39,18 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggingMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    protected boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return false;
+    }
 
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(methodInvocationTree);
-        String methodName = sym.getSimpleName().toString();
-        if (loggingMethod().matches(methodInvocationTree, state)) {
-            return Optional.of(migrateLoggingMethod(methodName, methodInvocationTree, state, migrationContext));
-        }
+    @Override
+    protected boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return loggingMethod().matches(methodInvocationTree, state);
+    }
 
-        return Optional.empty();
+    @Override
+    protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+        return null;
     }
 
     @Override
@@ -63,15 +64,12 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
     }
 
     @Override
-    public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
-        if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
-        }
-
-        return Optional.empty();
+    protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
+        return loggerImports().matches(qualifiedIdentifier, visitorState);
     }
 
-    private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+    @Override
+    protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                               VisitorState state, MigrationContext migrationContext) {
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
 

@@ -2,7 +2,6 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
-import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
@@ -11,27 +10,23 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.util.ASTHelpers;
-import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.classType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.logManagerMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggerType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.markerType;
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -48,19 +43,25 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggingMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    protected boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return loggingEnabledMethod().matches(methodInvocationTree, state);
+    }
 
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(methodInvocationTree);
-        String methodName = sym.getSimpleName().toString();
-        if (loggingMethod().matches(methodInvocationTree, state)) {
-            return Optional.of(migrateLoggingMethod(methodName, methodInvocationTree, state, migrationContext));
+    @Override
+    protected boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return loggingMethod().matches(methodInvocationTree, state);
+    }
+
+    @Override
+    protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+        TargetLogLevel targetLogLevel;
+        if (methodName.equals("isEnabled")) {
+            targetLogLevel = resolveLogLevel(methodInvocationTree.getArguments().get(0));
+        } else {
+            String level = methodName.substring(2).replace("Enabled", "");
+            targetLogLevel = targetLogLevelFunction.apply(level);
         }
-
-        if (loggingEnabledMethod().matches(methodInvocationTree, state)) {
-            return Optional.of(migrateConditionalMethod(methodName, methodInvocationTree, state, migrationContext));
-        }
-
-        return Optional.empty();
+        return floggerSuggestedFixGenerator.generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
     }
 
     @Override
@@ -74,12 +75,8 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
     }
 
     @Override
-    public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
-        if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
-        }
-
-        return Optional.empty();
+    protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
+        return loggerImports().matches(qualifiedIdentifier, visitorState);
     }
 
     private TargetLogLevel resolveLogLevel(ExpressionTree levelArgument) {
@@ -93,20 +90,7 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
         throw new SkipCompilationUnitException("Custom log level not supported: " + levelArgument);
     }
 
-
-    private SuggestedFix migrateConditionalMethod(String methodName, MethodInvocationTree methodInvocationTree,
-                                                  VisitorState state, MigrationContext migrationContext) {
-        TargetLogLevel targetLogLevel;
-        if (methodName.equals("isEnabled")) {
-            targetLogLevel = resolveLogLevel(methodInvocationTree.getArguments().get(0));
-        } else {
-            String level = methodName.substring(2).replace("Enabled", "");
-            targetLogLevel = targetLogLevelFunction.apply(level);
-        }
-        return floggerSuggestedFixGenerator.generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
-    }
-
-    private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+    protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                               VisitorState state, MigrationContext migrationContext) {
 
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();

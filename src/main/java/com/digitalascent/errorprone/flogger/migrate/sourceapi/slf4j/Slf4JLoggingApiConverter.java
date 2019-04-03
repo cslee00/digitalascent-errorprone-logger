@@ -2,7 +2,6 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
-import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
@@ -10,25 +9,22 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.util.ASTHelpers;
-import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import com.sun.tools.javac.code.Symbol;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerFactoryMethod;
+import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.markerType;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerImports;
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -45,22 +41,20 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggingMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    protected boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return loggingEnabledMethod().matches(methodInvocationTree, state);
+    }
 
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(methodInvocationTree);
-        String methodName = sym.getSimpleName().toString();
-        if (loggingMethod().matches(methodInvocationTree, state)) {
-            TargetLogLevel targetLogLevel = targetLogLevelFunction.apply(methodName);
-            return Optional.of(migrateLoggingMethod(targetLogLevel, methodInvocationTree, state, migrationContext));
-        }
+    @Override
+    protected boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return loggingMethod().matches(methodInvocationTree, state);
+    }
 
-        if (loggingEnabledMethod().matches(methodInvocationTree, state)) {
-            String level = methodName.substring(2).replace("Enabled", "");
-            TargetLogLevel targetLogLevel = targetLogLevelFunction.apply(level);
-            return Optional.of(migrateConditionalMethod(targetLogLevel, methodInvocationTree, state, migrationContext));
-        }
-
-        return Optional.empty();
+    @Override
+    protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+        String level = methodName.substring(2).replace("Enabled", "");
+        TargetLogLevel targetLogLevel = targetLogLevelFunction.apply(level);
+        return floggerSuggestedFixGenerator.generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
     }
 
     @Override
@@ -74,19 +68,13 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
     }
 
     @Override
-    public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
-        if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
-        }
-
-        return Optional.empty();
+    protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
+        return loggerImports().matches(qualifiedIdentifier, visitorState);
     }
 
-    private SuggestedFix migrateConditionalMethod(TargetLogLevel targetLogLevel, MethodInvocationTree tree, VisitorState state, MigrationContext migrationContext) {
-        return floggerSuggestedFixGenerator.generateConditional(tree, state, targetLogLevel, migrationContext);
-    }
-
-    private SuggestedFix migrateLoggingMethod(TargetLogLevel targetLogLevel, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    @Override
+    protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+        TargetLogLevel targetLogLevel = targetLogLevelFunction.apply(methodName);
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
 
@@ -124,5 +112,4 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
         }
         return markerType().matches(arguments.get(0),state);
     }
-
 }

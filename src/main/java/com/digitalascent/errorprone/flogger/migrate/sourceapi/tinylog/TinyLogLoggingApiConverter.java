@@ -2,9 +2,7 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
-import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
@@ -12,14 +10,10 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.util.ASTHelpers;
-import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.tree.JCTree;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -27,11 +21,9 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.matchAtIndex;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.logType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.throwableType;
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -48,16 +40,20 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggingMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
-
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(methodInvocationTree);
-        String methodName = sym.getSimpleName().toString();
-        if (loggingMethod().matches(methodInvocationTree, state)) {
-            return Optional.of(migrateLoggingMethod(methodName, methodInvocationTree, state, migrationContext));
-        }
-
-        return Optional.empty();
+    protected boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return false;
     }
+
+    @Override
+    protected boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return loggingMethod().matches(methodInvocationTree, state);
+    }
+
+    @Override
+    protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+        return null;
+    }
+
 
     @Override
     protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
@@ -70,16 +66,13 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
     }
 
     @Override
-    public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
-        if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
-        }
-
-        return Optional.empty();
+    protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
+        return loggerImports().matches(qualifiedIdentifier, visitorState);
     }
 
-    private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
-                                              VisitorState state, MigrationContext migrationContext) {
+    @Override
+    protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+                                                VisitorState state, MigrationContext migrationContext) {
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
 
         TargetLogLevel targetLogLevel;

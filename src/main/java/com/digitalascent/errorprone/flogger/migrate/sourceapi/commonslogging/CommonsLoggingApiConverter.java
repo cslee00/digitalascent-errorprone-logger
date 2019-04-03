@@ -2,25 +2,19 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
-import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
-import com.digitalascent.errorprone.flogger.migrate.ToDoCommentGenerator;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.util.ASTHelpers;
-import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import com.sun.tools.javac.code.Symbol;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.logFactoryMethod;
@@ -28,7 +22,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingMethod;
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -45,19 +38,21 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggingMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+        TargetLogLevel targetLogLevel;
+        String level = methodName.substring(2).replace("Enabled", "");
+        targetLogLevel = targetLogLevelFunction.apply(level);
+        return floggerSuggestedFixGenerator.generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
+    }
 
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(methodInvocationTree);
-        String methodName = sym.getSimpleName().toString();
-        if (loggingMethod().matches(methodInvocationTree, state)) {
-            return Optional.of(migrateLoggingMethod(methodName, methodInvocationTree, state, migrationContext));
-        }
+    @Override
+    protected boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return loggingEnabledMethod().matches(methodInvocationTree, state);
+    }
 
-        if (loggingEnabledMethod().matches(methodInvocationTree, state)) {
-            return Optional.of(migrateConditionalMethod(methodName, methodInvocationTree, state, migrationContext));
-        }
-
-        return Optional.empty();
+    @Override
+    protected boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+        return loggingMethod().matches(methodInvocationTree, state);
     }
 
     @Override
@@ -71,24 +66,12 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
     }
 
     @Override
-    public Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
-        if (loggerImports().matches(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
-        }
-
-        return Optional.empty();
+    protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
+        return loggerImports().matches(qualifiedIdentifier, visitorState);
     }
 
-    private SuggestedFix migrateConditionalMethod(String methodName, MethodInvocationTree methodInvocationTree,
-                                                  VisitorState state, MigrationContext migrationContext) {
-        TargetLogLevel targetLogLevel;
-        String level = methodName.substring(2).replace("Enabled", "");
-        targetLogLevel = targetLogLevelFunction.apply(level);
-        return floggerSuggestedFixGenerator.generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
-    }
-
-    private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
-                                              VisitorState state, MigrationContext migrationContext) {
+    protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+                                                VisitorState state, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel;
         targetLogLevel = targetLogLevelFunction.apply(methodName);
 
