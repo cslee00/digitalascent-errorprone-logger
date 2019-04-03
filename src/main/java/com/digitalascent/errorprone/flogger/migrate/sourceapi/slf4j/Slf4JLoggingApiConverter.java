@@ -113,8 +113,6 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
         }
 
         ExpressionTree messageFormatArgument = findMesageFormatArgument(remainingArguments, state);
-
-        // process everything past the message format; this includes unpacking Object[] parameter
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state );
 
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);

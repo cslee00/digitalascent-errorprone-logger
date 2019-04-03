@@ -107,7 +107,7 @@ public final class TinyLog2LoggingApiConverter implements LoggingApiConverter {
         }
 
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
-        remainingArguments = Arguments.removeFirst(remainingArguments);
+        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments,state);
 
         LogMessageModel logMessageModel = new TinyLog2LogMessageHandler().processLogMessage(messageFormatArgument,
                 remainingArguments, state, throwableArgument, migrationContext);

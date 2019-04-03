@@ -24,35 +24,34 @@ public abstract class AbstractLogMessageHandler {
                                                    VisitorState state,
                                                    @Nullable ExpressionTree thrownArgument,
                                                    MigrationContext migrationContext) {
+
         LogMessageModel result1 = customProcessing(messageFormatArgument, state, thrownArgument);
-        if( result1 != null ) {
+        if (result1 != null) {
             return result1;
         }
 
-        if( thrownArgument == messageFormatArgument ) {
+        if (thrownArgument == messageFormatArgument) {
             // if only argument is a Throwable w/ no message, create a message
             return LogMessageModel.fromStringFormat("Exception", ImmutableList.of());
         }
 
-        if (!STRING_MATCHER.matches(messageFormatArgument, state) ) {
+        if (!STRING_MATCHER.matches(messageFormatArgument, state)) {
             return LogMessageModel.fromStringFormat("%s", Arguments.prependArgument(remainingArguments, messageFormatArgument));
         }
 
         List<String> migrationIssues = new ArrayList<>();
         if (remainingArguments.isEmpty()) {
             // no arguments left after message format; check if message format argument is String.format
-            LogMessageModel result = maybeUnpackStringFormat(messageFormatArgument, state );
-            if( result != null ) {
+            LogMessageModel result = maybeUnpackStringFormat(messageFormatArgument, state);
+            if (result != null) {
                 return result;
             }
 
-            return LogMessageModel.fromMessageFormatArgument( messageFormatArgument, remainingArguments);
+            return LogMessageModel.fromMessageFormatArgument(messageFormatArgument, remainingArguments);
         }
 
-        remainingArguments = Arguments.maybeUnpackVarArgs(remainingArguments,state);
-
         // handle remaining format arguments
-        if (messageFormatArgument instanceof JCTree.JCLiteral && STRING_MATCHER.matches(messageFormatArgument,state)) {
+        if (messageFormatArgument instanceof JCTree.JCLiteral && STRING_MATCHER.matches(messageFormatArgument, state)) {
             // handle common case of string literal format string
             String sourceMessageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
             return convertMessageFormat(sourceMessageFormat, remainingArguments, migrationContext);
@@ -71,7 +70,7 @@ public abstract class AbstractLogMessageHandler {
     private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = Matchers.staticMethod().onClass("java.lang.String").named("format");
 
     @Nullable
-    private LogMessageModel maybeUnpackStringFormat(ExpressionTree messageFormatArgument, VisitorState state ) {
+    private LogMessageModel maybeUnpackStringFormat(ExpressionTree messageFormatArgument, VisitorState state) {
         if (STRING_FORMAT.matches(messageFormatArgument, state)) {
             MethodInvocationTree stringFormatTree = (MethodInvocationTree) messageFormatArgument;
             ExpressionTree firstArgument = stringFormatTree.getArguments().get(0);
