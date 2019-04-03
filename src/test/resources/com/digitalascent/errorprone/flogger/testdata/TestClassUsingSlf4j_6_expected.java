@@ -1,11 +1,10 @@
 package com.digitalascent.errorprone.flogger.testdata;
 
+import com.google.common.flogger.FluentLogger;
 
+public class TestClassUsingSlf4j_6 {
 
-public class TestClassUsingSlf4j_5 {
-
-    // TODO [LoggerApiRefactoring] Unable to migrate logger variable
-    private final Logger logger = LoggerFactory.getLogger("some random logger");
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     public void testLogLevels() {
         logger.atFinest().log( "test message" );
