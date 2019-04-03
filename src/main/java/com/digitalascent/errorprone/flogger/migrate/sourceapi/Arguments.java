@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import static com.google.errorprone.matchers.Matchers.isSameType;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
+import static com.google.errorprone.matchers.Matchers.methodInvocation;
 import static com.google.errorprone.matchers.Matchers.staticFieldAccess;
 
 public final class Arguments {
@@ -143,7 +144,8 @@ public final class Arguments {
     }
 
     public static boolean isLoggerNamedAfterClass(ClassTree classTree, ExpressionTree argument, VisitorState state) {
-        String expectedClassName = ASTHelpers.getSymbol(classTree).fullname.toString();
+        String expectedSimpleClassName = classTree.getSimpleName().toString();
+        String expectedQualifiedClassName = ASTHelpers.getSymbol(classTree).fullname.toString();
         // case 1: getClass() on this specific class
         if ("getClass()".equals(argument.toString())) {
             return true;
@@ -151,13 +153,13 @@ public final class Arguments {
 
         // case 2: com.foo.X.class, where it matches current class
         if( staticFieldAccess().matches(argument,state) && isSameType("java.lang.Class" ).matches(argument,state) ) {
-            if( expectedClassName.equals( ASTHelpers.getSymbol(argument).owner.type.toString() ) ) {
+            if( expectedQualifiedClassName.equals( ASTHelpers.getSymbol(argument).owner.type.toString() ) ) {
                 return true;
             }
         }
         // case 3: "com.foo.X", where it matches current class
         String stringValue = ASTHelpers.constValue(argument,String.class);
-        if (expectedClassName.equals(stringValue)) {
+        if (expectedQualifiedClassName.equals(stringValue)) {
             return true;
         }
 
@@ -166,7 +168,18 @@ public final class Arguments {
             return true;
         }
 
+        // case 5: com.foo.X.class.getName()
+        if(isClassGetName(argument, state) ) {
+            if( (expectedSimpleClassName + ".class.getName").equals( ((MethodInvocationTree)argument).getMethodSelect().toString())) {
+                return true;
+            }
+        }
+
         return false;
+    }
+
+    private static boolean isClassGetName(ExpressionTree argument, VisitorState state) {
+        return methodInvocation(instanceMethod().onExactClass("java.lang.Class").named("getName")).matches(argument,state);
     }
 
     public static final class LogMessageFormatSpec {

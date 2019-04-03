@@ -35,9 +35,10 @@ class LoggerApiRefactoringTest {
         executeTest("tinylog2", "TinyLog2", 0);
     }
 
-    @Test
-    public void testJUL() {
-        executeTest("jul", "JUL", 0);
+    @ParameterizedTest( name = "jul: test id {arguments}")
+    @ValueSource(ints = {0,1,2,3})
+    public void testJUL(int id) {
+        executeTest("jul", "JUL", id);
     }
 
     @Test
