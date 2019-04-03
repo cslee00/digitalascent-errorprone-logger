@@ -5,6 +5,8 @@ import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.ToDoCommentGenerator;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
@@ -21,7 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.classType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.logFactoryMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.logType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggerImports;
@@ -33,11 +34,12 @@ import static java.util.Objects.requireNonNull;
 /**
  * Commons Logging API: https://commons.apache.org/proper/commons-logging/apidocs/index.html
  */
-public final class CommonsLoggingApiConverter implements LoggingApiConverter {
+public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverter {
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
 
     public CommonsLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+        super(floggerSuggestedFixGenerator, targetLogLevelFunction);
         this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
@@ -59,22 +61,9 @@ public final class CommonsLoggingApiConverter implements LoggingApiConverter {
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggerVariable(ClassTree classTree, VariableTree variableTree,
-                                                        VisitorState state, MigrationContext migrationContext) {
-        checkArgument(isLoggerVariable(variableTree, state), "isLoggerVariable(variableTree, state) : %s", variableTree);
-
-        if (!logFactoryMethod().matches(variableTree.getInitializer(), state)) {
-            return Optional.empty();
-        }
-
-        MethodInvocationTree logManagerMethodInvocationTree = (MethodInvocationTree) variableTree.getInitializer();
-        if( Arguments.isLoggerNamedAfterClass(classTree, logManagerMethodInvocationTree.getArguments().get(0), state )) {
-            return Optional.of(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, variableTree, state, migrationContext));
-        }
-
-        return Optional.empty();
+    protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
+        return logFactoryMethod().matches(variableTree.getInitializer(), visitorState);
     }
-
 
     @Override
     public boolean isLoggerVariable(VariableTree tree, VisitorState state) {

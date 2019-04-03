@@ -4,6 +4,8 @@ import com.digitalascent.errorprone.flogger.migrate.LoggerApiRefactoring;
 import com.google.errorprone.BugCheckerRefactoringTestHelper;
 import com.google.errorprone.ErrorProneFlags;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class LoggerApiRefactoringTest {
 
@@ -17,9 +19,10 @@ class LoggerApiRefactoringTest {
         executeTest("log4j", "Log4j", 0);
     }
 
-    @Test
-    public void testCommonsLogging() {
-        executeTest("commons-logging", "CommonsLogging", 0);
+    @ParameterizedTest( name = "common-logging: test id {arguments}")
+    @ValueSource(ints = {0,1,2,3,4})
+    public void testCommonsLogging( int id ) {
+        executeTest("commons-logging", "CommonsLogging", id);
     }
 
     @Test

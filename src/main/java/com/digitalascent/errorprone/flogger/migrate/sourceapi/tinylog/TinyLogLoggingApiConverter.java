@@ -6,6 +6,7 @@ import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
@@ -36,11 +37,12 @@ import static java.util.Objects.requireNonNull;
 /**
  * Tiny Log API: https://static.javadoc.io/org.tinylog/tinylog/1.3.6/index.html
  */
-public final class TinyLogLoggingApiConverter implements LoggingApiConverter {
+public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverter {
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
 
     public TinyLogLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+        super( floggerSuggestedFixGenerator, targetLogLevelFunction);
         this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
@@ -58,18 +60,13 @@ public final class TinyLogLoggingApiConverter implements LoggingApiConverter {
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggerVariable(ClassTree classTree, VariableTree variableTree,
-                                                        VisitorState state, MigrationContext migrationContext) {
-        checkArgument(isLoggerVariable(variableTree, state), "isLoggerVariable(variableTree, state) : %s", variableTree);
-
-        // NO-OP - TinyLog is entirely static
-
-        return Optional.empty();
+    protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
+        return false;
     }
 
     @Override
     public boolean isLoggerVariable(VariableTree tree, VisitorState state) {
-        return logType().matches(tree, state);
+        return false;
     }
 
     @Override

@@ -9,6 +9,8 @@ import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodInvocationTree;
+import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
 
 import static com.google.errorprone.matchers.Matchers.instanceMethod;
@@ -148,12 +150,14 @@ public final class Arguments {
         }
 
         // case 2: com.foo.X.class, where it matches current class
-        if ((expectedClassName + ".class").equals(argument.toString())) {
-            return true;
+        if( staticFieldAccess().matches(argument,state) && isSameType("java.lang.Class" ).matches(argument,state) ) {
+            if( expectedClassName.equals( ASTHelpers.getSymbol(argument).owner.type.toString() ) ) {
+                return true;
+            }
         }
-
         // case 3: "com.foo.X", where it matches current class
-        if (expectedClassName.equals(argument.toString())) {
+        String stringValue = ASTHelpers.constValue(argument,String.class);
+        if (expectedClassName.equals(stringValue)) {
             return true;
         }
 

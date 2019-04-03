@@ -5,6 +5,7 @@ import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
@@ -21,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.classType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerFactoryMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggingEnabledMethod;
@@ -34,11 +34,12 @@ import static java.util.Objects.requireNonNull;
 /**
  * SLF4J API: https://www.slf4j.org/apidocs/index.html
  */
-public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
+public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter {
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
 
     public Slf4JLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+        super(floggerSuggestedFixGenerator,targetLogLevelFunction);
         this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
@@ -63,23 +64,8 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggerVariable(ClassTree classTree, VariableTree variableTree, VisitorState state, MigrationContext migrationContext) {
-        checkArgument(isLoggerVariable(variableTree, state), "isLoggerVariable(variableTree, state) : %s", variableTree);
-
-        if (!loggerFactoryMethod().matches(variableTree.getInitializer(), state)) {
-            return Optional.empty();
-        }
-
-        // the call to LoggerFactory.getMethod; if it isn't a class parameter then we can't migrate it
-        if (!hasClassParameter((MethodInvocationTree) variableTree.getInitializer(), state)) {
-            return Optional.empty();
-        }
-
-        return Optional.of(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, variableTree, state, migrationContext));
-    }
-
-    private boolean hasClassParameter(MethodInvocationTree methodInvocationTree, VisitorState state) {
-        return classType().matches(methodInvocationTree.getArguments().get(0), state);
+    protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
+        return loggerFactoryMethod().matches(variableTree.getInitializer(), visitorState);
     }
 
     @Override
@@ -110,7 +96,7 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
             remainingArguments = Arguments.removeFirst(remainingArguments);
         }
 
-        ExpressionTree messageFormatArgument = findMesageFormatArgument(remainingArguments, state);
+        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state );
 
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
@@ -125,7 +111,7 @@ public final class Slf4JLoggingApiConverter implements LoggingApiConverter {
         return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
-    private ExpressionTree findMesageFormatArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
+    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {
         if( arguments.isEmpty() ) {
             throw new IllegalStateException("Unable to locate required message format argument");
         }

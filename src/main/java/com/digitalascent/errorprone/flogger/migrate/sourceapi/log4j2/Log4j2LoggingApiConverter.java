@@ -6,6 +6,7 @@ import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
@@ -36,11 +37,12 @@ import static java.util.Objects.requireNonNull;
 /**
  * Log4J2 API: https://logging.apache.org/log4j/2.x/log4j-api/apidocs/index.html
  */
-public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
+public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter {
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
 
     public Log4j2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+        super( floggerSuggestedFixGenerator, targetLogLevelFunction);
         this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
@@ -62,21 +64,8 @@ public final class Log4j2LoggingApiConverter implements LoggingApiConverter {
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggerVariable(ClassTree classTree, VariableTree variableTree,
-                                                        VisitorState state, MigrationContext migrationContext) {
-        checkArgument(isLoggerVariable(variableTree, state), "isLoggerVariable(variableTree, state) : %s", variableTree);
-
-        if (!logManagerMethod().matches(variableTree.getInitializer(), state)) {
-            return Optional.empty();
-        }
-
-        // getLogger(), getLogger( Class ), getLogger( String ) (and getFormatterLogger)
-        MethodInvocationTree logManagerMethodInvocationTree = (MethodInvocationTree) variableTree.getInitializer();
-        if (logManagerMethodInvocationTree.getArguments().isEmpty() || Arguments.isLoggerNamedAfterClass(classTree, logManagerMethodInvocationTree.getArguments().get(0), state)) {
-            return Optional.of(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, variableTree, state, migrationContext));
-        }
-
-        return Optional.empty();
+    protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
+        return logManagerMethod().matches(variableTree.getInitializer(), visitorState);
     }
 
     @Override

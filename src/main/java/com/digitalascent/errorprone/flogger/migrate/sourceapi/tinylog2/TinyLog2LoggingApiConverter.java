@@ -2,23 +2,20 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
-import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
-import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.tree.JCTree;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -26,20 +23,19 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.matchAtIndex;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.logType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.loggingMethod;
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 /**
  * Tiny Log 2 API: https://tinylog.org/v2/javadoc/
  */
-public final class TinyLog2LoggingApiConverter implements LoggingApiConverter {
+public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConverter {
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
 
     public TinyLog2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+        super(floggerSuggestedFixGenerator, targetLogLevelFunction);
         this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
@@ -57,18 +53,13 @@ public final class TinyLog2LoggingApiConverter implements LoggingApiConverter {
     }
 
     @Override
-    public Optional<SuggestedFix> migrateLoggerVariable(ClassTree classTree, VariableTree variableTree,
-                                                        VisitorState state, MigrationContext migrationContext) {
-        checkArgument(isLoggerVariable(variableTree, state), "isLoggerVariable(variableTree, state) : %s", variableTree);
-
-        // NO-OP - TinyLog is entirely static
-
-        return Optional.empty();
+    protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
+        return false;
     }
 
     @Override
     public boolean isLoggerVariable(VariableTree tree, VisitorState state) {
-        return logType().matches(tree, state);
+        return false;
     }
 
     @Override
@@ -78,17 +69,6 @@ public final class TinyLog2LoggingApiConverter implements LoggingApiConverter {
         }
 
         return Optional.empty();
-    }
-
-    private TargetLogLevel resolveLogLevel(ExpressionTree levelArgument) {
-        try {
-            if (levelArgument instanceof JCTree.JCFieldAccess) {
-                JCTree.JCFieldAccess fieldAccess = (JCTree.JCFieldAccess) levelArgument;
-                return targetLogLevelFunction.apply(fieldAccess.name.toString());
-            }
-        } catch (IllegalArgumentException ignored) {
-        }
-        throw new SkipCompilationUnitException("Custom log level not supported: " + levelArgument);
     }
 
     private SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
