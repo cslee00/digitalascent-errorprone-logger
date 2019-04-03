@@ -9,14 +9,16 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class LoggerApiRefactoringTest {
 
-    @Test
-    public void testSlf4j() {
-        executeTest("slf4j", "Slf4j", 0 );
+    @ParameterizedTest( name = "slf4j: test id {arguments}")
+    @ValueSource(ints = {0,1,2,3,4})
+    public void testSlf4j(int id) {
+        executeTest("slf4j", "Slf4j", id );
     }
 
-    @Test
-    public void testLog4j() {
-        executeTest("log4j", "Log4j", 0);
+    @ParameterizedTest( name = "log4j: test id {arguments}")
+    @ValueSource(ints = {0,1,2,3,4,5,6})
+    public void testLog4j(int id) {
+        executeTest("log4j", "Log4j", id);
     }
 
     @ParameterizedTest( name = "common-logging: test id {arguments}")
@@ -41,9 +43,10 @@ class LoggerApiRefactoringTest {
         executeTest("jul", "JUL", id);
     }
 
-    @Test
-    public void testLog4j2() {
-        executeTest("log4j2", "Log4j2", 0);
+    @ParameterizedTest( name = "log4j2: test id {arguments}")
+    @ValueSource(ints = {0,1,2,3,4,5})
+    public void testLog4j2(int id) {
+        executeTest("log4j2", "Log4j2", id);
     }
 
     private void executeTest(String sourceApiName, String loggerName, int index) {
