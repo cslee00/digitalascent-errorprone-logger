@@ -32,6 +32,9 @@ import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
  * Log4J API: https://logging.apache.org/log4j/1.2/apidocs/index.html
  */
 public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter {
+
+    private Log4jLogMessageHandler logMessageHandler = new Log4jLogMessageHandler();
+
     public Log4jLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
     }
@@ -109,7 +112,7 @@ public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter 
             builder.thrown(throwableArgument);
         }
 
-        LogMessageModel logMessageModel = new Log4jLogMessageHandler().processLogMessage(messageFormatArgument,
+        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
                 remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 

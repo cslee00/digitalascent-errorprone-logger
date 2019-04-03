@@ -29,6 +29,9 @@ import static java.util.Objects.requireNonNull;
  * Tiny Log 2 API: https://tinylog.org/v2/javadoc/
  */
 public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConverter {
+
+    private final TinyLog2LogMessageHandler logMessageHandler = new TinyLog2LogMessageHandler();
+
     public TinyLog2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super(floggerSuggestedFixGenerator, targetLogLevelFunction);
     }
@@ -82,7 +85,7 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments,state);
 
-        LogMessageModel logMessageModel = new TinyLog2LogMessageHandler().processLogMessage(messageFormatArgument,
+        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
                 remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel( logMessageModel );
 

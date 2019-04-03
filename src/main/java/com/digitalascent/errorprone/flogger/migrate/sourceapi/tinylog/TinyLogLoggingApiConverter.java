@@ -29,6 +29,9 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.Tin
  * Tiny Log API: https://static.javadoc.io/org.tinylog/tinylog/1.3.6/index.html
  */
 public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverter {
+
+    private final TinyLogLogMessageHandler logMessageHandler = new TinyLogLogMessageHandler();
+
     public TinyLogLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
     }
@@ -82,7 +85,7 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments,state);
 
-        LogMessageModel logMessageModel = new TinyLogLogMessageHandler().processLogMessage(messageFormatArgument,
+        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
                 remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 

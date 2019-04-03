@@ -32,6 +32,9 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatc
  * JUL API: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html
  */
 public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
+
+    private JULLogMessageHandler logMessageHandler = new JULLogMessageHandler();
+
     public JULLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
     }
@@ -116,7 +119,7 @@ public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
             throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
         }
 
-        LogMessageModel logMessageModel = new JULLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
+        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
         return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);

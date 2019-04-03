@@ -31,6 +31,8 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4
  */
 public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter {
 
+    private final Log4j2LogMessageHandler logMessageHandler = new Log4j2LogMessageHandler();
+
     public Log4j2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
     }
@@ -112,7 +114,7 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
             builder.thrown(throwableArgument);
         }
 
-        LogMessageModel logMessageModel = new Log4j2LogMessageHandler().processLogMessage(messageFormatArgument,
+        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
                 remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 

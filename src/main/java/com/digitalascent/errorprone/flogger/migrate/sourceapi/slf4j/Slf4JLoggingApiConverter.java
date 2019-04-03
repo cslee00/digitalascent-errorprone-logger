@@ -29,6 +29,8 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4j
  */
 public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter {
 
+    private final Slf4jLogMessageHandler logMessageHandler = new Slf4jLogMessageHandler();
+
     public Slf4JLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super(floggerSuggestedFixGenerator,targetLogLevelFunction);
     }
@@ -86,7 +88,7 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
             builder.thrown(throwableArgument);
         }
 
-        LogMessageModel logMessageModel = new Slf4jLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
+        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
         return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);

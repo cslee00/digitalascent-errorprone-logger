@@ -28,6 +28,8 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
  */
 public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverter {
 
+    private CommonsLoggingLogMessageHandler logMessageHandler = new CommonsLoggingLogMessageHandler();
+
     public CommonsLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super(floggerSuggestedFixGenerator, targetLogLevelFunction);
     }
@@ -83,7 +85,7 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
         remainingArguments = Arguments.removeFirst(remainingArguments);
 
-        LogMessageModel logMessageModel = new CommonsLoggingLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
+        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
         return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
