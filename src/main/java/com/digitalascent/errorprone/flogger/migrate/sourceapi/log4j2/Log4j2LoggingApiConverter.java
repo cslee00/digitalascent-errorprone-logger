@@ -11,14 +11,12 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.tree.JCTree;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.logManagerMethod;
@@ -27,19 +25,14 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.markerType;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Log4J2 API: https://logging.apache.org/log4j/2.x/log4j-api/apidocs/index.html
  */
 public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter {
-    private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
-    private final Function<String, TargetLogLevel> targetLogLevelFunction;
 
     public Log4j2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
-        this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
 
     @Override
@@ -56,12 +49,12 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
     protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel;
         if (methodName.equals("isEnabled")) {
-            targetLogLevel = resolveLogLevel(methodInvocationTree.getArguments().get(0));
+            targetLogLevel = resolveLogLevelFromArgument(methodInvocationTree.getArguments().get(0));
         } else {
             String level = methodName.substring(2).replace("Enabled", "");
-            targetLogLevel = targetLogLevelFunction.apply(level);
+            targetLogLevel = mapLogLevel(level);
         }
-        return floggerSuggestedFixGenerator.generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
+        return getFloggerSuggestedFixGenerator().generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
     }
 
     @Override
@@ -79,11 +72,11 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
         return loggerImports().matches(qualifiedIdentifier, visitorState);
     }
 
-    private TargetLogLevel resolveLogLevel(ExpressionTree levelArgument) {
+    private TargetLogLevel resolveLogLevelFromArgument(ExpressionTree levelArgument) {
         try {
             if (levelArgument instanceof JCTree.JCFieldAccess) {
                 JCTree.JCFieldAccess fieldAccess = (JCTree.JCFieldAccess) levelArgument;
-                return targetLogLevelFunction.apply(fieldAccess.name.toString());
+                return mapLogLevel(fieldAccess.name.toString());
             }
         } catch (IllegalArgumentException ignored) {
         }
@@ -97,10 +90,10 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
         TargetLogLevel targetLogLevel;
         if (methodName.equals("log")) {
             ExpressionTree logLevelArgument = remainingArguments.get(0);
-            targetLogLevel = resolveLogLevel(logLevelArgument);
+            targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
             remainingArguments = Arguments.removeFirst(remainingArguments);
         } else {
-            targetLogLevel = targetLogLevelFunction.apply(methodName);
+            targetLogLevel = mapLogLevel(methodName);
         }
 
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
@@ -123,7 +116,7 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
                 remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
     private boolean hasMarkerArgument(List<? extends ExpressionTree> arguments, VisitorState state) {

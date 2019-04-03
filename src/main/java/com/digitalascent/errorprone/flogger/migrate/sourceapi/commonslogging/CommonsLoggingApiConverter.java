@@ -22,27 +22,22 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingMethod;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Commons Logging API: https://commons.apache.org/proper/commons-logging/apidocs/index.html
  */
 public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverter {
-    private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
-    private final Function<String, TargetLogLevel> targetLogLevelFunction;
 
     public CommonsLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super(floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
-        this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
 
     @Override
     protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel;
         String level = methodName.substring(2).replace("Enabled", "");
-        targetLogLevel = targetLogLevelFunction.apply(level);
-        return floggerSuggestedFixGenerator.generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
+        targetLogLevel = mapLogLevel(level);
+        return getFloggerSuggestedFixGenerator().generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
     }
 
     @Override
@@ -73,7 +68,7 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
     protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                                 VisitorState state, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel;
-        targetLogLevel = targetLogLevelFunction.apply(methodName);
+        targetLogLevel = mapLogLevel(methodName);
 
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
@@ -91,6 +86,6 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
         LogMessageModel logMessageModel = new CommonsLoggingLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 }

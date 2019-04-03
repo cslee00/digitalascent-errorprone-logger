@@ -5,10 +5,10 @@ import com.google.errorprone.VisitorState;
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.tree.JCTree;
 
-public final class ASTUtil {
+final class ASTUtil {
     private static final CharMatcher PREV_LINE_MATCHER = CharMatcher.anyOf("\r\n");
 
-    public static CharSequence determineIndent(Tree tree, VisitorState state) {
+    static CharSequence determineIndent(Tree tree, VisitorState state) {
         JCTree node = (JCTree) tree;
         int nodeStartPosition = node.getStartPosition();
 

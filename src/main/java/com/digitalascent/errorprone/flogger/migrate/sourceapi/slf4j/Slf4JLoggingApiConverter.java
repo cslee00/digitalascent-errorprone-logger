@@ -10,13 +10,11 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerFactoryMethod;
@@ -25,19 +23,14 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4j
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.markerType;
-import static java.util.Objects.requireNonNull;
 
 /**
  * SLF4J API: https://www.slf4j.org/apidocs/index.html
  */
 public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter {
-    private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
-    private final Function<String, TargetLogLevel> targetLogLevelFunction;
 
     public Slf4JLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super(floggerSuggestedFixGenerator,targetLogLevelFunction);
-        this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
-        this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
 
     @Override
@@ -53,8 +46,8 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
     @Override
     protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
         String level = methodName.substring(2).replace("Enabled", "");
-        TargetLogLevel targetLogLevel = targetLogLevelFunction.apply(level);
-        return floggerSuggestedFixGenerator.generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
+        TargetLogLevel targetLogLevel = mapLogLevel(level);
+        return getFloggerSuggestedFixGenerator().generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
     }
 
     @Override
@@ -74,7 +67,7 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
 
     @Override
     protected SuggestedFix migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
-        TargetLogLevel targetLogLevel = targetLogLevelFunction.apply(methodName);
+        TargetLogLevel targetLogLevel = mapLogLevel(methodName);
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
 
@@ -96,7 +89,7 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
         LogMessageModel logMessageModel = new Slf4jLogMessageHandler().processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
     private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {

@@ -24,19 +24,13 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.m
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.throwableType;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Tiny Log API: https://static.javadoc.io/org.tinylog/tinylog/1.3.6/index.html
  */
 public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverter {
-    private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
-    private final Function<String, TargetLogLevel> targetLogLevelFunction;
-
     public TinyLogLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
-        this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
 
     @Override
@@ -51,9 +45,8 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
 
     @Override
     protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
-        return null;
+        throw new UnsupportedOperationException("TinyLog2 doesn't have logging enabled methods");
     }
-
 
     @Override
     protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
@@ -76,7 +69,7 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
 
         TargetLogLevel targetLogLevel;
-        targetLogLevel = targetLogLevelFunction.apply(methodName);
+        targetLogLevel = mapLogLevel(methodName);
         builder.targetLogLevel(targetLogLevel);
 
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
@@ -93,7 +86,7 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
                 remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
     @Nullable

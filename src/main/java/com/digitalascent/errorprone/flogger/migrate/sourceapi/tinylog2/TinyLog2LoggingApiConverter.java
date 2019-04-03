@@ -29,13 +29,8 @@ import static java.util.Objects.requireNonNull;
  * Tiny Log 2 API: https://tinylog.org/v2/javadoc/
  */
 public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConverter {
-    private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
-    private final Function<String, TargetLogLevel> targetLogLevelFunction;
-
     public TinyLog2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super(floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
-        this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
 
     @Override
@@ -50,7 +45,7 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
 
     @Override
     protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
-        return null;
+        throw new UnsupportedOperationException("TinyLog2 doesn't have logging enabled methods");
     }
 
     @Override
@@ -74,7 +69,7 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
 
         TargetLogLevel targetLogLevel;
-        targetLogLevel = targetLogLevelFunction.apply(methodName);
+        targetLogLevel = mapLogLevel(methodName);
         builder.targetLogLevel(targetLogLevel);
 
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
@@ -91,7 +86,7 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
                 remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel( logMessageModel );
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
     @Nullable

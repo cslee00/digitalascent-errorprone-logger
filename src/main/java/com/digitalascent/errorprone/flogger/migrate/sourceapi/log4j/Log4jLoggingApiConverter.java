@@ -27,19 +27,13 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4j
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingMethod;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Log4J API: https://logging.apache.org/log4j/1.2/apidocs/index.html
  */
 public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter {
-    private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
-    private final Function<String, TargetLogLevel> targetLogLevelFunction;
-
     public Log4jLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
-        this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "");
     }
 
     @Override
@@ -56,12 +50,12 @@ public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter 
     protected SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel;
         if (methodName.equals("isEnabledFor")) {
-            targetLogLevel = resolveLogLevel(methodInvocationTree.getArguments().get(0));
+            targetLogLevel = resolveLogLevelFromArgument(methodInvocationTree.getArguments().get(0));
         } else {
             String level = methodName.substring(2).replace("Enabled", "");
-            targetLogLevel = targetLogLevelFunction.apply(level);
+            targetLogLevel = mapLogLevel(level);
         }
-        return floggerSuggestedFixGenerator.generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
+        return getFloggerSuggestedFixGenerator().generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
     }
 
     @Override
@@ -79,11 +73,11 @@ public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter 
         return loggerImports().matches(qualifiedIdentifier, visitorState);
     }
 
-    private TargetLogLevel resolveLogLevel(ExpressionTree levelArgument) {
+    private TargetLogLevel resolveLogLevelFromArgument(ExpressionTree levelArgument) {
         try {
             if (levelArgument instanceof JCTree.JCFieldAccess) {
                 JCTree.JCFieldAccess fieldAccess = (JCTree.JCFieldAccess) levelArgument;
-                return targetLogLevelFunction.apply(fieldAccess.name.toString());
+                return mapLogLevel(fieldAccess.name.toString());
             }
         } catch (IllegalArgumentException ignored) {
         }
@@ -97,10 +91,10 @@ public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter 
         TargetLogLevel targetLogLevel;
         if (methodName.equals("log")) {
             ExpressionTree logLevelArgument = findLogLevelArgument(remainingArguments, state);
-            targetLogLevel = resolveLogLevel(logLevelArgument);
+            targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
             remainingArguments = Arguments.findRemainingAfter(remainingArguments, state, logLevelArgument);
         } else {
-            targetLogLevel = targetLogLevelFunction.apply(methodName);
+            targetLogLevel = mapLogLevel(methodName);
         }
 
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
@@ -119,7 +113,7 @@ public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter 
                 remainingArguments, state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
-        return floggerSuggestedFixGenerator.generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
+        return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, builder.build(), migrationContext);
     }
 
     private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {

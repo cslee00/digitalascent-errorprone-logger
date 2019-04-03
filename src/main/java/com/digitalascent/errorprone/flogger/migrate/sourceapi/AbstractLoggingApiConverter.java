@@ -15,6 +15,7 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
 
+import java.lang.annotation.Target;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -30,6 +31,7 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
         this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "targetLogLevelFunction");
     }
+
 
     @Override
     public final Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
@@ -75,6 +77,13 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
         }
 
         return Optional.empty();
+    }
+
+    protected final TargetLogLevel mapLogLevel( String level ) {
+        return targetLogLevelFunction.apply(level);
+    }
+    protected final FloggerSuggestedFixGenerator getFloggerSuggestedFixGenerator() {
+        return floggerSuggestedFixGenerator;
     }
 
     protected abstract boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState);
