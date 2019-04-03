@@ -50,7 +50,7 @@ public final class Arguments {
         return maybeUnpackVarArgs( remainingArguments, state );
     }
 
-    public static List<? extends ExpressionTree> maybeUnpackVarArgs(List<? extends ExpressionTree> arguments, VisitorState state) {
+    private static List<? extends ExpressionTree> maybeUnpackVarArgs(List<? extends ExpressionTree> arguments, VisitorState state) {
         if (arguments.size() == 1) {
             ExpressionTree argument = arguments.get(0);
             // if Object[] unpack

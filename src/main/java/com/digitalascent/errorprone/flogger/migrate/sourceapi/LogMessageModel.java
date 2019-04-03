@@ -17,12 +17,12 @@ public final class LogMessageModel {
     @Nullable
     private final ExpressionTree messageFormatArgument;
 
-    public static LogMessageModel unableToConvert(ExpressionTree messageFormatArgument, List<? extends ExpressionTree> arguments) {
+    static LogMessageModel unableToConvert(ExpressionTree messageFormatArgument, List<? extends ExpressionTree> arguments) {
         requireNonNull(messageFormatArgument, "messageFormatArgument");
         return new LogMessageModel(null, arguments, ImmutableList.of("Unable to convert message format expression - not a string literal"), messageFormatArgument);
     }
 
-    public static LogMessageModel fromMessageFormatArgument(ExpressionTree messageFormatArgument, List<? extends ExpressionTree> arguments) {
+    static LogMessageModel fromMessageFormatArgument(ExpressionTree messageFormatArgument, List<? extends ExpressionTree> arguments) {
         requireNonNull(messageFormatArgument, "messageFormatArgument");
         requireNonNull(arguments, "arguments");
         return new LogMessageModel(null, arguments, ImmutableList.of(), messageFormatArgument);
@@ -37,7 +37,6 @@ public final class LogMessageModel {
     public static LogMessageModel fromStringFormat(String messageFormat, List<? extends ExpressionTree> arguments) {
         return fromStringFormat(messageFormat, arguments, ImmutableList.of());
     }
-
 
     private LogMessageModel(@Nullable String messageFormat, List<? extends ExpressionTree> arguments, List<String> migrationIssues, @Nullable ExpressionTree messageFormatArgument) {
         this.messageFormat = messageFormat;
