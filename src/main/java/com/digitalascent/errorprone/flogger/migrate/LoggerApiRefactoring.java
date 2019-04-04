@@ -37,6 +37,12 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
     private final LoggingApiConverter loggingApiConverter;
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator();
 
+    public LoggerApiRefactoring() {
+        // EMPTY; required as Error Prone loads via ServiceLoader; actual constructor used will be the one with
+        // ErrorProneFlags
+        this( ErrorProneFlags.empty() );
+    }
+
     public LoggerApiRefactoring(ErrorProneFlags flags) {
         System.out.println("Starting LoggerApiRefactoring with flags: " + flags);
         String sourceApi = flags.get(SOURCE_API_FLAG).orElseThrow(() -> new IllegalArgumentException("Missing source api for option " + SOURCE_API_FLAG));
