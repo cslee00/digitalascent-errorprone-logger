@@ -4,6 +4,7 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.common.base.Verify;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
+import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.google.errorprone.util.SourceCodeEscapers;
 import com.sun.source.tree.ClassTree;
@@ -124,6 +125,11 @@ public class FloggerSuggestedFixGenerator {
     }
 
     public SuggestedFix removeImport(ImportTree importTree) {
+        if (importTree.isStatic()) {
+            return SuggestedFix.builder()
+                    .removeStaticImport(importTree.getQualifiedIdentifier().toString())
+                    .build();
+        }
         return SuggestedFix.builder()
                 .removeImport(importTree.getQualifiedIdentifier().toString())
                 .build();
