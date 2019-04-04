@@ -40,7 +40,8 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
     public LoggerApiRefactoring() {
         // EMPTY; required as Error Prone loads via ServiceLoader; actual constructor used will be the one with
         // ErrorProneFlags
-        this( ErrorProneFlags.empty() );
+        this.refactoringConfiguration = null;
+        this.loggingApiConverter = null;
     }
 
     public LoggerApiRefactoring(ErrorProneFlags flags) {
