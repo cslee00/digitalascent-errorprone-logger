@@ -45,7 +45,7 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
     }
 
     public LoggerApiRefactoring(ErrorProneFlags flags) {
-        System.out.println("Starting LoggerApiRefactoring with flags: " + flags);
+        System.out.println("Starting LoggerApiRefactoring with flags: " + flags.getFlagsMap());
         String sourceApi = flags.get(SOURCE_API_FLAG).orElseThrow(() -> new IllegalArgumentException("Missing source api for option " + SOURCE_API_FLAG));
 
         this.refactoringConfiguration = new RefactoringConfigurationLoader().loadRefactoringConfiguration("", sourceApi);

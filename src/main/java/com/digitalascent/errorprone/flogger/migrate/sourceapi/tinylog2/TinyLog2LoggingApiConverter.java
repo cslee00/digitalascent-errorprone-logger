@@ -8,6 +8,7 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApi
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.sun.source.tree.ExpressionTree;
@@ -18,18 +19,19 @@ import com.sun.source.tree.VariableTree;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.matchAtIndex;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.loggingMethod;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Tiny Log 2 API: https://tinylog.org/v2/javadoc/
  */
 public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConverter {
 
+    private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.pmw.tinylog");
     private final TinyLog2LogMessageHandler logMessageHandler = new TinyLog2LogMessageHandler();
 
     public TinyLog2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
@@ -64,6 +66,11 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
     @Override
     protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
         return loggerImports().matches(qualifiedIdentifier, visitorState);
+    }
+
+    @Override
+    protected Set<String> loggingPackagePrefixes() {
+        return LOGGING_PACKAGE_PREFIXES;
     }
 
     @Override

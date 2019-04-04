@@ -8,6 +8,7 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApi
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.sun.source.tree.ExpressionTree;
@@ -18,6 +19,7 @@ import com.sun.source.tree.VariableTree;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.matchAtIndex;
@@ -29,6 +31,8 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.Tin
  * Tiny Log API: https://static.javadoc.io/org.tinylog/tinylog/1.3.6/index.html
  */
 public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverter {
+
+    private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.pmw.tinylog");
 
     private final TinyLogLogMessageHandler logMessageHandler = new TinyLogLogMessageHandler();
 
@@ -64,6 +68,11 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
     @Override
     protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
         return loggerImports().matches(qualifiedIdentifier, visitorState);
+    }
+
+    @Override
+    protected Set<String> loggingPackagePrefixes() {
+        return LOGGING_PACKAGE_PREFIXES;
     }
 
     @Override

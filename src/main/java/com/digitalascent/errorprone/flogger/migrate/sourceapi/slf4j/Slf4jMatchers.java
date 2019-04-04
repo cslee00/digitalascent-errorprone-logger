@@ -1,6 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j;
 
 import com.google.errorprone.matchers.Matcher;
+import com.google.errorprone.matchers.Matchers;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 

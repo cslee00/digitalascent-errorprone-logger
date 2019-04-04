@@ -9,6 +9,7 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApi
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.sun.source.tree.ExpressionTree;
@@ -19,6 +20,7 @@ import com.sun.tools.javac.tree.JCTree;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.logManagerMethod;
@@ -33,6 +35,7 @@ import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
  */
 public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter {
 
+    public static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.log4j");
     private Log4jLogMessageHandler logMessageHandler = new Log4jLogMessageHandler();
 
     public Log4jLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
@@ -74,6 +77,11 @@ public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter 
     @Override
     protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
         return loggerImports().matches(qualifiedIdentifier, visitorState);
+    }
+
+    @Override
+    protected Set<String> loggingPackagePrefixes() {
+        return LOGGING_PACKAGE_PREFIXES;
     }
 
     private TargetLogLevel resolveLogLevelFromArgument(ExpressionTree levelArgument) {

@@ -9,6 +9,7 @@ import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.sun.source.tree.ExpressionTree;
@@ -18,6 +19,7 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.tree.JCTree;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.logLevelType;
@@ -33,10 +35,16 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatc
  */
 public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
 
+    private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("java.util.logging");
     private JULLogMessageHandler logMessageHandler = new JULLogMessageHandler();
 
     public JULLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
+    }
+
+    @Override
+    protected Set<String> loggingPackagePrefixes() {
+        return LOGGING_PACKAGE_PREFIXES;
     }
 
     @Override

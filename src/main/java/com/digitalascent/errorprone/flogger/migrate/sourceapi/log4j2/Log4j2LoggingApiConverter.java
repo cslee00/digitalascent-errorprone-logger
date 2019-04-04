@@ -8,6 +8,7 @@ import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.sun.source.tree.ExpressionTree;
@@ -17,6 +18,7 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.tree.JCTree;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.logManagerMethod;
@@ -31,6 +33,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4
  */
 public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter {
 
+    private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.logging.log4j");
     private final Log4j2LogMessageHandler logMessageHandler = new Log4j2LogMessageHandler();
 
     public Log4j2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
@@ -57,6 +60,11 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
             targetLogLevel = mapLogLevel(level);
         }
         return getFloggerSuggestedFixGenerator().generateConditional(methodInvocationTree, state, targetLogLevel, migrationContext);
+    }
+
+    @Override
+    protected Set<String> loggingPackagePrefixes() {
+        return LOGGING_PACKAGE_PREFIXES;
     }
 
     @Override

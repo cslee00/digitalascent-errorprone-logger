@@ -7,6 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.sun.source.tree.ExpressionTree;
@@ -15,6 +16,7 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggerFactoryMethod;
@@ -29,6 +31,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4j
  */
 public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter {
 
+    private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.slf4j");
     private final Slf4jLogMessageHandler logMessageHandler = new Slf4jLogMessageHandler();
 
     public Slf4JLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
@@ -65,6 +68,11 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
     @Override
     protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
         return loggerImports().matches(qualifiedIdentifier, visitorState);
+    }
+
+    @Override
+    protected Set<String> loggingPackagePrefixes() {
+        return LOGGING_PACKAGE_PREFIXES;
     }
 
     @Override

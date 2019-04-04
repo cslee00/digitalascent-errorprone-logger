@@ -14,7 +14,7 @@ dependencies {
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
     errorprone("com.google.errorprone:error_prone_core:2.3.3")
 
-    errorprone("com.digitalascent:digitalascent-errorprone-flogger:0.5.4")
+    errorprone("com.digitalascent:digitalascent-errorprone-flogger:0.5.5")
 
     // SLF4J
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.26'
@@ -25,7 +25,7 @@ tasks.withType(JavaCompile).configureEach {
     options.errorprone {
         option("LoggerApiRefactoring:SourceApi", "slf4j")
         errorproneArgs += "-XepPatchChecks:LoggerApiRefactoring"
-        errorproneArgs += "-XepPatchLocation:" + buildDir
+        errorproneArgs += "-XepPatchLocation:" + new File(".").absolutePath 
     }
 }
 
