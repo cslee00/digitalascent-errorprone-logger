@@ -22,7 +22,7 @@ import java.util.List;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
-@AutoService(LoggerApiRefactoring.class)
+@AutoService(BugChecker.class)
 @BugPattern(
         name = "LoggerApiRefactoring",
         summary = "Refactor logging API",
