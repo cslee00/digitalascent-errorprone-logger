@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
+import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.ErrorProneFlags;
@@ -21,6 +22,7 @@ import java.util.List;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
+@AutoService(LoggerApiRefactoring.class)
 @BugPattern(
         name = "LoggerApiRefactoring",
         summary = "Refactor logging API",
@@ -36,6 +38,7 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator();
 
     public LoggerApiRefactoring(ErrorProneFlags flags) {
+        System.out.println("Starting LoggerApiRefactoring with flags: " + flags);
         String sourceApi = flags.get(SOURCE_API_FLAG).orElseThrow(() -> new IllegalArgumentException("Missing source api for option " + SOURCE_API_FLAG));
 
         this.refactoringConfiguration = new RefactoringConfigurationLoader().loadRefactoringConfiguration("", sourceApi);

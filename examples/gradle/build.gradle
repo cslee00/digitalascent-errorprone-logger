@@ -1,0 +1,35 @@
+plugins {
+    id "java-library"
+    id "net.ltgt.errorprone" version "0.7.1"
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    // docs: https://github.com/tbroyer/gradle-errorprone-plugin
+
+    // errorprone javac only required for Java 8
+    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+    errorprone("com.google.errorprone:error_prone_core:2.3.3")
+
+    errorprone("com.digitalascent:digitalascent-errorprone-flogger:0.5.0")
+
+    // SLF4J
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.26'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    println "Build dir: $buildDir"
+    options.errorprone {
+        option("LoggerApiRefactoring:SourceApi", "slf4j")
+        errorproneArgs += "-XepPatchChecks:LoggerApiRefactoring"
+        errorproneArgs += "-XepPatchLocation:" + buildDir
+    }
+}
+
+wrapper {
+    gradleVersion = "5.2.1"
+    distributionType = Wrapper.DistributionType.ALL
+}
