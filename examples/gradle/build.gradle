@@ -12,8 +12,11 @@ dependencies {
 
     // errorprone javac only required for Java 8
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+    
+    // error prone itself
     errorprone("com.google.errorprone:error_prone_core:2.3.3")
 
+    // custom error prone plugin
     errorprone("com.digitalascent:digitalascent-errorprone-flogger:0.5.5")
 
     // SLF4J
@@ -21,8 +24,8 @@ dependencies {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    println "Build dir: $buildDir"
     options.errorprone {
+        // change source logging API as appropriate
         option("LoggerApiRefactoring:SourceApi", "slf4j")
         errorproneArgs += "-XepPatchChecks:LoggerApiRefactoring"
         errorproneArgs += "-XepPatchLocation:" + new File(".").absolutePath 

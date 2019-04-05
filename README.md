@@ -19,6 +19,12 @@ Checks
 # Refactorings
 ## Migration
 
+### Gradle
+
+Example Gradle build script located [here](blob/master/examples/gradle/build.gradle)
+
+### Manual steps 
+
 Add Error Prone options to enable patch checks: (https://errorprone.info/docs/patching)
 
 ```
