@@ -35,7 +35,6 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
 
     private final RefactoringConfiguration refactoringConfiguration;
     private final LoggingApiConverter loggingApiConverter;
-    private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator();
 
     public LoggerApiRefactoring() {
         // EMPTY; required as Error Prone loads via ServiceLoader; actual constructor used will be the one with
@@ -122,7 +121,7 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
 
         switch (loggerVariables.size()) {
             case 0:
-                suggestedFixes.add(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, null, state, migrationContext));
+                suggestedFixes.add(refactoringConfiguration.floggerSuggestedFixGenerator().generateLoggerVariable(classTree, null, state, migrationContext));
                 break;
             case 1:
                 loggingApiConverter.migrateLoggerVariable(classTree, loggerVariables.get(0), state, migrationContext).ifPresent(suggestedFixes::add);

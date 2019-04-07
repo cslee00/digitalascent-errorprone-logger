@@ -8,4 +8,6 @@ public interface RefactoringConfiguration {
     LoggingApiConverter loggingApiConverter();
 
     Map<String, String> logLevelMappings();
+
+    FloggerSuggestedFixGenerator floggerSuggestedFixGenerator();
 }

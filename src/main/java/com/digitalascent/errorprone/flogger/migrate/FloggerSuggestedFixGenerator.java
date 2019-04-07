@@ -4,7 +4,6 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.common.base.Verify;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.google.errorprone.util.SourceCodeEscapers;
 import com.sun.source.tree.ClassTree;
@@ -18,11 +17,14 @@ import com.sun.source.tree.VariableTree;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class FloggerSuggestedFixGenerator {
+import static java.util.Objects.requireNonNull;
 
-    // TODO - configurable
-    private static final String FLOGGER_CLASSNAME = "com.google.common.flogger.FluentLogger";
-    private final String targetLoggerName = "logger";
+public class FloggerSuggestedFixGenerator {
+    private final LoggerDefinition loggerDefinition;
+
+    public FloggerSuggestedFixGenerator(LoggerDefinition loggerDefinition) {
+        this.loggerDefinition = requireNonNull(loggerDefinition, "loggerDefinition");
+    }
 
     public SuggestedFix generateConditional(MethodInvocationTree tree, VisitorState state, TargetLogLevel targetLogLevel, MigrationContext migrationContext) {
 
@@ -88,7 +90,7 @@ public class FloggerSuggestedFixGenerator {
     }
 
     private String determineLoggerVariableName(MigrationContext migrationContext) {
-        return migrationContext.bestLoggerVariableName().orElse(targetLoggerName);
+        return migrationContext.bestLoggerVariableName().orElse(loggerDefinition.name());
     }
 
     @Nullable
@@ -99,19 +101,23 @@ public class FloggerSuggestedFixGenerator {
     }
 
     public SuggestedFix generateLoggerVariable(ClassTree classTree, @Nullable VariableTree variableTree, VisitorState state, MigrationContext migrationContext) {
-        // TODO - pull from configuration
+        // find the first member in this class such that we can add the logger definition before it
         Tree firstMember = findFirstMember(classTree.getMembers());
         Verify.verify(firstMember != null);
 
         StringBuilder stringBuilder = new StringBuilder(200);
         String loggerVariableName = determineLoggerVariableName(migrationContext);
-        stringBuilder.append(String.format("private static final %s %s = %s.%s();", "FluentLogger", loggerVariableName, "FluentLogger", "forEnclosingClass"));
+
+        String loggerVariableDefinition = String.format("%s %s %s %s = %s.%s();", loggerDefinition.scope(), loggerDefinition.modifiers(),
+                loggerDefinition.type(), loggerVariableName, loggerDefinition.type(), loggerDefinition.factoryMethod());
+
+        stringBuilder.append(loggerVariableDefinition);
         stringBuilder.append("\n\n");
         stringBuilder.append(ASTUtil.determineIndent(firstMember, state));
 
         SuggestedFix suggestedFix = SuggestedFix.builder()
                 .prefixWith(firstMember, stringBuilder.toString())
-                .addImport(FLOGGER_CLASSNAME)
+                .addImport(loggerDefinition.typeQualified())
                 .build();
 
         if (variableTree != null) {
