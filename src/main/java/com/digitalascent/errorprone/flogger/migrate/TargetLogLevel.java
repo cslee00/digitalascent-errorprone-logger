@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
+import com.google.common.base.MoreObjects;
 import com.sun.source.tree.ExpressionTree;
 
 public final class TargetLogLevel {
@@ -24,5 +25,13 @@ public final class TargetLogLevel {
 
     ExpressionTree customLogLevel() {
         return customLogLevel;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("methodName", methodName)
+                .add("customLogLevel", customLogLevel)
+                .toString();
     }
 }

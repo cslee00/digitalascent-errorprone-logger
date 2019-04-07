@@ -12,8 +12,8 @@ public class TestClassUsingJUL_0 {
         someLogger.atFinest().log( "test message" );
         someLogger.atFinest().log( "test message" );
 
-        someLogger.atFinest().log( "test message" );
-        someLogger.atFinest().log( "test message" );
+        someLogger.atFiner().log( "test message" );
+        someLogger.atFiner().log( "test message" );
 
         someLogger.atFine().log( "test message" );
         someLogger.atFine().log( "test message" );
@@ -37,7 +37,7 @@ public class TestClassUsingJUL_0 {
 
     public void testEnabled() {
         someLogger.atFinest().isEnabled();
-        someLogger.atFinest().isEnabled();
+        someLogger.atFiner().isEnabled();
         someLogger.atFine().isEnabled();
         someLogger.atFine().isEnabled();
         someLogger.atInfo().isEnabled();

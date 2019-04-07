@@ -16,10 +16,13 @@ import com.google.common.io.Resources;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Target;
 import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
+
+import static com.google.common.collect.ImmutableMap.*;
 
 @SuppressWarnings("UnstableApiUsage")
 final class RefactoringConfigurationLoader {
@@ -34,12 +37,23 @@ final class RefactoringConfigurationLoader {
         FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator(loggerDefinition);
         builder.floggerSuggestedFixGenerator( floggerSuggestedFixGenerator );
 
-        Function<String, TargetLogLevel> targetLogLevelFunction = new TargetLogLevelMapper();
-
+        Function<String, TargetLogLevel> targetLogLevelFunction = readLogLevelMappings( properties );
         LoggingApiConverter converter = determineSourceApiConverter(sourceApi, floggerSuggestedFixGenerator, targetLogLevelFunction);
         builder.loggingApiConverter(converter);
 
         return builder.build();
+    }
+
+    private Function<String, TargetLogLevel> readLogLevelMappings(Properties properties) {
+        Map<String,String> propMap = properties.entrySet().stream().collect(
+                toImmutableMap( e -> (String)e.getKey(), e -> (String)e.getValue() ));
+
+        Map<String, TargetLogLevel> logLevelMap = propMap.entrySet().stream()
+                .filter(e -> e.getKey().startsWith("level.") && e.getKey().endsWith(".mapping"))
+                .collect( toImmutableMap(
+                        e -> e.getKey().replace("level.","").replace(".mapping",""),
+                        e -> new TargetLogLevel( e.getValue())));
+        return new TargetLogLevelMapper( logLevelMap );
     }
 
     private LoggerDefinition readLoggerDefinition(Properties properties) {
@@ -78,7 +92,7 @@ final class RefactoringConfigurationLoader {
     }
 
     private ImmutableMap<String, LoggingApiConverter> buildConverterMap(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
-        ImmutableMap.Builder<String, LoggingApiConverter> converterMapBuilder = ImmutableMap.builder();
+        ImmutableMap.Builder<String, LoggingApiConverter> converterMapBuilder = builder();
 
         converterMapBuilder.put("slf4j", new Slf4JLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
         converterMapBuilder.put("log4j", new Log4jLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
