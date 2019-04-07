@@ -1,8 +1,9 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog;
 
+import com.digitalascent.errorprone.flogger.migrate.MessageFormatArgument;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLogMessageHandler;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.matchers.Matchers;
@@ -21,7 +22,7 @@ final class TinyLogLogMessageHandler extends AbstractLogMessageHandler {
     }
 
     @Override
-    protected LogMessageModel convertMessageFormat(String sourceMessageFormat, List<? extends ExpressionTree> formatArguments, MigrationContext migrationContext) {
+    protected LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
         return LogMessageModel.fromStringFormat( TinyLogMessageFormatter.format(sourceMessageFormat), formatArguments);
     }
 }

@@ -1,10 +1,10 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2;
 
+import com.digitalascent.errorprone.flogger.migrate.MessageFormatArgument;
 import com.digitalascent.errorprone.flogger.migrate.MessageFormatStyle;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLogMessageHandler;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
-import com.google.common.collect.ImmutableList;
+import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.matchers.Matchers;
@@ -15,8 +15,6 @@ import com.sun.tools.javac.code.Symbol;
 
 import javax.annotation.Nullable;
 import java.util.List;
-
-import static com.digitalascent.errorprone.flogger.migrate.MessageFormatStyle.LOG4J2_BRACE;
 
 final class Log4j2LogMessageHandler extends AbstractLogMessageHandler {
     @Nullable
@@ -38,11 +36,11 @@ final class Log4j2LogMessageHandler extends AbstractLogMessageHandler {
     }
 
     @Override
-    protected LogMessageModel convertMessageFormat(String sourceMessageFormat, List<? extends ExpressionTree> formatArguments, MigrationContext migrationContext) {
+    protected LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
         return internalMessageFormat(sourceMessageFormat, formatArguments, migrationContext);
     }
 
-    private LogMessageModel internalMessageFormat(String messageFormat, List<? extends ExpressionTree> formatArguments, MigrationContext migrationContext) {
+    private LogMessageModel internalMessageFormat(String messageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
         if( migrationContext.sourceLoggerMemberVariables().isEmpty() && messageFormatStyle != null ) {
             // no logger variable definition (possibly from superclass or elsewhere); we can't accurately know
             // whether the logger was acquired via getLogger (brace-format) or getFormatter (printf-format)

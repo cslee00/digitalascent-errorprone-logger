@@ -6,8 +6,8 @@ import com.sun.source.tree.Tree;
 
 public final class ToDoCommentGenerator {
     private static final CharMatcher NEWLINE = CharMatcher.anyOf("\r\n");
-    public static String singleLineCommentForNode(String text, Tree tree, VisitorState visitorState) {
-        return "// TODO [LoggerApiRefactoring] " + NEWLINE.replaceFrom( text, "\\n" ) + "\n" + ASTUtil.determineIndent(tree,visitorState);
+    public static String singleLineCommentForNode(String text, Tree node, VisitorState visitorState) {
+        return "// TODO [LoggerApiRefactoring] " + NEWLINE.replaceFrom( text, "\\n" ) + "\n" + ASTUtil.determineIndent(node,visitorState);
     }
 
     private ToDoCommentGenerator() {

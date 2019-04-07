@@ -1,6 +1,5 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
 import com.google.common.base.Verify;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -68,25 +67,34 @@ public class FloggerSuggestedFixGenerator {
         sb.append(loggingCall);
         sb.append(".log( ");
 
-        if (logMessageModel.messageFormat() != null) {
-            String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(logMessageModel.messageFormat()) + "\"";
-            sb.append(argumentSrc);
-        } else {
-            sb.append(state.getSourceForNode(logMessageModel.messageFormatArgument()));
-        }
+        emitMessageFormat(state, logMessageModel, sb);
+        emitMessageFormatArguments(state, logMessageModel, sb);
 
-        for (ExpressionTree argument : logMessageModel.arguments()) {
-            if (sb.length() > 0) {
-                sb.append(", ");
-            }
-            String argumentSrc = state.getSourceForNode(argument);
-            sb.append(argumentSrc);
-        }
         sb.append(" )");
 
         return SuggestedFix.builder()
                 .replace(loggerMethodInvocation, sb.toString())
                 .build();
+    }
+
+    private void emitMessageFormatArguments(VisitorState state, LogMessageModel logMessageModel, StringBuilder sb) {
+        for (MessageFormatArgument argument : logMessageModel.arguments()) {
+            sb.append(", ");
+            String argumentSrc = argument.code(state);
+            sb.append(argumentSrc);
+        }
+    }
+
+    private void emitMessageFormat(VisitorState state, LogMessageModel logMessageModel, StringBuilder sb) {
+        if (logMessageModel.messageFormat() != null) {
+            String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(logMessageModel.messageFormat()) + "\"";
+            sb.append(argumentSrc);
+        } else {
+            if (logMessageModel.messageFormatArgument() == null) {
+                throw new AssertionError("One of messageFormat or messagFormatArgumetn required");
+            }
+            sb.append(state.getSourceForNode(logMessageModel.messageFormatArgument()));
+        }
     }
 
     private String determineLoggerVariableName(MigrationContext migrationContext) {

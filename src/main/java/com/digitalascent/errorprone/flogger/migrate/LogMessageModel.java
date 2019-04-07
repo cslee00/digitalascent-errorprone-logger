@@ -1,4 +1,4 @@
-package com.digitalascent.errorprone.flogger.migrate.sourceapi;
+package com.digitalascent.errorprone.flogger.migrate;
 
 import com.google.common.collect.ImmutableList;
 import com.sun.source.tree.ExpressionTree;
@@ -11,34 +11,34 @@ import static java.util.Objects.requireNonNull;
 public final class LogMessageModel {
     @Nullable
     private final String messageFormat;
-    private final List<? extends ExpressionTree> arguments;
+    private final List<MessageFormatArgument> arguments;
     private final List<String> migrationIssues;
 
     @Nullable
     private final ExpressionTree messageFormatArgument;
 
-    static LogMessageModel unableToConvert(ExpressionTree messageFormatArgument, List<? extends ExpressionTree> arguments) {
+    public static LogMessageModel unableToConvert(ExpressionTree messageFormatArgument, List<MessageFormatArgument> arguments) {
         requireNonNull(messageFormatArgument, "messageFormatArgument");
         return new LogMessageModel(null, arguments, ImmutableList.of("Unable to convert message format expression - not a string literal"), messageFormatArgument);
     }
 
-    static LogMessageModel fromMessageFormatArgument(ExpressionTree messageFormatArgument, List<? extends ExpressionTree> arguments) {
+    public static LogMessageModel fromMessageFormatArgument(ExpressionTree messageFormatArgument, List<MessageFormatArgument> arguments) {
         requireNonNull(messageFormatArgument, "messageFormatArgument");
         requireNonNull(arguments, "arguments");
         return new LogMessageModel(null, arguments, ImmutableList.of(), messageFormatArgument);
     }
 
-    public static LogMessageModel fromStringFormat(String messageFormat, List<? extends ExpressionTree> arguments, List<String> migrationIssues) {
+    public static LogMessageModel fromStringFormat(String messageFormat, List<MessageFormatArgument> arguments, List<String> migrationIssues) {
         requireNonNull(messageFormat, "messageFormat");
         requireNonNull(arguments, "arguments");
         return new LogMessageModel(messageFormat, arguments, migrationIssues, null);
     }
 
-    public static LogMessageModel fromStringFormat(String messageFormat, List<? extends ExpressionTree> arguments) {
+    public static LogMessageModel fromStringFormat(String messageFormat, List<MessageFormatArgument> arguments) {
         return fromStringFormat(messageFormat, arguments, ImmutableList.of());
     }
 
-    private LogMessageModel(@Nullable String messageFormat, List<? extends ExpressionTree> arguments, List<String> migrationIssues, @Nullable ExpressionTree messageFormatArgument) {
+    private LogMessageModel(@Nullable String messageFormat, List<MessageFormatArgument> arguments, List<String> migrationIssues, @Nullable ExpressionTree messageFormatArgument) {
         this.messageFormat = messageFormat;
         this.arguments = arguments;
         this.migrationIssues = ImmutableList.copyOf(migrationIssues);
@@ -46,20 +46,20 @@ public final class LogMessageModel {
     }
 
     @Nullable
-    public ExpressionTree messageFormatArgument() {
+    ExpressionTree messageFormatArgument() {
         return messageFormatArgument;
     }
 
-    public List<String> migrationIssues() {
+    List<String> migrationIssues() {
         return migrationIssues;
     }
 
     @Nullable
-    public String messageFormat() {
+    String messageFormat() {
         return messageFormat;
     }
 
-    public List<? extends ExpressionTree> arguments() {
+    List<MessageFormatArgument> arguments() {
         return arguments;
     }
 }

@@ -7,7 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;

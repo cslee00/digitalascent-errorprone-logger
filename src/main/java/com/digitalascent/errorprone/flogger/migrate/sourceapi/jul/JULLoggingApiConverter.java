@@ -8,7 +8,7 @@ import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -28,7 +28,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatc
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggerType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggingMethod;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.stringType;
 
 /**
  * JUL API: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html

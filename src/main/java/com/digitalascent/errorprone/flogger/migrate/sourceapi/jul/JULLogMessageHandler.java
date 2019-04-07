@@ -1,15 +1,14 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.jul;
 
+import com.digitalascent.errorprone.flogger.migrate.MessageFormatArgument;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLogMessageHandler;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.google.common.base.CharMatcher;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matchers;
 import com.sun.source.tree.ExpressionTree;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -29,12 +28,12 @@ final class JULLogMessageHandler extends AbstractLogMessageHandler {
     }
 
     @Override
-    protected LogMessageModel convertMessageFormat(String sourceMessageFormat, List<? extends ExpressionTree> formatArguments, MigrationContext migrationContext) {
+    protected LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
         return doConvert(sourceMessageFormat, formatArguments);
     }
 
-    private LogMessageModel doConvert(String messageFormat, List<? extends ExpressionTree> formatArguments) {
-        List<ExpressionTree> argumentList = new ArrayList<>();
+    private LogMessageModel doConvert(String messageFormat, List<MessageFormatArgument> formatArguments) {
+        List<MessageFormatArgument> argumentList = new ArrayList<>();
         List<String> migrationIssues = new ArrayList<>();
         Matcher matcher = PARAM_PATTERN.matcher(messageFormat);
         StringBuffer sb = new StringBuffer();
@@ -52,7 +51,7 @@ final class JULLogMessageHandler extends AbstractLogMessageHandler {
         }
         matcher.appendTail(sb);
 
-        for (ExpressionTree remainingArgument : formatArguments) {
+        for (MessageFormatArgument remainingArgument : formatArguments) {
             if( !argumentList.contains(remainingArgument)) {
                 argumentList.add(remainingArgument);
             }
