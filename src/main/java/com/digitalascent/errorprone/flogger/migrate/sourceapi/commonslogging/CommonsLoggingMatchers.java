@@ -26,7 +26,6 @@ final class CommonsLoggingMatchers {
             .onClass(LOG_FACTORY_CLASS)
             .namedAnyOf("getLog"));
 
-    private static final Matcher<ExpressionTree> CLASS_MATCHER = isSubtypeOf(Class.class);
     private static final Matcher<Tree> LOG_TYPE_MATCHER = isSubtypeOf(LOG_CLASS);
     private static final Matcher<Tree> LOGGER_FACTORY_TYPE_MATCHER = isSubtypeOf(LOG_FACTORY_CLASS);
     private static final Matcher<Tree> IMPORT_TYPES = anyOf(LOG_TYPE_MATCHER, LOGGER_FACTORY_TYPE_MATCHER );
@@ -37,10 +36,6 @@ final class CommonsLoggingMatchers {
 
     static Matcher<ExpressionTree> loggingEnabledMethod() {
         return IS_ENABLED_METHODS;
-    }
-
-    static Matcher<ExpressionTree> classType() {
-        return CLASS_MATCHER;
     }
 
     static Matcher<ExpressionTree> logFactoryMethod() {

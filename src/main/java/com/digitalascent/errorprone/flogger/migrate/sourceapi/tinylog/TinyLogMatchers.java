@@ -27,10 +27,6 @@ final class TinyLogMatchers {
         return THROWABLE_MATCHER;
     }
 
-    static Matcher<Tree> logType() {
-        return LOG_TYPE_MATCHER;
-    }
-
     static Matcher<Tree> loggerImports() {
         return IMPORT_TYPES;
     }

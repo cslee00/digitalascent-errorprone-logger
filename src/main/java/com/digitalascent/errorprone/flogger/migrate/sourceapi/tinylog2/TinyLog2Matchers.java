@@ -19,8 +19,6 @@ final class TinyLog2Matchers {
             .namedAnyOf("trace","debug","info","warn","error"));
 
     private static final Matcher<ExpressionTree> THROWABLE_MATCHER = isSubtypeOf(Throwable.class);
-    private static final Matcher<ExpressionTree> CLASS_MATCHER = isSubtypeOf(Class.class);
-    private static final Matcher<ExpressionTree> STRING_MATCHER = isSubtypeOf(String.class);
     private static final Matcher<Tree> LOG_TYPE_MATCHER = isSubtypeOf(LOG_CLASS);
     private static final Matcher<Tree> IMPORT_TYPES = anyOf(LOG_TYPE_MATCHER, isSubtypeOf("org.tinylog.TaggedLogger") );
 
@@ -30,17 +28,6 @@ final class TinyLog2Matchers {
 
     static Matcher<ExpressionTree> throwableType() {
         return THROWABLE_MATCHER;
-    }
-    static Matcher<ExpressionTree> classType() {
-        return CLASS_MATCHER;
-    }
-
-    static Matcher<ExpressionTree> stringType() {
-        return STRING_MATCHER;
-    }
-
-    static Matcher<Tree> logType() {
-        return LOG_TYPE_MATCHER;
     }
 
     static Matcher<Tree> loggerImports() {

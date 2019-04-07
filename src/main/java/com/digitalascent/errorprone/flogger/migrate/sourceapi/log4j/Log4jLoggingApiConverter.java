@@ -35,7 +35,7 @@ import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
  */
 public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter {
 
-    public static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.log4j");
+    private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.log4j");
     private Log4jLogMessageHandler logMessageHandler = new Log4jLogMessageHandler();
 
     public Log4jLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {

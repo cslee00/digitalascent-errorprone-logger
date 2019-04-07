@@ -96,7 +96,8 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
             builder.thrown(throwableArgument);
         }
 
-        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
+        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments,
+                state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
 
         return builder.build();

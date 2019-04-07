@@ -24,7 +24,7 @@ final class JULLogMessageHandler extends AbstractLogMessageHandler {
     );
 
     @Override
-    protected boolean skipMessageFormat(ExpressionTree messageFormatArgument, VisitorState state) {
+    protected boolean shouldSkipMessageFormatArgument(ExpressionTree messageFormatArgument, VisitorState state) {
        return INVALID_MSG_FORMAT_TYPES.matches(messageFormatArgument,state);
     }
 

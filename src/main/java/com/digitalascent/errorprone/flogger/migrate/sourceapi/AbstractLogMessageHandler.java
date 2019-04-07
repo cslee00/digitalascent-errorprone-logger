@@ -15,14 +15,13 @@ import java.util.List;
 
 public abstract class AbstractLogMessageHandler {
 
-
     public final LogMessageModel processLogMessage(ExpressionTree messageFormatArgument,
                                                    List<? extends ExpressionTree> remainingArguments,
                                                    VisitorState state,
                                                    @Nullable ExpressionTree thrownArgument,
                                                    MigrationContext migrationContext) {
 
-        if( skipMessageFormat(messageFormatArgument, state) ) {
+        if( shouldSkipMessageFormatArgument(messageFormatArgument, state) ) {
             throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
         }
 
@@ -56,7 +55,7 @@ public abstract class AbstractLogMessageHandler {
     }
 
 
-    protected boolean skipMessageFormat(ExpressionTree messageFormatArgument, VisitorState state) {
+    protected boolean shouldSkipMessageFormatArgument(ExpressionTree messageFormatArgument, VisitorState state) {
         return false;
     }
 

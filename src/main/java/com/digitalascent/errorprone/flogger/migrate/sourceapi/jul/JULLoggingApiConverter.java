@@ -111,7 +111,6 @@ public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
         }
 
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
-
         builder.targetLogLevel(targetLogLevel);
 
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
@@ -121,10 +120,6 @@ public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);
             builder.thrown(throwableArgument);
-        }
-
-        if (!stringType().matches(messageFormatArgument, state)) {
-            throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
         }
 
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);

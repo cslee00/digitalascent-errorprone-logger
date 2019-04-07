@@ -76,10 +76,8 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
     @Override
     protected ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                                               VisitorState state, MigrationContext migrationContext) {
+        TargetLogLevel targetLogLevel = mapLogLevel(methodName);
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
-
-        TargetLogLevel targetLogLevel;
-        targetLogLevel = mapLogLevel(methodName);
         builder.targetLogLevel(targetLogLevel);
 
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();

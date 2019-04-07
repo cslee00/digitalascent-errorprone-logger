@@ -77,8 +77,7 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
 
     protected ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
                                                               VisitorState state, MigrationContext migrationContext) {
-        TargetLogLevel targetLogLevel;
-        targetLogLevel = mapLogLevel(methodName);
+        TargetLogLevel targetLogLevel = mapLogLevel(methodName);
 
         ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
         builder.targetLogLevel(targetLogLevel);
@@ -93,7 +92,8 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
         remainingArguments = Arguments.removeFirst(remainingArguments);
 
-        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments, state, throwableArgument, migrationContext);
+        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments,
+                state, throwableArgument, migrationContext);
         builder.logMessageModel(logMessageModel);
         return builder.build();
     }

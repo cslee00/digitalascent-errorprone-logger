@@ -105,5 +105,4 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
     protected abstract ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext);
 
     protected abstract SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext);
-
 }
