@@ -7,6 +7,8 @@ Refactorings:
    * Log4J / Log4J2
    * SLF4J
    * TinyLog / TinyLog2
+* Remove toString() calls on message format arguments
+* Remove Arrays.toString() calls on message format arguments
 * (TODO) remove unnecessary conditionals around logging statements
 * (TODO) convert string-concatenated formatting messages into parameters
 * (TODO) make complex formatting arguments lazy
