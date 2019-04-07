@@ -43,6 +43,8 @@ dependencies {
     annotationProcessor("org.immutables:value:2.7.4")
     compileOnly("org.immutables:value-annotations:2.7.4")
 
+    
+    
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.1.0")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.1.0")
     testImplementation("org.assertj:assertj-core:3.11.1")
@@ -50,8 +52,8 @@ dependencies {
     testCompile group: 'com.google.errorprone', name: 'error_prone_test_helpers', version: '2.3.3'
 
     testCompile group: 'com.google.flogger', name: 'flogger', version: '0.4'
+    testRuntime group: 'com.google.flogger', name: 'flogger-system-backend', version: '0.4'
 
-    
     // for sample classes used as test inputs
     // SLF4J
     testCompile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.26'

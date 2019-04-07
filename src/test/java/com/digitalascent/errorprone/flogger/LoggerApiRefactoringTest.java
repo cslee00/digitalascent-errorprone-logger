@@ -43,6 +43,12 @@ class LoggerApiRefactoringTest {
         executeTest("tinylog2", "TinyLog2", 0);
     }
 
+    @Test
+    public void testMessageFormatArguments() {
+        executeTest("slf4j", "MessageFormatArguments", 0);
+    }
+
+
     @ParameterizedTest( name = "jul: test id {arguments}")
     @ValueSource(ints = {0,1,2,3,4})
     public void testJUL(int id) {

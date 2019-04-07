@@ -91,7 +91,7 @@ public class FloggerSuggestedFixGenerator {
             sb.append(argumentSrc);
         } else {
             if (logMessageModel.messageFormatArgument() == null) {
-                throw new AssertionError("One of messageFormat or messagFormatArgumetn required");
+                throw new AssertionError("One of messageFormat or messageFormatArgument required");
             }
             sb.append(state.getSourceForNode(logMessageModel.messageFormatArgument()));
         }

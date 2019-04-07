@@ -18,6 +18,9 @@ import java.util.List;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 public abstract class AbstractLogMessageHandler {
+    private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = Matchers.staticMethod().onClass("java.lang.String").named("format");
+    private static final MessageFormatArgumentConverter MESSAGE_FORMAT_ARGUMENT_CONVERTER = new CompositeMessageFormatArgumentConverter();
+    private static final MessageFormatArgumentReducer MESSAGE_FORMAT_ARGUMENT_REDUCER = new CompositeMessageFormatArgumentReducer();
 
     public final LogMessageModel processLogMessage(ExpressionTree messageFormatArgument,
                                                    List<? extends ExpressionTree> remainingArguments,
@@ -36,7 +39,7 @@ public abstract class AbstractLogMessageHandler {
 
         if (!Arguments.isStringType(messageFormatArgument, state)) {
             return LogMessageModel.fromStringFormat("%s",
-                    convertArguments(Arguments.prependArgument(remainingArguments, messageFormatArgument)));
+                    processArguments(Arguments.prependArgument(remainingArguments, messageFormatArgument), state));
         }
 
         if (remainingArguments.isEmpty()) {
@@ -46,17 +49,17 @@ public abstract class AbstractLogMessageHandler {
                 return result;
             }
 
-            return LogMessageModel.fromMessageFormatArgument(messageFormatArgument, convertArguments(remainingArguments));
+            return LogMessageModel.fromMessageFormatArgument(messageFormatArgument, processArguments(remainingArguments, state));
         }
 
         // handle remaining format arguments
         if (Arguments.isStringLiteral(messageFormatArgument, state)) {
             // handle common case of string literal format string
             String sourceMessageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
-            return convertMessageFormat(sourceMessageFormat, convertArguments( remainingArguments ), migrationContext);
+            return convertMessageFormat(sourceMessageFormat, processArguments( remainingArguments, state ), migrationContext);
         }
 
-        return LogMessageModel.unableToConvert(messageFormatArgument, convertArguments(remainingArguments));
+        return LogMessageModel.unableToConvert(messageFormatArgument, processArguments(remainingArguments, state));
     }
 
 
@@ -66,8 +69,6 @@ public abstract class AbstractLogMessageHandler {
 
     protected abstract LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext);
 
-    private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = Matchers.staticMethod().onClass("java.lang.String").named("format");
-
     @Nullable
     private LogMessageModel maybeUnpackStringFormat(ExpressionTree messageFormatArgument, VisitorState state) {
         if (STRING_FORMAT.matches(messageFormatArgument, state)) {
@@ -76,15 +77,17 @@ public abstract class AbstractLogMessageHandler {
             if ((firstArgument instanceof JCTree.JCLiteral)) {
                 String messageFormat = (String) ((JCTree.JCLiteral) firstArgument).value;
                 return LogMessageModel.fromStringFormat(messageFormat,
-                        convertArguments(Arguments.removeFirst(stringFormatTree.getArguments())));
+                        processArguments(Arguments.removeFirst(stringFormatTree.getArguments()), state));
             }
         }
 
         return null;
     }
 
-    private List<MessageFormatArgument> convertArguments(List<? extends ExpressionTree> arguments) {
-        // TODO - process arguments
-        return arguments.stream().map(MessageFormatArgument::fromExpressionTree).collect(toImmutableList());
+    private List<MessageFormatArgument> processArguments(List<? extends ExpressionTree> arguments, VisitorState state) {
+        return arguments.stream()
+                .map( x -> MESSAGE_FORMAT_ARGUMENT_REDUCER.reduce(x,state) )
+                .map(x -> MESSAGE_FORMAT_ARGUMENT_CONVERTER.convert(x,state))
+                .collect(toImmutableList());
     }
 }
