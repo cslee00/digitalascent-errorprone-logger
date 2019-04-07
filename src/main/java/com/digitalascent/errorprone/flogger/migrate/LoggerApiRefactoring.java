@@ -142,8 +142,7 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
     }
 
     private List<VariableTree> findFloggerMemberVariables(Tree typeDecl, VisitorState state) {
-        // TODO - configurable
-        Matcher<Tree> matcher = Matchers.isSubtypeOf("com.google.common.flogger.FluentLogger");
+        Matcher<Tree> matcher = Matchers.isSubtypeOf(refactoringConfiguration.loggerDefinition().typeQualified());
 
         LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(tree -> matcher.matches(tree,state));
         typeDecl.accept(scanner, state);

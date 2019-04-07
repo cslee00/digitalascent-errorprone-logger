@@ -1,7 +1,5 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
-import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
-
 import java.util.Map;
 
 public interface RefactoringConfiguration {
@@ -10,4 +8,6 @@ public interface RefactoringConfiguration {
     Map<String, String> logLevelMappings();
 
     FloggerSuggestedFixGenerator floggerSuggestedFixGenerator();
+
+    LoggerDefinition loggerDefinition();
 }

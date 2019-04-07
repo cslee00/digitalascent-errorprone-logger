@@ -30,10 +30,11 @@ final class RefactoringConfigurationLoader {
     RefactoringConfiguration loadRefactoringConfiguration(String userProvidedPropertyPath, String sourceApi) {
 
         ImmutableRefactoringConfiguration.Builder builder = ImmutableRefactoringConfiguration.builder();
-
         Properties properties = loadProperties(userProvidedPropertyPath);
 
         LoggerDefinition loggerDefinition = readLoggerDefinition(properties);
+        builder.loggerDefinition(loggerDefinition);
+
         FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator(loggerDefinition);
         builder.floggerSuggestedFixGenerator( floggerSuggestedFixGenerator );
 
