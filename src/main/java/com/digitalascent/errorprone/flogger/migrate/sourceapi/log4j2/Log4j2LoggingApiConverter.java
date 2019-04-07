@@ -2,6 +2,7 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
+import com.digitalascent.errorprone.flogger.migrate.MessageFormatStyle;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
@@ -17,6 +18,7 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.tree.JCTree;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -34,10 +36,15 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4
 public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter {
 
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.logging.log4j");
-    private final Log4j2LogMessageHandler logMessageHandler = new Log4j2LogMessageHandler();
 
-    public Log4j2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+    @Nullable
+    private final Log4j2LogMessageHandler logMessageHandler;
+
+    public Log4j2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
+                                     Function<String, TargetLogLevel> targetLogLevelFunction,
+                                     @Nullable MessageFormatStyle messageFormatStyle) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
+        this.logMessageHandler = new Log4j2LogMessageHandler(messageFormatStyle);
     }
 
     @Override

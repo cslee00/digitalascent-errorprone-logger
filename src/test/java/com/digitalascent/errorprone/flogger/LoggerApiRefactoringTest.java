@@ -22,7 +22,7 @@ class LoggerApiRefactoringTest {
     }
 
     @ParameterizedTest( name = "log4j2: test id {arguments}")
-    @ValueSource(ints = {0,1,2,3,4,5,6})
+    @ValueSource(ints = {0,1,2,3,4,5,6,7})
     public void testLog4j2(int id) {
         executeTest("log4j2", "Log4j2", id);
     }

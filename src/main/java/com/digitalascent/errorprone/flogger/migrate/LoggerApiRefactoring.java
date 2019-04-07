@@ -31,7 +31,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 public final class LoggerApiRefactoring extends BugChecker implements BugChecker.CompilationUnitTreeMatcher {
 
     private static final String CONFIGURATION_NAMESPACE = "LoggerApiRefactoring";
-    private static final String SOURCE_API_FLAG = String.format("%s:%s",CONFIGURATION_NAMESPACE, "SourceApi" );
+    private static final String SOURCE_API_FLAG = String.format("%s:%s", CONFIGURATION_NAMESPACE, "SourceApi");
 
     private final RefactoringConfiguration refactoringConfiguration;
     private final LoggingApiConverter loggingApiConverter;
@@ -107,7 +107,7 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
             public Void visitMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState visitorState) {
                 try {
                     addSuggestedFix(loggingApiConverter.migrateLoggingMethodInvocation(methodInvocationTree, state, migrationContext));
-                } catch( SkipLogMethodException e ) {
+                } catch (SkipLogMethodException e) {
                     // TODO - diag message
                 }
                 return super.visitMethodInvocation(methodInvocationTree, visitorState);
@@ -144,7 +144,7 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
     private List<VariableTree> findFloggerMemberVariables(Tree typeDecl, VisitorState state) {
         Matcher<Tree> matcher = Matchers.isSubtypeOf(refactoringConfiguration.loggerDefinition().typeQualified());
 
-        LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(tree -> matcher.matches(tree,state));
+        LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(tree -> matcher.matches(tree, state));
         typeDecl.accept(scanner, state);
         return scanner.loggerVariables();
     }
@@ -153,14 +153,14 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
         ImmutableMigrationContext.Builder builder = ImmutableMigrationContext.builder();
         List<VariableTree> sourceLoggerMemberVariables = findSourceLoggerMemberVariables(classTree, visitorState);
         builder.addAllSourceLoggerMemberVariables(sourceLoggerMemberVariables);
-        if( sourceLoggerMemberVariables.size() == 1 ) {
-            builder.sourceLoggerMemberVariableName( sourceLoggerMemberVariables.get(0).getName().toString() );
+        if (sourceLoggerMemberVariables.size() == 1) {
+            builder.sourceLoggerMemberVariableName(sourceLoggerMemberVariables.get(0).getName().toString());
         }
 
         List<VariableTree> floggerMemberVariables = findFloggerMemberVariables(classTree, visitorState);
         builder.addAllFloggerMemberVariables(floggerMemberVariables);
-        if( floggerMemberVariables.size() == 1 ) {
-            builder.floggerMemberVariableName( floggerMemberVariables.get(0).getName().toString() );
+        if (floggerMemberVariables.size() == 1) {
+            builder.floggerMemberVariableName(floggerMemberVariables.get(0).getName().toString());
         }
 
         return builder.build();

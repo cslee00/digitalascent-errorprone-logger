@@ -9,7 +9,7 @@ import java.util.function.Function;
 final class TargetLogLevelMapper implements Function<String, TargetLogLevel> {
     private final ImmutableMap<String, TargetLogLevel> logLevelMap;
 
-    public TargetLogLevelMapper(Map<String, TargetLogLevel> logLevelMap) {
+    TargetLogLevelMapper(Map<String, TargetLogLevel> logLevelMap) {
         this.logLevelMap = ImmutableMap.copyOf(logLevelMap);
     }
 

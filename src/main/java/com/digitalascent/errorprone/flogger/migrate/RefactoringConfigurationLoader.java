@@ -13,6 +13,7 @@ import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,25 +37,44 @@ final class RefactoringConfigurationLoader {
         builder.loggerDefinition(loggerDefinition);
 
         FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator(loggerDefinition);
-        builder.floggerSuggestedFixGenerator( floggerSuggestedFixGenerator );
+        builder.floggerSuggestedFixGenerator(floggerSuggestedFixGenerator);
 
-        Function<String, TargetLogLevel> targetLogLevelFunction = readLogLevelMappings( properties );
-        LoggingApiConverter converter = determineSourceApiConverter(sourceApi, floggerSuggestedFixGenerator, targetLogLevelFunction);
+        MessageFormatStyle messageFormatStyle = determineMessageFormatStyle(sourceApi, properties);
+        builder.messageFormatStyle(messageFormatStyle);
+
+        Function<String, TargetLogLevel> targetLogLevelFunction = readLogLevelMappings(properties);
+        LoggingApiConverter converter = determineSourceApiConverter(sourceApi, floggerSuggestedFixGenerator, targetLogLevelFunction, messageFormatStyle);
         builder.loggingApiConverter(converter);
 
         return builder.build();
     }
 
+    @Nullable
+    private MessageFormatStyle determineMessageFormatStyle(String sourceApi, Properties properties) {
+        if ("log4j2".equals(sourceApi)) {
+            String log4j2DefaultMessageFormat = properties.getProperty("log4j2.default-message-format");
+            switch (log4j2DefaultMessageFormat) {
+                case "brace":
+                    return MessageFormatStyle.LOG4J2_BRACE;
+                case "printf":
+                    return MessageFormatStyle.PRINTF;
+                default:
+                    throw new AssertionError("Unknown Log4J2 message format: " + log4j2DefaultMessageFormat);
+            }
+        }
+        return null;
+    }
+
     private Function<String, TargetLogLevel> readLogLevelMappings(Properties properties) {
-        Map<String,String> propMap = properties.entrySet().stream().collect(
-                toImmutableMap( e -> (String)e.getKey(), e -> (String)e.getValue() ));
+        Map<String, String> propMap = properties.entrySet().stream().collect(
+                toImmutableMap(e -> (String) e.getKey(), e -> (String) e.getValue()));
 
         Map<String, TargetLogLevel> logLevelMap = propMap.entrySet().stream()
                 .filter(e -> e.getKey().startsWith("level.") && e.getKey().endsWith(".mapping"))
-                .collect( toImmutableMap(
-                        e -> e.getKey().replace("level.","").replace(".mapping",""),
-                        e -> new TargetLogLevel( e.getValue())));
-        return new TargetLogLevelMapper( logLevelMap );
+                .collect(toImmutableMap(
+                        e -> e.getKey().replace("level.", "").replace(".mapping", ""),
+                        e -> new TargetLogLevel(e.getValue())));
+        return new TargetLogLevelMapper(logLevelMap);
     }
 
     private LoggerDefinition readLoggerDefinition(Properties properties) {
@@ -83,8 +103,11 @@ final class RefactoringConfigurationLoader {
         return finalProperties;
     }
 
-    private LoggingApiConverter determineSourceApiConverter(String sourceApi, FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
-        Map<String, LoggingApiConverter> converterMap = buildConverterMap(floggerSuggestedFixGenerator, targetLogLevelFunction);
+    private LoggingApiConverter determineSourceApiConverter(String sourceApi,
+                                                            FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
+                                                            Function<String, TargetLogLevel> targetLogLevelFunction,
+                                                            @Nullable MessageFormatStyle messageFormatStyle) {
+        Map<String, LoggingApiConverter> converterMap = buildConverterMap(floggerSuggestedFixGenerator, targetLogLevelFunction, messageFormatStyle);
         LoggingApiConverter converter = converterMap.get(sourceApi.toLowerCase().trim());
         if (converter == null) {
             throw new IllegalArgumentException("Unknown source API specified: " + sourceApi);
@@ -92,12 +115,14 @@ final class RefactoringConfigurationLoader {
         return converter;
     }
 
-    private ImmutableMap<String, LoggingApiConverter> buildConverterMap(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+    private ImmutableMap<String, LoggingApiConverter> buildConverterMap(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
+                                                                        Function<String, TargetLogLevel> targetLogLevelFunction,
+                                                                        @Nullable MessageFormatStyle messageFormatStyle) {
         ImmutableMap.Builder<String, LoggingApiConverter> converterMapBuilder = builder();
 
         converterMapBuilder.put("slf4j", new Slf4JLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
         converterMapBuilder.put("log4j", new Log4jLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
-        converterMapBuilder.put("log4j2", new Log4j2LoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
+        converterMapBuilder.put("log4j2", new Log4j2LoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction, messageFormatStyle));
         converterMapBuilder.put("commons-logging", new CommonsLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
         converterMapBuilder.put("tinylog", new TinyLogLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
         converterMapBuilder.put("tinylog2", new TinyLog2LoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction));
