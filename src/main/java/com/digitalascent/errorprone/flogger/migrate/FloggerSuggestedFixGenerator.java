@@ -6,7 +6,6 @@ import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
 import com.google.errorprone.util.SourceCodeEscapers;
 import com.sun.source.tree.ClassTree;
-import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
@@ -15,6 +14,7 @@ import com.sun.source.tree.VariableTree;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -98,43 +98,69 @@ public class FloggerSuggestedFixGenerator {
     }
 
     private String determineLoggerVariableName(MigrationContext migrationContext) {
-        return migrationContext.bestLoggerVariableName().orElse(loggerDefinition.name());
+
+        Optional<String> existingFloggerLoggerVariable = migrationContext.floggerLoggers().stream()
+                .map( x -> x.getName().toString() )
+                .findFirst();
+
+        if( existingFloggerLoggerVariable.isPresent() ) {
+            return existingFloggerLoggerVariable.get();
+        }
+
+        Optional<String> existingLoggerVariable = migrationContext.classNamedLoggers().stream()
+                .map(x -> x.getName().toString())
+                .findFirst();
+
+        return existingLoggerVariable.orElseGet(loggerDefinition::name);
     }
 
     @Nullable
     private Tree findFirstMember(List<? extends Tree> members) {
-        return members.stream().filter(x -> !((x instanceof MethodTree) && ASTHelpers.isGeneratedConstructor((MethodTree) x)))
+        return members.stream()
+                .filter(x -> !((x instanceof MethodTree) && ASTHelpers.isGeneratedConstructor((MethodTree) x)))
                 .findFirst()
                 .orElse(null);
     }
 
-    public SuggestedFix generateLoggerVariable(ClassTree classTree, @Nullable VariableTree variableTree, VisitorState state, MigrationContext migrationContext) {
+    SuggestedFix processLoggerVariables(ClassTree classTree, VisitorState state, MigrationContext migrationContext) {
+
         // find the first member in this class such that we can add the logger definition before it
         Tree firstMember = findFirstMember(classTree.getMembers());
         Verify.verify(firstMember != null);
 
-        StringBuilder stringBuilder = new StringBuilder(200);
         String loggerVariableName = determineLoggerVariableName(migrationContext);
-
         String loggerVariableDefinition = String.format("%s %s %s %s = %s.%s();", loggerDefinition.scope(), loggerDefinition.modifiers(),
                 loggerDefinition.type(), loggerVariableName, loggerDefinition.type(), loggerDefinition.factoryMethod());
 
-        stringBuilder.append(loggerVariableDefinition);
-        stringBuilder.append("\n\n");
-        stringBuilder.append(ASTUtil.determineIndent(firstMember, state));
+        StringBuilder sb = new StringBuilder(200);
 
-        SuggestedFix suggestedFix = SuggestedFix.builder()
-                .prefixWith(firstMember, stringBuilder.toString())
-                .addImport(loggerDefinition.typeQualified())
-                .build();
+        sb.append(loggerVariableDefinition);
+        sb.append("\n\n");
+        sb.append(ASTUtil.determineIndent(firstMember, state));
 
-        if (variableTree != null) {
+        SuggestedFix suggestedFix = generateFloggerLogger(firstMember, sb, migrationContext);
+        suggestedFix = deleteOriginalLoggers(migrationContext, suggestedFix);
+
+        return suggestedFix;
+    }
+
+    private SuggestedFix generateFloggerLogger(Tree firstMember, StringBuilder sb, MigrationContext migrationContext) {
+        if( !migrationContext.floggerLoggers().isEmpty()) {
+            return SuggestedFix.builder().build();
+        }
+        return SuggestedFix.builder()
+                    .prefixWith(firstMember, sb.toString())
+                    .addImport(loggerDefinition.typeQualified())
+                    .build();
+    }
+
+    private SuggestedFix deleteOriginalLoggers(MigrationContext migrationContext, SuggestedFix suggestedFix) {
+        for (VariableTree classNamedLogger : migrationContext.classNamedLoggers()) {
             suggestedFix = SuggestedFix.builder()
-                    .delete(variableTree)
+                    .delete(classNamedLogger)
                     .merge(suggestedFix)
                     .build();
         }
-
         return suggestedFix;
     }
 

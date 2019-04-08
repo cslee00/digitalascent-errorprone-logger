@@ -14,8 +14,6 @@ import java.util.Optional;
 public interface LoggingApiConverter {
     Optional<SuggestedFix> migrateLoggingMethodInvocation(MethodInvocationTree tree, VisitorState state, MigrationContext migrationContext);
 
-    Optional<SuggestedFix> migrateLoggerVariable(ClassTree classTree, @Nullable VariableTree tree, VisitorState state, MigrationContext migrationContext);
-
     AbstractLoggingApiConverter.LoggerVariableNamingType determineLoggerVariableNamingType(ClassTree classTree, VariableTree tree, VisitorState state);
 
     Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState);

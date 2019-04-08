@@ -8,7 +8,6 @@ import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
-import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
@@ -17,6 +16,7 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -58,8 +58,8 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
         }
 
         MethodInvocationTree logManagerMethodInvocationTree = (MethodInvocationTree) variableTree.getInitializer();
-        if( logManagerMethodInvocationTree.getArguments().isEmpty() || Arguments.isLoggerNamedAfterClass(classTree,
-                logManagerMethodInvocationTree.getArguments().get(0), visitorState) ) {
+        if (logManagerMethodInvocationTree.getArguments().isEmpty() || Arguments.isLoggerNamedAfterClass(classTree,
+                logManagerMethodInvocationTree.getArguments().get(0), visitorState)) {
             return LoggerVariableNamingType.CLASS_NAMED;
         }
 
@@ -67,28 +67,18 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
     }
 
     @Override
-    public final Optional<SuggestedFix> migrateLoggerVariable(ClassTree classTree, VariableTree variableTree,
-                                                              VisitorState state, MigrationContext migrationContext) {
-        if (determineLoggerVariableNamingType(classTree, variableTree, state) != LoggerVariableNamingType.CLASS_NAMED) {
-            return Optional.empty();
-        }
-
-        return Optional.of(floggerSuggestedFixGenerator.generateLoggerVariable(classTree, variableTree, state, migrationContext));
-    }
-
-    @Override
     public final Optional<SuggestedFix> migrateLoggingMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
 
         String variableName = null;
         Tree methodSelect = methodInvocationTree.getMethodSelect();
-        if( methodSelect instanceof JCTree.JCFieldAccess) {
+        if (methodSelect instanceof JCTree.JCFieldAccess) {
             variableName = ((JCTree.JCFieldAccess) methodSelect).selected.toString();
         }
 
         Symbol.MethodSymbol sym = ASTHelpers.getSymbol(methodInvocationTree);
         String methodName = sym.getSimpleName().toString();
         if (matchLoggingMethod(methodInvocationTree, state)) {
-            if( migrationContext.isIgnoredLogger( variableName )) {
+            if (isIgnoredLogger(variableName, migrationContext)) {
                 return Optional.empty();
             }
             ImmutableFloggerLogContext floggerLogContext = migrateLoggingMethod(methodName, methodInvocationTree, state, migrationContext);
@@ -96,13 +86,18 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
         }
 
         if (matchLoggingEnabledMethod(methodInvocationTree, state)) {
-            if( migrationContext.isIgnoredLogger( variableName )) {
+            if (isIgnoredLogger(variableName, migrationContext)) {
                 return Optional.empty();
             }
             return Optional.of(migrateLoggingEnabledMethod(methodName, methodInvocationTree, state, migrationContext));
         }
 
         return Optional.empty();
+    }
+
+    private boolean isIgnoredLogger(@Nullable String variableName, MigrationContext migrationContext) {
+        return migrationContext.nonClassNamedLoggers().stream()
+                .anyMatch(loggerVariable -> loggerVariable.getName().toString().equals(variableName));
     }
 
     protected final TargetLogLevel mapLogLevel(String level) {
