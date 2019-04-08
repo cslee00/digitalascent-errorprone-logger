@@ -61,11 +61,6 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
     }
 
     @Override
-    public boolean isLoggerVariable(VariableTree tree, VisitorState state) {
-        return false;
-    }
-
-    @Override
     protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
         return loggerImports().matches(qualifiedIdentifier, visitorState);
     }

@@ -70,11 +70,6 @@ public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter 
     }
 
     @Override
-    public boolean isLoggerVariable(VariableTree tree, VisitorState state) {
-        return loggerType().matches(tree, state);
-    }
-
-    @Override
     protected boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState) {
         return loggerImports().matches(qualifiedIdentifier, visitorState);
     }

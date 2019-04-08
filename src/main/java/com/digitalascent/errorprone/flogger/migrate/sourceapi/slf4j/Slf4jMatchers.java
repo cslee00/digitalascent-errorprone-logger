@@ -1,7 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j;
 
 import com.google.errorprone.matchers.Matcher;
-import com.google.errorprone.matchers.Matchers;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 
@@ -44,10 +43,6 @@ final class Slf4jMatchers {
 
     static Matcher<ExpressionTree> loggerFactoryMethod() {
         return LOGGER_FACTORY_MATCHER;
-    }
-
-    static Matcher<Tree> loggerType() {
-        return LOGGER_TYPE_MATCHER;
     }
 
     static Matcher<Tree> loggerImports() {

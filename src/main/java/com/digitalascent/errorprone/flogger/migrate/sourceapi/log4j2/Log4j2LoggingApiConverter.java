@@ -2,13 +2,13 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
+import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.MessageFormatStyle;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -25,7 +25,6 @@ import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.logManagerMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggerImports;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggerType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.markerType;
@@ -77,11 +76,6 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
     @Override
     protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
         return logManagerMethod().matches(variableTree.getInitializer(), visitorState);
-    }
-
-    @Override
-    public boolean isLoggerVariable(VariableTree tree, VisitorState state) {
-        return loggerType().matches(tree, state);
     }
 
     @Override

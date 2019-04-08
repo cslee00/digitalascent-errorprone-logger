@@ -1,14 +1,14 @@
 package com.digitalascent.errorprone.flogger.testdata;
 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestClassUsingSlf4j_5 {
 
-    // TODO [LoggerApiRefactoring] Unable to migrate logger variable
     private final Logger logger = LoggerFactory.getLogger("some random logger");
 
     public void testLogLevels() {
-        logger.atFinest().log( "test message" );
-        logger.atFinest().log( "test message" );
+        logger.trace("test message");
+        logger.trace(DummySlf4JMarker.INSTANCE, "test message");
     }
 }

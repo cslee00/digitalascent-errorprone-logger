@@ -2,12 +2,14 @@ package com.digitalascent.errorprone.flogger.migrate;
 
 import com.sun.source.tree.VariableTree;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
 public interface MigrationContext {
-    List<VariableTree> sourceLoggerMemberVariables();
-    List<VariableTree> floggerMemberVariables();
+    List<VariableTree> classNamedLoggers();
+    List<VariableTree> nonClassNamedLoggers();
+    List<VariableTree> floggerLoggers();
     Optional<String> floggerMemberVariableName();
     Optional<String> sourceLoggerMemberVariableName();
 
@@ -23,5 +25,14 @@ public interface MigrationContext {
         }
 
         return Optional.empty();
+    }
+
+    default boolean isIgnoredLogger(@Nullable  String variableName) {
+        for (VariableTree logger : nonClassNamedLoggers()) {
+            if( logger.getName().toString().equals( variableName ) ) {
+                return true;
+            }
+        }
+        return false;
     }
 }

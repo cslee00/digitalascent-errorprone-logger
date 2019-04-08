@@ -2,11 +2,11 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
+import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
@@ -31,7 +31,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.Ti
  */
 public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConverter {
 
-    private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.pmw.tinylog");
+    private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.tinylog");
     private final TinyLog2LogMessageHandler logMessageHandler = new TinyLog2LogMessageHandler();
 
     public TinyLog2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
@@ -55,11 +55,6 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
 
     @Override
     protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
-        return false;
-    }
-
-    @Override
-    public boolean isLoggerVariable(VariableTree tree, VisitorState state) {
         return false;
     }
 

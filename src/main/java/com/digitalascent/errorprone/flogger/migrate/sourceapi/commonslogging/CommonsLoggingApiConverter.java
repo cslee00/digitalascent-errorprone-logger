@@ -2,11 +2,11 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
+import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.logFactoryMethod;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.logType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingMethod;
@@ -58,11 +57,6 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
     @Override
     protected boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState) {
         return logFactoryMethod().matches(variableTree.getInitializer(), visitorState);
-    }
-
-    @Override
-    public boolean isLoggerVariable(VariableTree tree, VisitorState state) {
-        return logType().matches(tree, state);
     }
 
     @Override

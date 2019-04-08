@@ -41,7 +41,7 @@ final class Log4j2LogMessageHandler extends AbstractLogMessageHandler {
     }
 
     private LogMessageModel internalMessageFormat(String messageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
-        if( migrationContext.sourceLoggerMemberVariables().isEmpty() && messageFormatStyle != null ) {
+        if( migrationContext.classNamedLoggers().isEmpty() && messageFormatStyle != null ) {
             // no logger variable definition (possibly from superclass or elsewhere); we can't accurately know
             // whether the logger was acquired via getLogger (brace-format) or getFormatter (printf-format)
             // use the (configurable) default
@@ -56,7 +56,7 @@ final class Log4j2LogMessageHandler extends AbstractLogMessageHandler {
         }
 
         // single Log4j2 logger; if it is getLogger, convert the message format otherwise it's getFormatterLogger
-        MethodInvocationTree logFactoryMethodInvocationTree = (MethodInvocationTree) migrationContext.sourceLoggerMemberVariables().get(0).getInitializer();
+        MethodInvocationTree logFactoryMethodInvocationTree = (MethodInvocationTree) migrationContext.classNamedLoggers().get(0).getInitializer();
         Symbol.MethodSymbol sym = ASTHelpers.getSymbol(logFactoryMethodInvocationTree);
         String methodName = sym.getSimpleName().toString();
         if ("getLogger".equals(methodName)) {

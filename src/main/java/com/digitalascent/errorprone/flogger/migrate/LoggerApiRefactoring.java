@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.BugPattern;
@@ -117,27 +118,31 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
 
     private List<SuggestedFix> handleLoggerMemberVariables(ClassTree classTree, VisitorState state, MigrationContext migrationContext) throws SkipCompilationUnitException {
         List<SuggestedFix> suggestedFixes = new ArrayList<>();
-        List<VariableTree> loggerVariables = migrationContext.sourceLoggerMemberVariables();
+        List<VariableTree> loggerVariables = migrationContext.classNamedLoggers();
 
-        switch (loggerVariables.size()) {
-            case 0:
-                suggestedFixes.add(refactoringConfiguration.floggerSuggestedFixGenerator().generateLoggerVariable(classTree, null, state, migrationContext));
-                break;
-            case 1:
-                loggingApiConverter.migrateLoggerVariable(classTree, loggerVariables.get(0), state, migrationContext).ifPresent(suggestedFixes::add);
-                break;
+        if( loggerVariables.isEmpty() ) {
+            suggestedFixes.add(refactoringConfiguration.floggerSuggestedFixGenerator().generateLoggerVariable(classTree, null, state, migrationContext));
+            return suggestedFixes;
+        }
 
-            default:
-                // we can't handle more than one logger per-class at present, in part due to Flogger being tied to class name
-                throw new SkipCompilationUnitException("Unable to migrate logger class with multiple loggers");
+        for (VariableTree loggerVariable : loggerVariables) {
+            loggingApiConverter.migrateLoggerVariable(classTree, loggerVariable, state, migrationContext).ifPresent(suggestedFixes::add);
         }
 
         return ImmutableList.copyOf(suggestedFixes);
     }
 
-    private List<VariableTree> findSourceLoggerMemberVariables(Tree typeDecl, VisitorState state) {
-        LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(tree -> loggingApiConverter.isLoggerVariable(tree, state));
-        typeDecl.accept(scanner, state);
+    private List<VariableTree> findClassNamedLoggers(ClassTree classTree, VisitorState state) {
+        LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(
+                tree -> loggingApiConverter.determineLoggerVariableNamingType(classTree, tree, state) == AbstractLoggingApiConverter.LoggerVariableNamingType.CLASS_NAMED);
+        classTree.accept(scanner, state);
+        return scanner.loggerVariables();
+    }
+
+    private List<VariableTree> findNonClassNamedLoggers(ClassTree classTree, VisitorState state) {
+        LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(
+                tree -> loggingApiConverter.determineLoggerVariableNamingType(classTree, tree, state) == AbstractLoggingApiConverter.LoggerVariableNamingType.NON_CLASS_NAMED);
+        classTree.accept(scanner, state);
         return scanner.loggerVariables();
     }
 
@@ -151,16 +156,22 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
 
     private MigrationContext createMigrationContext(ClassTree classTree, VisitorState visitorState) {
         ImmutableMigrationContext.Builder builder = ImmutableMigrationContext.builder();
-        List<VariableTree> sourceLoggerMemberVariables = findSourceLoggerMemberVariables(classTree, visitorState);
-        builder.addAllSourceLoggerMemberVariables(sourceLoggerMemberVariables);
-        if (sourceLoggerMemberVariables.size() == 1) {
-            builder.sourceLoggerMemberVariableName(sourceLoggerMemberVariables.get(0).getName().toString());
-        }
+        List<VariableTree> classNamedLoggers = findClassNamedLoggers(classTree, visitorState);
+        builder.addAllClassNamedLoggers(classNamedLoggers);
 
-        List<VariableTree> floggerMemberVariables = findFloggerMemberVariables(classTree, visitorState);
-        builder.addAllFloggerMemberVariables(floggerMemberVariables);
-        if (floggerMemberVariables.size() == 1) {
-            builder.floggerMemberVariableName(floggerMemberVariables.get(0).getName().toString());
+        // TODO
+        if (classNamedLoggers.size() == 1) {
+            builder.sourceLoggerMemberVariableName(classNamedLoggers.get(0).getName().toString());
+        }
+        List<VariableTree> nonClassNamedLoggers = findNonClassNamedLoggers(classTree,visitorState);
+        builder.addAllNonClassNamedLoggers(nonClassNamedLoggers);
+
+        List<VariableTree> floggerLoggers = findFloggerMemberVariables(classTree, visitorState);
+        builder.addAllFloggerLoggers(floggerLoggers);
+
+        // TODO
+        if (floggerLoggers.size() == 1) {
+            builder.floggerMemberVariableName(floggerLoggers.get(0).getName().toString());
         }
 
         return builder.build();

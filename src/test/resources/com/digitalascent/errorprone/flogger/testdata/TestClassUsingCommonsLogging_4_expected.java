@@ -1,17 +1,18 @@
 package com.digitalascent.errorprone.flogger.testdata;
 
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class TestClassUsingCommonsLogging_4 {
     private final Log someLogger = LogFactory.getLog("some other logger name");
 
     public void testLogLevels() {
-        someLogger.atFinest().log( "test message" );
-        someLogger.atFine().log( "test message" );
-        someLogger.atInfo().log( "test message" );
-        someLogger.atWarning().log( "test message" );
-        someLogger.atSevere().log( "test message" );
-        someLogger.atSevere().log( "test message" );
+        someLogger.trace("test message");
+        someLogger.debug("test message");
+        someLogger.info("test message");
+        someLogger.warn("test message");
+        someLogger.error("test message");
+        someLogger.fatal("test message");
     }
 
 }
