@@ -10,7 +10,10 @@ import java.util.Arrays;
 import static com.google.errorprone.matchers.Matchers.methodInvocation;
 import static com.google.errorprone.matchers.Matchers.staticMethod;
 
-
+/**
+ * Removes Arrays.toString( array ) calls, allowing them to be deferred until it's determined that
+ * the logging level is enabled.
+ */
 public final class ArraysToStringMessageFormatArgumentReducer implements MessageFormatArgumentReducer {
     private static final Matcher<ExpressionTree> ARRAYS_TO_STRING_METHOD = methodInvocation(staticMethod()
             .onClass(Arrays.class.getName())

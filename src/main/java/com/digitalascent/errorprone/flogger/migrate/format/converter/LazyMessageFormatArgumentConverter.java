@@ -10,6 +10,10 @@ import com.sun.source.tree.NewClassTree;
 
 import static com.google.errorprone.matchers.Matchers.anyMethod;
 
+/**
+ * Wrap method-invoking message format arguments in lazy( argument ) to defer evaluation until it's been determined
+ * that the log level is enabled
+ */
 public final class LazyMessageFormatArgumentConverter implements MessageFormatArgumentConverter {
 
     private static final ImmutableList<String> LAZY_ARG_IMPORT = ImmutableList.of("com.google.common.flogger.LazyArgs.lazy");
@@ -27,7 +31,7 @@ public final class LazyMessageFormatArgumentConverter implements MessageFormatAr
             if (rawSource == null) {
                 return null;
             }
-            String source = "lazy(" + rawSource + ")";
+            String source = "lazy( () -> " + rawSource + ")";
             return MessageFormatArgument.fromCode(source, ImmutableList.of(), LAZY_ARG_IMPORT);
         }
         return null;

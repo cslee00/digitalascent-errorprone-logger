@@ -9,6 +9,10 @@ import com.sun.tools.javac.tree.JCTree;
 import static com.google.errorprone.matchers.Matchers.instanceMethod;
 
 
+/**
+ * Removes toString() calls on message format parameters, allowing that to be deferred until it's determined
+ * that the logging level is enabled
+ */
 public final class ToStringMessageFormatArgumentReducer implements MessageFormatArgumentReducer {
     private static final Matcher<ExpressionTree> TO_STRING_METHOD = instanceMethod()
             .onDescendantOf("java.lang.Object")
