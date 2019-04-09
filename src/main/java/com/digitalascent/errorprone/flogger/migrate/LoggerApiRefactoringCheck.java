@@ -146,14 +146,9 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
 
     private MigrationContext createMigrationContext(ClassTree classTree, VisitorState visitorState) {
         ImmutableMigrationContext.Builder builder = ImmutableMigrationContext.builder();
-        List<VariableTree> classNamedLoggers = findClassNamedLoggers(classTree, visitorState);
-        builder.addAllClassNamedLoggers(classNamedLoggers);
-
-        List<VariableTree> nonClassNamedLoggers = findNonClassNamedLoggers(classTree,visitorState);
-        builder.addAllNonClassNamedLoggers(nonClassNamedLoggers);
-
-        List<VariableTree> floggerLoggers = findFloggerMemberVariables(classTree, visitorState);
-        builder.addAllFloggerLoggers(floggerLoggers);
+        builder.addAllClassNamedLoggers(findClassNamedLoggers(classTree, visitorState));
+        builder.addAllNonClassNamedLoggers(findNonClassNamedLoggers(classTree,visitorState));
+        builder.addAllFloggerLoggers(findFloggerMemberVariables(classTree, visitorState));
 
         return builder.build();
     }

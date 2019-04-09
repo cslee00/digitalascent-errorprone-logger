@@ -49,7 +49,7 @@ class LoggerApiRefactoringCheckTest {
     }
 
     @ParameterizedTest( name = "multiple-loggers: test id {arguments}")
-    @ValueSource(ints = {0,1})
+    @ValueSource(ints = {0,1, 2})
     public void testMultipleLoggers(int id) {
         executeTest("slf4j", "MultipleLoggers", id);
     }

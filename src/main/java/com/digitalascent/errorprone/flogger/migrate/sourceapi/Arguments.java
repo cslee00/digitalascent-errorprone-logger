@@ -68,9 +68,6 @@ public final class Arguments {
         return arguments;
     }
 
-    private Arguments() {
-        throw new AssertionError("Cannot instantiate " + getClass());
-    }
 
     public static List<? extends ExpressionTree> prependArgument(List<? extends ExpressionTree> arguments, ExpressionTree argument) {
         ImmutableList.Builder<ExpressionTree> builder = ImmutableList.builder();
@@ -118,7 +115,6 @@ public final class Arguments {
         return Optional.empty();
     }
 
-
     static boolean isStringType(ExpressionTree expressionTree, VisitorState state) {
         return STRING_MATCHER.matches(expressionTree, state);
     }
@@ -163,4 +159,9 @@ public final class Arguments {
     private static boolean isClassGetName(ExpressionTree argument, VisitorState state) {
         return methodInvocation(instanceMethod().onExactClass("java.lang.Class").named("getName")).matches(argument,state);
     }
+
+    private Arguments() {
+        throw new AssertionError("Cannot instantiate " + getClass());
+    }
+
 }

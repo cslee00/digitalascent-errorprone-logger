@@ -35,13 +35,13 @@ public class FloggerSuggestedFixGenerator {
     public SuggestedFix generateConditional(MethodInvocationTree tree, VisitorState state, TargetLogLevel targetLogLevel, MigrationContext migrationContext) {
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);
-        String selectorMethod = generateSelector(targetLogLevel, state);
+        String selectorMethod = generateSelectorMethod(targetLogLevel, state);
         return SuggestedFix.builder()
                 .replace(tree, String.format("%s.%s.isEnabled()", loggerVariableName, selectorMethod))
                 .build();
     }
 
-    private String generateSelector(TargetLogLevel targetLogLevel, VisitorState state) {
+    private String generateSelectorMethod(TargetLogLevel targetLogLevel, VisitorState state) {
         String methodInvocation = targetLogLevel.methodName() + "()";
         if (targetLogLevel.customLogLevel() != null) {
             methodInvocation = String.format("%s(%s)", targetLogLevel.methodName(), state.getSourceForNode(targetLogLevel.customLogLevel()));
@@ -52,25 +52,44 @@ public class FloggerSuggestedFixGenerator {
     public SuggestedFix generateLoggingMethod(MethodInvocationTree loggerMethodInvocation, VisitorState state,
                                               FloggerLogStatement floggerLogStatement, MigrationContext migrationContext) {
 
+        StringBuilder sb = new StringBuilder(200);
+
         LogMessageModel logMessageModel = floggerLogStatement.logMessageModel();
+        emitComments(loggerMethodInvocation, state, logMessageModel, sb);
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);
+        String selectorMethod = generateSelectorMethod(floggerLogStatement.targetLogLevel(), state);
+        String loggingCall = generateLoggingCall(state, floggerLogStatement, loggerVariableName, selectorMethod);
+        emitLoggingCall(state, logMessageModel, loggingCall, sb);
 
-        String methodInvocation = generateSelector(floggerLogStatement.targetLogLevel(), state);
+        SuggestedFix.Builder builder = SuggestedFix.builder()
+                .replace(loggerMethodInvocation, sb.toString());
 
+        // add in any imports the arguments may have added
+        addArgumentImports(logMessageModel, builder);
+
+        return builder.build();
+    }
+
+    private String generateLoggingCall(VisitorState state, FloggerLogStatement floggerLogStatement, String loggerVariableName, String methodInvocation) {
         String loggingCall = String.format("%s.%s", loggerVariableName, methodInvocation);
 
         if (floggerLogStatement.thrown() != null) {
             String thrownCode = state.getSourceForNode(floggerLogStatement.thrown());
             loggingCall += String.format(".withCause(%s)", thrownCode);
         }
+        return loggingCall;
+    }
 
-        StringBuilder sb = new StringBuilder(200);
+    private void addArgumentImports(LogMessageModel logMessageModel, SuggestedFix.Builder builder) {
+        logMessageModel.arguments().stream().map(MessageFormatArgument::imports).flatMap(Collection::stream)
+                .forEach(builder::addImport);
 
-        for (String comment : logMessageModel.migrationIssues()) {
-            sb.append(ToDoCommentGenerator.singleLineCommentForNode(comment, loggerMethodInvocation, state));
-        }
+        logMessageModel.arguments().stream().map(MessageFormatArgument::staticImports).flatMap(Collection::stream)
+                .forEach(builder::addStaticImport);
+    }
 
+    private void emitLoggingCall(VisitorState state, LogMessageModel logMessageModel, String loggingCall, StringBuilder sb) {
         sb.append(loggingCall);
         sb.append(".log( ");
 
@@ -78,18 +97,12 @@ public class FloggerSuggestedFixGenerator {
         emitMessageFormatArguments(state, logMessageModel, sb);
 
         sb.append(" )");
+    }
 
-        SuggestedFix.Builder builder = SuggestedFix.builder()
-                .replace(loggerMethodInvocation, sb.toString());
-
-        // add in any imports the arguments may have added
-        logMessageModel.arguments().stream().map(MessageFormatArgument::imports).flatMap(Collection::stream)
-                .forEach(builder::addImport);
-
-        logMessageModel.arguments().stream().map(MessageFormatArgument::staticImports).flatMap(Collection::stream)
-                .forEach(builder::addStaticImport);
-
-        return builder.build();
+    private void emitComments(MethodInvocationTree loggerMethodInvocation, VisitorState state, LogMessageModel logMessageModel, StringBuilder sb) {
+        for (String comment : logMessageModel.migrationIssues()) {
+            sb.append(ToDoCommentGenerator.singleLineCommentForNode(comment, loggerMethodInvocation, state));
+        }
     }
 
     private void emitMessageFormatArguments(VisitorState state, LogMessageModel logMessageModel, StringBuilder sb) {
@@ -144,12 +157,12 @@ public class FloggerSuggestedFixGenerator {
         Verify.verify(firstMember != null);
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);
-        String loggerVariableDefinition = String.format("%s %s %s %s = %s.%s();", this.loggerVariableDefinition.scope(), this.loggerVariableDefinition.modifiers(),
-                this.loggerVariableDefinition.type(), loggerVariableName, this.loggerVariableDefinition.type(), this.loggerVariableDefinition.factoryMethod());
+        String loggerVariable = String.format("%s %s %s %s = %s.%s();", loggerVariableDefinition.scope(), loggerVariableDefinition.modifiers(),
+                loggerVariableDefinition.type(), loggerVariableName, loggerVariableDefinition.type(), loggerVariableDefinition.factoryMethod());
 
         StringBuilder sb = new StringBuilder(200);
 
-        sb.append(loggerVariableDefinition);
+        sb.append(loggerVariable);
         sb.append("\n\n");
         sb.append(ASTUtil.determineIndent(firstMember, state));
 
@@ -189,5 +202,4 @@ public class FloggerSuggestedFixGenerator {
                 .removeImport(importTree.getQualifiedIdentifier().toString())
                 .build();
     }
-
 }
