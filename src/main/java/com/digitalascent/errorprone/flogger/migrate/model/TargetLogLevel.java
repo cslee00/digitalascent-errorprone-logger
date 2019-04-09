@@ -5,6 +5,9 @@ import com.sun.source.tree.ExpressionTree;
 
 import javax.annotation.Nullable;
 
+/**
+ * Represents target log level for a Flogger log statement
+ */
 public final class TargetLogLevel {
     private final String methodName;
 
@@ -19,7 +22,7 @@ public final class TargetLogLevel {
         this(methodName, null);
     }
 
-    private TargetLogLevel(String methodName, @Nullable  ExpressionTree customLogLevel) {
+    private TargetLogLevel(String methodName, @Nullable ExpressionTree customLogLevel) {
         this.methodName = methodName;
         this.customLogLevel = customLogLevel;
     }
