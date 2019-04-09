@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
+import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
 import com.google.common.collect.ImmutableList;
 import com.sun.source.tree.ExpressionTree;
 

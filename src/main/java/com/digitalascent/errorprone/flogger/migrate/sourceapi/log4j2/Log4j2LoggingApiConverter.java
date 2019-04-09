@@ -3,12 +3,12 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2;
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
 import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
-import com.digitalascent.errorprone.flogger.migrate.MessageFormatStyle;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.SkipCompilationUnitException;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -18,7 +18,6 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.tree.JCTree;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -28,6 +27,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.markerType;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Log4J2 API: https://logging.apache.org/log4j/2.x/log4j-api/apidocs/index.html
@@ -36,14 +36,13 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
 
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.logging.log4j");
 
-    @Nullable
-    private final Log4j2LogMessageHandler logMessageHandler;
+    private final LogMessageHandler logMessageHandler;
 
     public Log4j2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
                                      Function<String, TargetLogLevel> targetLogLevelFunction,
-                                     @Nullable MessageFormatStyle messageFormatStyle) {
+                                     LogMessageHandler logMessageHandler) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.logMessageHandler = new Log4j2LogMessageHandler(messageFormatStyle);
+        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
     }
 
     @Override
@@ -124,7 +123,7 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
         }
 
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
-                remainingArguments, state, throwableArgument, migrationContext);
+                remainingArguments, state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
     }

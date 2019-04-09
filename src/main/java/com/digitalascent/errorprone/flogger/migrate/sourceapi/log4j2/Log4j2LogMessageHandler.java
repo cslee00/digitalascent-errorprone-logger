@@ -1,10 +1,12 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2;
 
-import com.digitalascent.errorprone.flogger.migrate.MessageFormatArgument;
-import com.digitalascent.errorprone.flogger.migrate.MessageFormatStyle;
+import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
+import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatStyle;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLogMessageHandler;
 import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.format.converter.MessageFormatArgumentConverter;
+import com.digitalascent.errorprone.flogger.migrate.format.reducer.MessageFormatArgumentReducer;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.matchers.Matchers;
@@ -16,7 +18,7 @@ import com.sun.tools.javac.code.Symbol;
 import javax.annotation.Nullable;
 import java.util.List;
 
-final class Log4j2LogMessageHandler extends AbstractLogMessageHandler {
+public final class Log4j2LogMessageHandler extends AbstractLogMessageHandler  {
     @Nullable
     private final MessageFormatStyle messageFormatStyle;
 
@@ -26,7 +28,10 @@ final class Log4j2LogMessageHandler extends AbstractLogMessageHandler {
             Matchers.isSubtypeOf("org.apache.logging.log4j.util.Supplier")
     );
 
-    Log4j2LogMessageHandler(@Nullable MessageFormatStyle messageFormatStyle) {
+    public Log4j2LogMessageHandler(@Nullable MessageFormatStyle messageFormatStyle,
+                            MessageFormatArgumentConverter messageFormatArgumentConverter,
+                            MessageFormatArgumentReducer messageFormatArgumentReducer) {
+        super(messageFormatArgumentConverter, messageFormatArgumentReducer);
         this.messageFormatStyle = messageFormatStyle;
     }
 

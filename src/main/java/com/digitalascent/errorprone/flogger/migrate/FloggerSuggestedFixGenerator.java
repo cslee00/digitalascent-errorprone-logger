@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
+import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
 import com.google.common.base.Verify;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -13,6 +14,7 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,9 +74,17 @@ public class FloggerSuggestedFixGenerator {
 
         sb.append(" )");
 
-        return SuggestedFix.builder()
-                .replace(loggerMethodInvocation, sb.toString())
-                .build();
+        SuggestedFix.Builder builder = SuggestedFix.builder()
+                .replace(loggerMethodInvocation, sb.toString());
+
+        // add in any imports the arguments may have added
+        logMessageModel.arguments().stream().map(MessageFormatArgument::imports).flatMap(Collection::stream)
+                .forEach(builder::addImport);
+
+        logMessageModel.arguments().stream().map(MessageFormatArgument::staticImports).flatMap(Collection::stream)
+                .forEach(builder::addStaticImport);
+
+        return builder.build();
     }
 
     private void emitMessageFormatArguments(VisitorState state, LogMessageModel logMessageModel, StringBuilder sb) {

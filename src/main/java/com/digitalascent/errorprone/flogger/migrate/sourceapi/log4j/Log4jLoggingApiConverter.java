@@ -8,6 +8,7 @@ import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
@@ -25,10 +26,10 @@ import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.logManagerMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggerImports;
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggerType;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingMethod;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Log4J API: https://logging.apache.org/log4j/1.2/apidocs/index.html
@@ -36,10 +37,13 @@ import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter {
 
     private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.log4j");
-    private Log4jLogMessageHandler logMessageHandler = new Log4jLogMessageHandler();
+    private final LogMessageHandler logMessageHandler;
 
-    public Log4jLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+    public Log4jLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
+                                    Function<String, TargetLogLevel> targetLogLevelFunction,
+                                    LogMessageHandler logMessageHandler) {
         super( floggerSuggestedFixGenerator, targetLogLevelFunction);
+        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
     }
 
     @Override
@@ -116,7 +120,7 @@ public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter 
         }
 
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
-                remainingArguments, state, throwableArgument, migrationContext);
+                remainingArguments, state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
     }

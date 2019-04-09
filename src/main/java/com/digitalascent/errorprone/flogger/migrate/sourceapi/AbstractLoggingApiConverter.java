@@ -33,7 +33,6 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "targetLogLevelFunction");
     }
 
-
     @Override
     public final Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
         if (matchImport(importTree.getQualifiedIdentifier(), visitorState)) {

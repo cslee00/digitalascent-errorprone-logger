@@ -6,6 +6,7 @@ import com.sun.source.tree.ExpressionTree;
 public final class TargetLogLevel {
     private final String methodName;
     private final ExpressionTree customLogLevel;
+    private final int ordinal = 1;
 
     public static TargetLogLevel customLogLevel( ExpressionTree customLogLevel ) {
         return new TargetLogLevel("at", customLogLevel );
@@ -17,6 +18,10 @@ public final class TargetLogLevel {
     public TargetLogLevel(String methodName, ExpressionTree customLogLevel) {
         this.methodName = methodName;
         this.customLogLevel = customLogLevel;
+    }
+
+    public int ordinal() {
+        return ordinal;
     }
 
     public String methodName() {

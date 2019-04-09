@@ -1,4 +1,4 @@
-package com.digitalascent.errorprone.flogger.migrate.sourceapi;
+package com.digitalascent.errorprone.flogger.migrate.format.reducer;
 
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
@@ -6,14 +6,11 @@ import com.sun.source.tree.ExpressionTree;
 
 import java.util.List;
 
-final class CompositeMessageFormatArgumentReducer implements MessageFormatArgumentReducer{
+public final class CompositeMessageFormatArgumentReducer implements MessageFormatArgumentReducer {
     private final List<MessageFormatArgumentReducer> reducers;
 
-    CompositeMessageFormatArgumentReducer() {
-        ImmutableList.Builder<MessageFormatArgumentReducer> builder = ImmutableList.builder();
-        builder.add(new ToStringMessageFormatArgumentReducer());
-        builder.add(new ArraysToStringMessageFormatArgumentReducer());
-        this.reducers = builder.build();
+    public CompositeMessageFormatArgumentReducer(List<MessageFormatArgumentReducer> reducers) {
+        this.reducers = ImmutableList.copyOf(reducers);
     }
 
     @Override
@@ -25,6 +22,7 @@ final class CompositeMessageFormatArgumentReducer implements MessageFormatArgume
                 lastReducedArgument = reducedArgument;
             }
         }
+        // recurse after reduction to enable subsequent reductions
         return lastReducedArgument == argument ? argument : reduce( lastReducedArgument, visitorState );
     }
 }

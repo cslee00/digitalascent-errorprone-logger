@@ -1,6 +1,5 @@
-package com.digitalascent.errorprone.flogger.migrate.sourceapi;
+package com.digitalascent.errorprone.flogger.migrate.format.reducer;
 
-import com.digitalascent.errorprone.flogger.migrate.MessageFormatArgument;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matcher;
 import com.sun.source.tree.ExpressionTree;
@@ -10,7 +9,7 @@ import com.sun.tools.javac.tree.JCTree;
 import static com.google.errorprone.matchers.Matchers.instanceMethod;
 
 
-final class ToStringMessageFormatArgumentReducer implements MessageFormatArgumentReducer {
+public final class ToStringMessageFormatArgumentReducer implements MessageFormatArgumentReducer {
     private static final Matcher<ExpressionTree> TO_STRING_METHOD = instanceMethod()
             .onDescendantOf("java.lang.Object")
             .named("toString").withParameters();

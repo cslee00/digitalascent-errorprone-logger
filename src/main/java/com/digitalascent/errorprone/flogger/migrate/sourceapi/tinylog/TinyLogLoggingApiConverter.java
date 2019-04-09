@@ -7,6 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
@@ -26,6 +27,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.m
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.throwableType;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Tiny Log API: https://static.javadoc.io/org.tinylog/tinylog/1.3.6/index.html
@@ -34,10 +36,13 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
 
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.pmw.tinylog");
 
-    private final TinyLogLogMessageHandler logMessageHandler = new TinyLogLogMessageHandler();
+    private final LogMessageHandler logMessageHandler;
 
-    public TinyLogLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
-        super( floggerSuggestedFixGenerator, targetLogLevelFunction);
+    public TinyLogLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
+                                      Function<String, TargetLogLevel> targetLogLevelFunction,
+                                      LogMessageHandler logMessageHandler) {
+        super(floggerSuggestedFixGenerator, targetLogLevelFunction);
+        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
     }
 
     @Override
@@ -78,17 +83,17 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
         builder.targetLogLevel(targetLogLevel);
 
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
-        ExpressionTree throwableArgument = findThrowableArgument(remainingArguments,state);
-        if( throwableArgument != null ) {
+        ExpressionTree throwableArgument = findThrowableArgument(remainingArguments, state);
+        if (throwableArgument != null) {
             builder.thrown(throwableArgument);
-            remainingArguments = Arguments.removeFirst( remainingArguments );
+            remainingArguments = Arguments.removeFirst(remainingArguments);
         }
 
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
-        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments,state);
+        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
-                remainingArguments, state, throwableArgument, migrationContext);
+                remainingArguments, state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
     }

@@ -7,6 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -23,6 +24,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingMethod;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Commons Logging API: https://commons.apache.org/proper/commons-logging/apidocs/index.html
@@ -30,10 +32,13 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
 public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverter {
 
     private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.commons.logging");
-    private CommonsLoggingLogMessageHandler logMessageHandler = new CommonsLoggingLogMessageHandler();
+    private final LogMessageHandler logMessageHandler;
 
-    public CommonsLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+    public CommonsLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
+                                      Function<String, TargetLogLevel> targetLogLevelFunction,
+                                      LogMessageHandler logMessageHandler) {
         super(floggerSuggestedFixGenerator, targetLogLevelFunction);
+        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
     }
 
     @Override
@@ -87,7 +92,7 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
         remainingArguments = Arguments.removeFirst(remainingArguments);
 
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments,
-                state, throwableArgument, migrationContext);
+                state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
     }

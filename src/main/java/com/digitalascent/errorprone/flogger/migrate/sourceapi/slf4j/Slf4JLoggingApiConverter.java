@@ -7,6 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
@@ -24,6 +25,7 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4j
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.markerType;
+import static java.util.Objects.requireNonNull;
 
 /**
  * SLF4J API: https://www.slf4j.org/apidocs/index.html
@@ -31,10 +33,13 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4j
 public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter {
 
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.slf4j");
-    private final Slf4jLogMessageHandler logMessageHandler = new Slf4jLogMessageHandler();
+    private final LogMessageHandler logMessageHandler;
 
-    public Slf4JLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+    public Slf4JLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
+                                    Function<String, TargetLogLevel> targetLogLevelFunction,
+                                    LogMessageHandler logMessageHandler) {
         super(floggerSuggestedFixGenerator,targetLogLevelFunction);
+        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
     }
 
     @Override
@@ -91,7 +96,7 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
         }
 
         LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments,
-                state, throwableArgument, migrationContext);
+                state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
 
         return builder.build();
