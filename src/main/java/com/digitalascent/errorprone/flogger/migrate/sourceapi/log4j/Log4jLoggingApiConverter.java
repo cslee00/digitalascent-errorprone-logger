@@ -108,9 +108,11 @@ public final class Log4jLoggingApiConverter extends AbstractLoggingApiConverter 
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
+        // extract message format argument
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
         remainingArguments = Arguments.removeFirst(remainingArguments);
 
+        // extract throwable as last argument, if present
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);

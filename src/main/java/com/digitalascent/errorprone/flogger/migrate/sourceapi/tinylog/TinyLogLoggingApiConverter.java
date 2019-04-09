@@ -80,12 +80,15 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
         builder.targetLogLevel(targetLogLevel);
 
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
+
+        // extract throwable as first parameter, if present
         ExpressionTree throwableArgument = findThrowableArgument(remainingArguments, state);
         if (throwableArgument != null) {
             builder.thrown(throwableArgument);
             remainingArguments = Arguments.removeFirst(remainingArguments);
         }
 
+        // extract message format argument, if present
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 

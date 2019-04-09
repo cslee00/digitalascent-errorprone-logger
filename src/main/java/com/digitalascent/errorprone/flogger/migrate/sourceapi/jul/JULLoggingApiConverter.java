@@ -109,9 +109,11 @@ public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
+        // extract message format argument and it's arguments
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 
+        // extract throwable argument at the end, if present
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);

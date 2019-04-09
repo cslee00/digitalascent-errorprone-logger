@@ -80,13 +80,14 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
 
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
 
-        if( hasMarkerArgument(remainingArguments,state)) {
-            remainingArguments = Arguments.removeFirst(remainingArguments);
-        }
+        // skip the marker object, if present
+        remainingArguments = maybeSkipMarkerArgument(state, remainingArguments);
 
+        // extract the message format argument and it's arguments
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state );
 
+        // extract throwable as last argument, if present
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast( remainingArguments );
@@ -98,6 +99,13 @@ public final class Slf4JLoggingApiConverter extends AbstractLoggingApiConverter 
         builder.logMessageModel(logMessageModel);
 
         return builder.build();
+    }
+
+    private List<? extends ExpressionTree> maybeSkipMarkerArgument(VisitorState state, List<? extends ExpressionTree> remainingArguments) {
+        if( hasMarkerArgument(remainingArguments,state)) {
+            remainingArguments = Arguments.removeFirst(remainingArguments);
+        }
+        return remainingArguments;
     }
 
     private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {

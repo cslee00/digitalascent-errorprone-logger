@@ -106,13 +106,14 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        if (hasMarkerArgument(remainingArguments, state)) {
-            remainingArguments = Arguments.removeFirst(remainingArguments);
-        }
+        // skip marker object, if present
+        remainingArguments = maybeSkipMarkerArgument(state, remainingArguments);
 
+        // extract message format argument and it's arguments
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 
+        // extract tailing exception, if present
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);
@@ -123,6 +124,13 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
                 remainingArguments, state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
+    }
+
+    private List<? extends ExpressionTree> maybeSkipMarkerArgument(VisitorState state, List<? extends ExpressionTree> remainingArguments) {
+        if (hasMarkerArgument(remainingArguments, state)) {
+            remainingArguments = Arguments.removeFirst(remainingArguments);
+        }
+        return remainingArguments;
     }
 
     private boolean hasMarkerArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
