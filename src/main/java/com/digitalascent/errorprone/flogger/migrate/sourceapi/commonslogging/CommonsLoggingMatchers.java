@@ -12,7 +12,7 @@ import static com.google.errorprone.matchers.Matchers.staticMethod;
 
 final class CommonsLoggingMatchers {
     private static final String LOG_CLASS = "org.apache.commons.logging.Log";
-    private static String LOG_FACTORY_CLASS = "org.apache.commons.logging.LogFactory";
+    private static final String LOG_FACTORY_CLASS = "org.apache.commons.logging.LogFactory";
 
     private static final Matcher<ExpressionTree> IS_ENABLED_METHODS = instanceMethod()
             .onDescendantOf(LOG_CLASS)
@@ -40,10 +40,6 @@ final class CommonsLoggingMatchers {
 
     static Matcher<ExpressionTree> logFactoryMethod() {
         return LOG_FACTORY_MATCHER;
-    }
-
-    static Matcher<Tree> logType() {
-        return LOG_TYPE_MATCHER;
     }
 
     static Matcher<Tree> loggerImports() {

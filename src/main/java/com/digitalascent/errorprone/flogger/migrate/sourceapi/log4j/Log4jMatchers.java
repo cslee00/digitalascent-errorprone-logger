@@ -12,7 +12,7 @@ import static com.google.errorprone.matchers.Matchers.staticMethod;
 
 final class Log4jMatchers {
     private static final String LOG4J_LOGGER_CLASS = "org.apache.log4j.Category";
-    private static String LOG4J_LOG_MANAGER_CLASS = "org.apache.log4j.LogManager";
+    private static final String LOG4J_LOG_MANAGER_CLASS = "org.apache.log4j.LogManager";
 
     private static final Matcher<ExpressionTree> IS_ENABLED_METHODS = instanceMethod()
             .onDescendantOf(LOG4J_LOGGER_CLASS)
@@ -40,10 +40,6 @@ final class Log4jMatchers {
 
     static Matcher<ExpressionTree> logManagerMethod() {
         return LOG_MANAGER_MATCHER;
-    }
-
-    static Matcher<Tree> loggerType() {
-        return LOGGER_TYPE_MATCHER;
     }
 
     static Matcher<Tree> loggerImports() {

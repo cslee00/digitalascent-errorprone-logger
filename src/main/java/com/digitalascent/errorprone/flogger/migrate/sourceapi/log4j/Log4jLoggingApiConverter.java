@@ -30,7 +30,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4j
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingMethod;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Log4J API: https://logging.apache.org/log4j/1.2/apidocs/index.html

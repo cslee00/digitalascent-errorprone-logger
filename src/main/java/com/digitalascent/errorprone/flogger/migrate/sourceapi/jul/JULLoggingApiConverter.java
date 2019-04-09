@@ -29,7 +29,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatc
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMatchers.loggingMethod;
-import static java.util.Objects.requireNonNull;
 
 /**
  * JUL API: https://docs.oracle.com/javase/8/docs/api/java/util/logging/Logger.html

@@ -25,7 +25,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingMethod;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Commons Logging API: https://commons.apache.org/proper/commons-logging/apidocs/index.html

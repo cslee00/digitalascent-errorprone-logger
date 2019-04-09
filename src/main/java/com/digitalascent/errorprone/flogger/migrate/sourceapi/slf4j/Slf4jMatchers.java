@@ -13,7 +13,7 @@ import static com.google.errorprone.matchers.Matchers.staticMethod;
 final class Slf4jMatchers {
     private static final String SLF4J_LOGGER_CLASS = "org.slf4j.Logger";
     private static final String SLF4J_MARKER_CLASS = "org.slf4j.Marker";
-    private static String SLF4J_LOGGER_FACTORY_CLASS = "org.slf4j.LoggerFactory";
+    private static final String SLF4J_LOGGER_FACTORY_CLASS = "org.slf4j.LoggerFactory";
 
     private static final Matcher<ExpressionTree> MARKER_MATCHER = isSubtypeOf(SLF4J_MARKER_CLASS);
     private static final Matcher<ExpressionTree> LOGGER_FACTORY_MATCHER = methodInvocation(staticMethod()

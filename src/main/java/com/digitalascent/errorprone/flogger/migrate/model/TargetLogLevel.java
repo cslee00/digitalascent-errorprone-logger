@@ -15,7 +15,7 @@ public final class TargetLogLevel {
         this(methodName, null);
     }
 
-    public TargetLogLevel(String methodName, ExpressionTree customLogLevel) {
+    private TargetLogLevel(String methodName, ExpressionTree customLogLevel) {
         this.methodName = methodName;
         this.customLogLevel = customLogLevel;
     }

@@ -63,7 +63,6 @@ final class RefactoringConfigurationLoader {
         builder.floggerSuggestedFixGenerator(floggerSuggestedFixGenerator);
 
         MessageFormatStyle messageFormatStyle = determineMessageFormatStyle(sourceApi, properties);
-        builder.messageFormatStyle(messageFormatStyle);
 
         Function<String, TargetLogLevel> targetLogLevelFunction = readLogLevelMappings(properties);
         LoggingApiConverter converter = determineSourceApiConverter(sourceApi, floggerSuggestedFixGenerator, targetLogLevelFunction, messageFormatStyle);

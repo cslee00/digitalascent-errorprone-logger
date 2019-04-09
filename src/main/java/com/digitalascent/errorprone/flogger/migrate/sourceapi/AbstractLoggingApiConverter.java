@@ -32,9 +32,9 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
     private final LogMessageHandler logMessageHandler;
 
-    public AbstractLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
-                                       Function<String, TargetLogLevel> targetLogLevelFunction,
-                                       LogMessageHandler logMessageHandler) {
+    protected AbstractLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
+                                          Function<String, TargetLogLevel> targetLogLevelFunction,
+                                          LogMessageHandler logMessageHandler) {
         this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "targetLogLevelFunction");
         this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");

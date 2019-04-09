@@ -12,7 +12,7 @@ import java.util.Optional;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 abstract class FixCollectingTreeScanner extends TreeScanner<Void, VisitorState> {
     private final List<SuggestedFix> suggestedFixes = new ArrayList<>();
-    protected final void addSuggestedFix( Optional<SuggestedFix> suggestedFix ) {
+    final void addSuggestedFix(Optional<SuggestedFix> suggestedFix) {
         suggestedFix.ifPresent(suggestedFixes::add);
     }
 

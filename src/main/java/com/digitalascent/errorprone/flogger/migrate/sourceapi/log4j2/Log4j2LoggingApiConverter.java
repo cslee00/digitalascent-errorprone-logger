@@ -28,7 +28,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2Matchers.markerType;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Log4J2 API: https://logging.apache.org/log4j/2.x/log4j-api/apidocs/index.html

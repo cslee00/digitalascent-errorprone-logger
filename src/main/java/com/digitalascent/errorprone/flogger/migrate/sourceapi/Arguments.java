@@ -4,13 +4,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.matchers.Matchers;
-import com.google.errorprone.matchers.method.MethodMatchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodInvocationTree;
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
 
 import static com.google.errorprone.matchers.Matchers.instanceMethod;
@@ -28,7 +25,6 @@ import static com.google.errorprone.matchers.Matchers.staticFieldAccess;
 public final class Arguments {
     private static final Matcher<ExpressionTree> STRING_MATCHER = isSubtypeOf(String.class);
     private static final Matcher<ExpressionTree> THROWABLE_MATCHER = isSubtypeOf(Throwable.class);
-    private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = Matchers.staticMethod().onClass("java.lang.String").named("format");
 
     public static List<? extends ExpressionTree> removeLast(List<? extends ExpressionTree> expressions) {
         if (expressions.size() <= 1) {
@@ -122,18 +118,6 @@ public final class Arguments {
         return Optional.empty();
     }
 
-    public static LogMessageFormatSpec maybeUnpackStringFormat(ExpressionTree messageFormatArgument, VisitorState state) {
-        if (STRING_FORMAT.matches(messageFormatArgument, state)) {
-            MethodInvocationTree stringFormatTree = (MethodInvocationTree) messageFormatArgument;
-            ExpressionTree firstArgument = stringFormatTree.getArguments().get(0);
-            if ((firstArgument instanceof JCTree.JCLiteral)) {
-                String messageFormat = (String) ((JCTree.JCLiteral) firstArgument).value;
-                return new LogMessageFormatSpec(messageFormat, Arguments.removeFirst(stringFormatTree.getArguments()));
-            }
-        }
-
-        return null;
-    }
 
     static boolean isStringType(ExpressionTree expressionTree, VisitorState state) {
         return STRING_MATCHER.matches(expressionTree, state);
@@ -170,9 +154,7 @@ public final class Arguments {
 
         // case 5: com.foo.X.class.getName()
         if(isClassGetName(argument, state) ) {
-            if( (expectedSimpleClassName + ".class.getName").equals( ((MethodInvocationTree)argument).getMethodSelect().toString())) {
-                return true;
-            }
+            return (expectedSimpleClassName + ".class.getName").equals(((MethodInvocationTree) argument).getMethodSelect().toString());
         }
 
         return false;
@@ -180,23 +162,5 @@ public final class Arguments {
 
     private static boolean isClassGetName(ExpressionTree argument, VisitorState state) {
         return methodInvocation(instanceMethod().onExactClass("java.lang.Class").named("getName")).matches(argument,state);
-    }
-
-    public static final class LogMessageFormatSpec {
-        private final String formatString;
-        private final List<? extends ExpressionTree> arguments;
-
-        private LogMessageFormatSpec(String formatString, List<? extends ExpressionTree> arguments) {
-            this.formatString = formatString;
-            this.arguments = ImmutableList.copyOf(arguments);
-        }
-
-        public String formatString() {
-            return formatString;
-        }
-
-        public List<? extends ExpressionTree> arguments() {
-            return arguments;
-        }
     }
 }

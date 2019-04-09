@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 
 public class TestClassUsingLog4j_2 {
 
-    // TODO [LoggerApiRefactoring] Unable to migrate logger variable
+    // TODO [LoggerApiRefactoringCheck] Unable to migrate logger variable
     private final Logger someLogger = LogManager.getLogger(Object.class);
 
     public void testLogLevels() {

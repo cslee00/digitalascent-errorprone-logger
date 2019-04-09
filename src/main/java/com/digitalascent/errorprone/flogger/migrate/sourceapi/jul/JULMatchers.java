@@ -13,7 +13,7 @@ import static com.google.errorprone.matchers.Matchers.staticMethod;
 
 final class JULMatchers {
     private static final String LOGGER_CLASS = "java.util.logging.Logger";
-    private static String LOGGER_FACTORY_CLASS = "java.util.logging.Logger";
+    private static final String LOGGER_FACTORY_CLASS = "java.util.logging.Logger";
 
     private static final Matcher<ExpressionTree> LOGGER_FACTORY_MATCHER = methodInvocation(staticMethod()
             .onClass(LOGGER_FACTORY_CLASS)

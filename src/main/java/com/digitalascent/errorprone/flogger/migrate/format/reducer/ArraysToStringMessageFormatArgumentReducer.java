@@ -7,7 +7,6 @@ import com.sun.source.tree.MethodInvocationTree;
 
 import java.util.Arrays;
 
-import static com.google.errorprone.matchers.Matchers.instanceMethod;
 import static com.google.errorprone.matchers.Matchers.methodInvocation;
 import static com.google.errorprone.matchers.Matchers.staticMethod;
 

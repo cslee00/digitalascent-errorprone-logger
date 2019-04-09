@@ -13,7 +13,7 @@ import static com.google.errorprone.matchers.Matchers.staticMethod;
 final class Log4j2Matchers {
     private static final String LOG4J2_LOGGER_CLASS = "org.apache.logging.log4j.Logger";
     private static final String LOG4J2_MARKER_CLASS = "org.apache.logging.log4j.Marker";
-    private static String LOG4J2_LOG_MANAGER_CLASS = "org.apache.logging.log4j.LogManager";
+    private static final String LOG4J2_LOG_MANAGER_CLASS = "org.apache.logging.log4j.LogManager";
 
     private static final Matcher<ExpressionTree> IS_ENABLED_METHODS = instanceMethod()
             .onDescendantOf(LOG4J2_LOGGER_CLASS)
