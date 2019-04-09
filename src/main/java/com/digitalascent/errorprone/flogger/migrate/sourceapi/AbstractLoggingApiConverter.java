@@ -1,11 +1,11 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
-import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
-import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
-import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.target.FloggerSuggestedFixGenerator;
+import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
-import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
@@ -53,10 +53,6 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
         return Optional.empty();
     }
 
-    public enum LoggerVariableNamingType {
-        CLASS_NAMED, NON_CLASS_NAMED, NOT_LOGGER
-    }
-
     @Override
     public final LoggerVariableNamingType determineLoggerVariableNamingType(ClassTree classTree, VariableTree variableTree, VisitorState visitorState) {
         if (!matchLogFactory(variableTree, visitorState)) {
@@ -87,8 +83,10 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
             if (isIgnoredLogger(variableName, migrationContext)) {
                 return Optional.empty();
             }
-            ImmutableFloggerLogContext floggerLogContext = migrateLoggingMethod(methodName, methodInvocationTree, state, migrationContext);
-            return Optional.of(getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree, state, floggerLogContext, migrationContext));
+            FloggerLogStatement floggerLogStatement = migrateLoggingMethod(methodName,
+                    methodInvocationTree, state, migrationContext);
+            return Optional.of(getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree,
+                    state, floggerLogStatement, migrationContext));
         }
 
         if (matchLoggingEnabledMethod(methodInvocationTree, state)) {
@@ -136,7 +134,7 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
 
     protected abstract boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state);
 
-    protected abstract ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext);
+    protected abstract FloggerLogStatement migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext);
 
     protected abstract SuggestedFix migrateLoggingEnabledMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext);
 }

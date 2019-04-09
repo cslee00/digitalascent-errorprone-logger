@@ -1,8 +1,8 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
-import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
-import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
 

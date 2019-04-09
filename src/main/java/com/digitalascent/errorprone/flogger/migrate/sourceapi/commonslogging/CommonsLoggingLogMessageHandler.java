@@ -1,9 +1,9 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging;
 
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
-import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLogMessageHandler;
-import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.format.converter.MessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.format.reducer.MessageFormatArgumentReducer;
 

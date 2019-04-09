@@ -1,6 +1,9 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
+import com.digitalascent.errorprone.flogger.migrate.model.ImmutableMigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.model.RefactoringConfiguration;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LoggerVariableNamingType;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.BugPattern;
@@ -123,14 +126,14 @@ public final class LoggerApiRefactoring extends BugChecker implements BugChecker
 
     private List<VariableTree> findClassNamedLoggers(ClassTree classTree, VisitorState state) {
         LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(
-                tree -> loggingApiConverter.determineLoggerVariableNamingType(classTree, tree, state) == AbstractLoggingApiConverter.LoggerVariableNamingType.CLASS_NAMED);
+                tree -> loggingApiConverter.determineLoggerVariableNamingType(classTree, tree, state) == LoggerVariableNamingType.CLASS_NAMED);
         classTree.accept(scanner, state);
         return scanner.loggerVariables();
     }
 
     private List<VariableTree> findNonClassNamedLoggers(ClassTree classTree, VisitorState state) {
         LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(
-                tree -> loggingApiConverter.determineLoggerVariableNamingType(classTree, tree, state) == AbstractLoggingApiConverter.LoggerVariableNamingType.NON_CLASS_NAMED);
+                tree -> loggingApiConverter.determineLoggerVariableNamingType(classTree, tree, state) == LoggerVariableNamingType.NON_CLASS_NAMED);
         classTree.accept(scanner, state);
         return scanner.loggerVariables();
     }

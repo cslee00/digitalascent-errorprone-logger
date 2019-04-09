@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
+import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 

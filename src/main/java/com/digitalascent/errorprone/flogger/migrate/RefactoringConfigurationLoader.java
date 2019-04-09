@@ -1,6 +1,10 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
-import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatStyle;
+import com.digitalascent.errorprone.flogger.migrate.model.ImmutableLoggerVariableDefinition;
+import com.digitalascent.errorprone.flogger.migrate.model.ImmutableRefactoringConfiguration;
+import com.digitalascent.errorprone.flogger.migrate.model.LoggerVariableDefinition;
+import com.digitalascent.errorprone.flogger.migrate.model.RefactoringConfiguration;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatStyle;
 import com.digitalascent.errorprone.flogger.migrate.format.converter.CompositeMessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.format.converter.LazyMessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.format.converter.MessageFormatArgumentConverter;
@@ -8,6 +12,7 @@ import com.digitalascent.errorprone.flogger.migrate.format.reducer.ArraysToStrin
 import com.digitalascent.errorprone.flogger.migrate.format.reducer.CompositeMessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.format.reducer.MessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.format.reducer.ToStringMessageFormatArgumentReducer;
+import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingLogMessageHandler;
@@ -23,6 +28,7 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogLog
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2LogMessageHandler;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2LoggingApiConverter;
+import com.digitalascent.errorprone.flogger.migrate.target.FloggerSuggestedFixGenerator;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -50,10 +56,10 @@ final class RefactoringConfigurationLoader {
         ImmutableRefactoringConfiguration.Builder builder = ImmutableRefactoringConfiguration.builder();
         Properties properties = loadProperties(userProvidedPropertyPath);
 
-        LoggerDefinition loggerDefinition = readLoggerDefinition(properties);
-        builder.loggerDefinition(loggerDefinition);
+        LoggerVariableDefinition loggerVariableDefinition = readLoggerDefinition(properties);
+        builder.loggerDefinition(loggerVariableDefinition);
 
-        FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator(loggerDefinition);
+        FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator(loggerVariableDefinition);
         builder.floggerSuggestedFixGenerator(floggerSuggestedFixGenerator);
 
         MessageFormatStyle messageFormatStyle = determineMessageFormatStyle(sourceApi, properties);
@@ -97,8 +103,8 @@ final class RefactoringConfigurationLoader {
         return new TargetLogLevelMapper(logLevelMap);
     }
 
-    private LoggerDefinition readLoggerDefinition(Properties properties) {
-        ImmutableLoggerDefinition.Builder builder = ImmutableLoggerDefinition.builder();
+    private LoggerVariableDefinition readLoggerDefinition(Properties properties) {
+        ImmutableLoggerVariableDefinition.Builder builder = ImmutableLoggerVariableDefinition.builder();
         builder.name(properties.getProperty("logger.name"));
         builder.scope(properties.getProperty("logger.scope"));
         builder.modifiers(properties.getProperty("logger.modifiers"));

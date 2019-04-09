@@ -1,7 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate.format.converter;
 
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
-import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
 

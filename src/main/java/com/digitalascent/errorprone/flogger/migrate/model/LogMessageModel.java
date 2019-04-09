@@ -1,4 +1,4 @@
-package com.digitalascent.errorprone.flogger.migrate;
+package com.digitalascent.errorprone.flogger.migrate.model;
 
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
 import com.google.common.collect.ImmutableList;
@@ -47,20 +47,20 @@ public final class LogMessageModel {
     }
 
     @Nullable
-    ExpressionTree messageFormatArgument() {
+    public ExpressionTree messageFormatArgument() {
         return messageFormatArgument;
     }
 
-    List<String> migrationIssues() {
+    public List<String> migrationIssues() {
         return migrationIssues;
     }
 
     @Nullable
-    String messageFormat() {
+    public String messageFormat() {
         return messageFormat;
     }
 
-    List<MessageFormatArgument> arguments() {
+    public List<MessageFormatArgument> arguments() {
         return arguments;
     }
 }

@@ -1,10 +1,11 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging;
 
-import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
-import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
-import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
-import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.target.FloggerSuggestedFixGenerator;
+import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
+import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
@@ -72,11 +73,11 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
         return LOGGING_PACKAGE_PREFIXES;
     }
 
-    protected ImmutableFloggerLogContext migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
-                                                              VisitorState state, MigrationContext migrationContext) {
+    protected FloggerLogStatement migrateLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+                                                       VisitorState state, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel = mapLogLevel(methodName);
 
-        ImmutableFloggerLogContext.Builder builder = ImmutableFloggerLogContext.builder();
+        ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
         List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
