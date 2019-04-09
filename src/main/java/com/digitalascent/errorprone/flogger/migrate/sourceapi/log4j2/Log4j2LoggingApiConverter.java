@@ -36,13 +36,10 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
 
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.logging.log4j");
 
-    private final LogMessageHandler logMessageHandler;
-
     public Log4j2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
                                      Function<String, TargetLogLevel> targetLogLevelFunction,
                                      LogMessageHandler logMessageHandler) {
-        super( floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
+        super( floggerSuggestedFixGenerator, targetLogLevelFunction, logMessageHandler);
     }
 
     @Override
@@ -122,7 +119,7 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
             builder.thrown(throwableArgument);
         }
 
-        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
+        LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument,
                 remainingArguments, state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();

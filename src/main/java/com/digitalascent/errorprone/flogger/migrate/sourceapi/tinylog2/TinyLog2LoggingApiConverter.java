@@ -26,7 +26,6 @@ import java.util.function.Function;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.matchAtIndex;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2Matchers.loggingMethod;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Tiny Log 2 API: https://tinylog.org/v2/javadoc/
@@ -34,13 +33,11 @@ import static java.util.Objects.requireNonNull;
 public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConverter {
 
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.tinylog");
-    private final LogMessageHandler logMessageHandler;
 
     public TinyLog2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
                                        Function<String, TargetLogLevel> targetLogLevelFunction,
                                        LogMessageHandler logMessageHandler) {
-        super(floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
+        super(floggerSuggestedFixGenerator, targetLogLevelFunction, logMessageHandler);
     }
 
     @Override
@@ -90,7 +87,7 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
         remainingArguments = Arguments.findMessageFormatArguments(remainingArguments,state);
 
-        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument,
+        LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument,
                 remainingArguments, state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel( logMessageModel );
         return builder.build();

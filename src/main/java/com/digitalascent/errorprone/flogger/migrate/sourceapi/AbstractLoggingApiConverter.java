@@ -2,6 +2,7 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
 import com.digitalascent.errorprone.flogger.migrate.FloggerSuggestedFixGenerator;
 import com.digitalascent.errorprone.flogger.migrate.ImmutableFloggerLogContext;
+import com.digitalascent.errorprone.flogger.migrate.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.TargetLogLevel;
@@ -9,6 +10,7 @@ import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
@@ -17,6 +19,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -27,10 +30,14 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
 
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
+    private final LogMessageHandler logMessageHandler;
 
-    public AbstractLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction) {
+    public AbstractLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
+                                       Function<String, TargetLogLevel> targetLogLevelFunction,
+                                       LogMessageHandler logMessageHandler) {
         this.floggerSuggestedFixGenerator = requireNonNull(floggerSuggestedFixGenerator, "floggerSuggestedFixGenerator");
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "targetLogLevelFunction");
+        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
     }
 
     @Override
@@ -93,6 +100,18 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
 
         return Optional.empty();
     }
+
+    protected final LogMessageModel createLogMessageModel( ExpressionTree messageFormatArgument,
+                                                           List<? extends ExpressionTree> remainingArguments,
+                                                           VisitorState state,
+                                                           @Nullable ExpressionTree thrownArgument,
+                                                           MigrationContext migrationContext,
+                                                           TargetLogLevel targetLogLevel ) {
+        return logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments,
+                state, thrownArgument, migrationContext, targetLogLevel);
+    }
+
+
 
     private boolean isIgnoredLogger(@Nullable String variableName, MigrationContext migrationContext) {
         return migrationContext.nonClassNamedLoggers().stream()

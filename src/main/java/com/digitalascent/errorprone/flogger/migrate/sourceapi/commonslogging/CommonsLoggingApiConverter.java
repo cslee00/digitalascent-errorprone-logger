@@ -32,13 +32,11 @@ import static java.util.Objects.requireNonNull;
 public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverter {
 
     private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.commons.logging");
-    private final LogMessageHandler logMessageHandler;
 
     public CommonsLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
                                       Function<String, TargetLogLevel> targetLogLevelFunction,
                                       LogMessageHandler logMessageHandler) {
-        super(floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
+        super(floggerSuggestedFixGenerator, targetLogLevelFunction, logMessageHandler);
     }
 
     @Override
@@ -91,7 +89,7 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
         remainingArguments = Arguments.removeFirst(remainingArguments);
 
-        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments,
+        LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument, remainingArguments,
                 state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();

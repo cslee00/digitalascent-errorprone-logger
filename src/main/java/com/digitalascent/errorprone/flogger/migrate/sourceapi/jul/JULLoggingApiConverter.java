@@ -36,13 +36,11 @@ import static java.util.Objects.requireNonNull;
 public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
 
     private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("java.util.logging");
-    private final LogMessageHandler logMessageHandler;
 
     public JULLoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
                                   Function<String, TargetLogLevel> targetLogLevelFunction,
                                   LogMessageHandler logMessageHandler) {
-        super( floggerSuggestedFixGenerator, targetLogLevelFunction);
-        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
+        super( floggerSuggestedFixGenerator, targetLogLevelFunction, logMessageHandler);
     }
 
     @Override
@@ -120,7 +118,7 @@ public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
             builder.thrown(throwableArgument);
         }
 
-        LogMessageModel logMessageModel = logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments,
+        LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument, remainingArguments,
                 state, throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
