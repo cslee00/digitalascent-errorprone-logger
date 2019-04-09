@@ -11,10 +11,6 @@ final class Slf4jMessageFormatConverter {
 
     static String convertMessageFormat(String messagePattern ) {
 
-        if (messagePattern == null) {
-            return null;
-        }
-
         // escape '%' sign in incoming format
         messagePattern = messagePattern.replace("%", "%%");
 
