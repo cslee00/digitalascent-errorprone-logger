@@ -57,7 +57,7 @@ final class RefactoringConfigurationLoader {
         Properties properties = loadProperties(userProvidedPropertyPath);
 
         LoggerVariableDefinition loggerVariableDefinition = readLoggerDefinition(properties);
-        builder.loggerDefinition(loggerVariableDefinition);
+        builder.loggerVariableDefinition(loggerVariableDefinition);
 
         FloggerSuggestedFixGenerator floggerSuggestedFixGenerator = new FloggerSuggestedFixGenerator(loggerVariableDefinition);
         builder.floggerSuggestedFixGenerator(floggerSuggestedFixGenerator);
