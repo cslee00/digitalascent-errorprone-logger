@@ -25,7 +25,7 @@ public final class ToStringMessageFormatArgumentReducer implements MessageFormat
         }
         MethodInvocationTree methodInvocationTree = (MethodInvocationTree) argument;
         ExpressionTree select = methodInvocationTree.getMethodSelect();
-        if( select instanceof JCTree.JCFieldAccess) {
+        if( methodInvocationTree.getArguments().isEmpty() && select instanceof JCTree.JCFieldAccess) {
             return ((JCTree.JCFieldAccess)select).selected;
         }
         return null;

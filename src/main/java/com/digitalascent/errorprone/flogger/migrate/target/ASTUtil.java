@@ -8,6 +8,13 @@ import com.sun.tools.javac.tree.JCTree;
 final class ASTUtil {
     private static final CharMatcher PREV_LINE_MATCHER = CharMatcher.anyOf("\r\n");
 
+    /**
+     * Determines the indentation characters used for the given node
+     *
+     * @param tree
+     * @param state
+     * @return
+     */
     static CharSequence determineIndent(Tree tree, VisitorState state) {
         JCTree node = (JCTree) tree;
         int nodeStartPosition = node.getStartPosition();

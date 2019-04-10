@@ -8,6 +8,9 @@ import com.sun.source.tree.ExpressionTree;
 import javax.annotation.Nullable;
 import java.util.List;
 
+/**
+ * Represents a format argument to a logging message.
+ */
 public final class MessageFormatArgument {
     private final List<String> staticImports;
     private final List<String> imports;
@@ -17,7 +20,8 @@ public final class MessageFormatArgument {
     @Nullable
     private final ExpressionTree argument;
 
-    private MessageFormatArgument(@Nullable String code, @Nullable ExpressionTree argument, List<String> imports, List<String> staticImports) {
+    private MessageFormatArgument(@Nullable String code, @Nullable ExpressionTree argument, List<String> imports,
+                                  List<String> staticImports) {
         this.code = code;
         this.argument = argument;
         this.imports = ImmutableList.copyOf(imports);

@@ -123,23 +123,23 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     }
 
     private List<VariableTree> findClassNamedLoggers(ClassTree classTree, VisitorState state) {
-        LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(
+        MemberVariableScanner scanner = new MemberVariableScanner(
                 tree -> loggingApiConverter.determineLoggerVariableNamingType(classTree, tree, state) == LoggerVariableNamingType.CLASS_NAMED);
         classTree.accept(scanner, state);
         return scanner.loggerVariables();
     }
 
     private List<VariableTree> findNonClassNamedLoggers(ClassTree classTree, VisitorState state) {
-        LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(
+        MemberVariableScanner scanner = new MemberVariableScanner(
                 tree -> loggingApiConverter.determineLoggerVariableNamingType(classTree, tree, state) == LoggerVariableNamingType.NON_CLASS_NAMED);
         classTree.accept(scanner, state);
         return scanner.loggerVariables();
     }
 
     private List<VariableTree> findFloggerMemberVariables(Tree typeDecl, VisitorState state) {
-        Matcher<Tree> matcher = Matchers.isSubtypeOf(refactoringConfiguration.loggerDefinition().typeQualified());
+        Matcher<Tree> matcher = Matchers.isSubtypeOf(refactoringConfiguration.loggerVariableDefinition().typeQualified());
 
-        LoggerMemberVariableScanner scanner = new LoggerMemberVariableScanner(tree -> matcher.matches(tree, state));
+        MemberVariableScanner scanner = new MemberVariableScanner(tree -> matcher.matches(tree, state));
         typeDecl.accept(scanner, state);
         return scanner.loggerVariables();
     }

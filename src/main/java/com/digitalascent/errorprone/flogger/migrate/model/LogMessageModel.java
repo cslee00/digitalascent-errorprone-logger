@@ -9,6 +9,9 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Represents a log message - the format, arguments and any migration notes
+ */
 public final class LogMessageModel {
     @Nullable
     private final String messageFormat;

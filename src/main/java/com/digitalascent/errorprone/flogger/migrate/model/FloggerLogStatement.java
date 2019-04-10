@@ -6,6 +6,9 @@ import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 
+/**
+ * Represents a Flogger log statement - the log level, log message, and (optional) thrown exception
+ */
 @ImmutableStyle
 @Value.Immutable
 public interface FloggerLogStatement {

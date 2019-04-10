@@ -50,6 +50,8 @@ public abstract class AbstractLogMessageHandler implements LogMessageHandler {
         }
 
         if (!Arguments.isStringType(messageFormatArgument, state)) {
+            // message format argument is some other type (some loggers allow Object for the format)
+            // emit as "%s", arg
             return LogMessageModel.fromStringFormat("%s",
                     processArguments(Arguments.prependArgument(remainingArguments, messageFormatArgument), state, targetLogLevel));
         }
@@ -64,10 +66,11 @@ public abstract class AbstractLogMessageHandler implements LogMessageHandler {
             return LogMessageModel.fromMessageFormatArgument(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
         }
 
-        // handle remaining format arguments
         if (Arguments.isStringLiteral(messageFormatArgument, state)) {
             // handle common case of string literal format string
             String sourceMessageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
+
+            // convert from source message format (e.g. {} placeholders) to printf format specifiers
             return convertMessageFormat(sourceMessageFormat, processArguments(remainingArguments, state, targetLogLevel), migrationContext);
         }
 

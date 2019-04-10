@@ -12,7 +12,7 @@ public interface RefactoringConfiguration {
 
     FloggerSuggestedFixGenerator floggerSuggestedFixGenerator();
 
-    LoggerVariableDefinition loggerDefinition();
+    LoggerVariableDefinition loggerVariableDefinition();
 
     int lazyThresholdOrdinal();
 }
