@@ -155,7 +155,7 @@ final class RefactoringConfigurationLoader {
         LogMessageHandler logMessageHandler2 =  new Log4jLogMessageHandler(messageFormatArgumentConverter, messageFormatArgumentReducer);
         converterMapBuilder.put("log4j", new Log4jLoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction, logMessageHandler2));
 
-        converterMapBuilder.put("log4j2", createLog4j2LoggingApiCovnerter(floggerSuggestedFixGenerator, targetLogLevelFunction,
+        converterMapBuilder.put("log4j2", createLog4j2LoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction,
                 messageFormatStyle, messageFormatArgumentConverter, messageFormatArgumentReducer) );
 
         LogMessageHandler logMessageHandler = new CommonsLoggingLogMessageHandler(messageFormatArgumentConverter, messageFormatArgumentReducer);
@@ -173,7 +173,7 @@ final class RefactoringConfigurationLoader {
         return converterMapBuilder.build();
     }
 
-    private LoggingApiConverter createLog4j2LoggingApiCovnerter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction, @Nullable MessageFormatStyle messageFormatStyle, MessageFormatArgumentConverter messageFormatArgumentConverter, MessageFormatArgumentReducer messageFormatArgumentReducer) {
+    private LoggingApiConverter createLog4j2LoggingApiConverter(FloggerSuggestedFixGenerator floggerSuggestedFixGenerator, Function<String, TargetLogLevel> targetLogLevelFunction, @Nullable MessageFormatStyle messageFormatStyle, MessageFormatArgumentConverter messageFormatArgumentConverter, MessageFormatArgumentReducer messageFormatArgumentReducer) {
         LogMessageHandler logMessageHandler = new Log4j2LogMessageHandler(messageFormatStyle, messageFormatArgumentConverter, messageFormatArgumentReducer);
         return new Log4j2LoggingApiConverter(floggerSuggestedFixGenerator, targetLogLevelFunction, logMessageHandler);
     }

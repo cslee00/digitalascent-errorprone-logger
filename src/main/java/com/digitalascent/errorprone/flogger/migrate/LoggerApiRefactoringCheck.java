@@ -28,13 +28,13 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-        name = "LoggerApiRefactoringCheck",
+        name = "LoggerApiRefactoring",
         summary = "Refactor logging API",
         severity = BugPattern.SeverityLevel.SUGGESTION,
         tags = BugPattern.StandardTags.REFACTORING)
 public final class LoggerApiRefactoringCheck extends BugChecker implements BugChecker.CompilationUnitTreeMatcher {
 
-    private static final String CONFIGURATION_NAMESPACE = "LoggerApiRefactoringCheck";
+    private static final String CONFIGURATION_NAMESPACE = "LoggerApiRefactoring";
     private static final String SOURCE_API_FLAG = String.format("%s:%s", CONFIGURATION_NAMESPACE, "SourceApi");
 
     private final RefactoringConfiguration refactoringConfiguration;
@@ -84,7 +84,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
 
             return fixes;
         } catch (SkipCompilationUnitException e) {
-            // TODO - print diag message
+            System.out.printf("Skipped %s: %s\n", classTree.getSimpleName(), e.getMessage());
             return ImmutableList.of();
         }
     }
@@ -111,7 +111,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
                 try {
                     addSuggestedFix(loggingApiConverter.migrateLoggingMethodInvocation(methodInvocationTree, state, migrationContext));
                 } catch (SkipLogMethodException e) {
-                    // TODO - diag message
+                    System.out.printf("Skipped %s %s: %s\n", classTree.getSimpleName(), methodInvocationTree.toString(), e.getMessage());
                 }
                 return super.visitMethodInvocation(methodInvocationTree, visitorState);
             }

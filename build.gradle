@@ -42,8 +42,6 @@ dependencies {
 
     annotationProcessor("org.immutables:value:2.7.4")
     compileOnly("org.immutables:value-annotations:2.7.4")
-
-    
     
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.1.0")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.1.0")

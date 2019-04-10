@@ -12,12 +12,12 @@ dependencies {
 
     // errorprone javac only required for Java 8
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
-    
+
     // error prone itself
     errorprone("com.google.errorprone:error_prone_core:2.3.3")
 
     // custom error prone plugin
-    errorprone("com.digitalascent:digitalascent-errorprone-flogger:0.5.5")
+    errorprone("com.digitalascent:digitalascent-errorprone-flogger:0.5.9")
 
     // SLF4J
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.26'
@@ -28,7 +28,7 @@ tasks.withType(JavaCompile).configureEach {
         // change source logging API as appropriate
         option("LoggerApiRefactoring:SourceApi", "slf4j")
         errorproneArgs += "-XepPatchChecks:LoggerApiRefactoring"
-        errorproneArgs += "-XepPatchLocation:" + new File(".").absolutePath 
+        errorproneArgs += "-XepPatchLocation:" + new File(".").absolutePath
     }
 }
 
