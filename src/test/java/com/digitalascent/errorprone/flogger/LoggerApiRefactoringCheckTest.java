@@ -63,7 +63,7 @@ class LoggerApiRefactoringCheckTest {
 
     private void executeTest(String sourceApiName, String loggerName, int index) {
         ErrorProneFlags flags = ErrorProneFlags.builder()
-                .putFlag("LoggerApiRefactoringCheck:SourceApi", sourceApiName)
+                .putFlag("LoggerApiRefactoring:SourceApi", sourceApiName)
                 .build();
         String prefix = "testdata/TestClassUsing";
         String input = String.format("%s%s_%d.java", prefix, loggerName, index);

@@ -7,6 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LoggerVariableNami
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.flogger.FluentLogger;
+import com.google.common.io.Resources;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.ErrorProneFlags;
 import com.google.errorprone.VisitorState;
@@ -22,8 +23,12 @@ import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.LogManager;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
@@ -50,10 +55,20 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     }
 
     public LoggerApiRefactoringCheck(ErrorProneFlags flags) {
+        configureLogging();
         logger.atInfo().log("Starting LoggerApiRefactoringCheck with flags: %s", flags.getFlagsMap());
         String sourceApi = flags.get(SOURCE_API_FLAG).orElseThrow(() -> new IllegalArgumentException("Missing source api for option " + SOURCE_API_FLAG));
         this.refactoringConfiguration = new RefactoringConfigurationLoader().loadRefactoringConfiguration("", sourceApi);
         this.loggingApiConverter = refactoringConfiguration.loggingApiConverter();
+    }
+
+    private void configureLogging() {
+        URL url = Resources.getResource(getClass(), "logging.properties");
+        try(InputStream inputStream = Resources.asByteSource(url).openStream() ) {
+            LogManager.getLogManager().readConfiguration(inputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
