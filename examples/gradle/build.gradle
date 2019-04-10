@@ -17,7 +17,7 @@ dependencies {
     errorprone("com.google.errorprone:error_prone_core:2.3.3")
 
     // custom error prone plugin
-    errorprone("com.digitalascent:digitalascent-errorprone-flogger:0.5.9")
+    errorprone("com.digitalascent:digitalascent-errorprone-flogger:0.5.10")
 
     // SLF4J
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.26'

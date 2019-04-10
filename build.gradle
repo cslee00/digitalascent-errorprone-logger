@@ -42,6 +42,9 @@ dependencies {
 
     annotationProcessor("org.immutables:value:2.7.4")
     compileOnly("org.immutables:value-annotations:2.7.4")
+
+    compile group: 'com.google.flogger', name: 'flogger', version: '0.4'
+    runtime group: 'com.google.flogger', name: 'flogger-system-backend', version: '0.4'
     
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.1.0")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.1.0")

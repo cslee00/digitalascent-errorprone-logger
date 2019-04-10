@@ -7,6 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.LoggerVariableDefiniti
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.common.base.Verify;
+import com.google.common.flogger.FluentLogger;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
@@ -29,6 +30,8 @@ import static java.util.Objects.requireNonNull;
  * Generates code for Flogger logging constructs - loggers & logger invocations
  */
 public class FloggerSuggestedFixGenerator {
+    private final FluentLogger logger = FluentLogger.forEnclosingClass();
+
     private final LoggerVariableDefinition loggerVariableDefinition;
 
     public FloggerSuggestedFixGenerator(LoggerVariableDefinition loggerVariableDefinition) {
@@ -39,8 +42,9 @@ public class FloggerSuggestedFixGenerator {
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);
         String selectorMethod = generateSelectorMethod(targetLogLevel, state);
+        String loggerEnabledMethodCall = String.format("%s.%s.isEnabled()", loggerVariableName, selectorMethod);
         return SuggestedFix.builder()
-                .replace(tree, String.format("%s.%s.isEnabled()", loggerVariableName, selectorMethod))
+                .replace(tree,loggerEnabledMethodCall )
                 .build();
     }
 
@@ -64,9 +68,9 @@ public class FloggerSuggestedFixGenerator {
         String selectorMethod = generateSelectorMethod(floggerLogStatement.targetLogLevel(), state);
         String loggingCall = generateLoggingCall(state, floggerLogStatement, loggerVariableName, selectorMethod);
         emitLoggingCall(state, logMessageModel, loggingCall, sb);
-
+        String loggerMethodCall = sb.toString();
         SuggestedFix.Builder builder = SuggestedFix.builder()
-                .replace(loggerMethodInvocation, sb.toString());
+                .replace(loggerMethodInvocation, loggerMethodCall);
 
         // add in any imports the arguments may have added
         addArgumentImports(logMessageModel, builder);

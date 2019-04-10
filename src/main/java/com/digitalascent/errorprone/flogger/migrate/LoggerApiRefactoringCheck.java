@@ -6,6 +6,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.RefactoringConfigurati
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LoggerVariableNamingType;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
+import com.google.common.flogger.FluentLogger;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.ErrorProneFlags;
 import com.google.errorprone.VisitorState;
@@ -33,6 +34,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
         severity = BugPattern.SeverityLevel.SUGGESTION,
         tags = BugPattern.StandardTags.REFACTORING)
 public final class LoggerApiRefactoringCheck extends BugChecker implements BugChecker.CompilationUnitTreeMatcher {
+    private final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     private static final String CONFIGURATION_NAMESPACE = "LoggerApiRefactoring";
     private static final String SOURCE_API_FLAG = String.format("%s:%s", CONFIGURATION_NAMESPACE, "SourceApi");
@@ -48,7 +50,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     }
 
     public LoggerApiRefactoringCheck(ErrorProneFlags flags) {
-        System.out.println("Starting LoggerApiRefactoringCheck with flags: " + flags.getFlagsMap());
+        logger.atInfo().log("Starting LoggerApiRefactoringCheck with flags: %s", flags.getFlagsMap());
         String sourceApi = flags.get(SOURCE_API_FLAG).orElseThrow(() -> new IllegalArgumentException("Missing source api for option " + SOURCE_API_FLAG));
         this.refactoringConfiguration = new RefactoringConfigurationLoader().loadRefactoringConfiguration("", sourceApi);
         this.loggingApiConverter = refactoringConfiguration.loggingApiConverter();
@@ -74,17 +76,20 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
 
     private List<SuggestedFix> processClassTree(ClassTree classTree, VisitorState state) {
         try {
+            logger.atInfo().log("Processing %s", classTree.getSimpleName());
             MigrationContext migrationContext = createMigrationContext(classTree, state);
+            logger.atFine().log("Migration context: %s", migrationContext);
+
             List<SuggestedFix> fixes = new ArrayList<>(handleMethodInvocations(classTree, state, migrationContext));
 
             if (!fixes.isEmpty()) {
                 // only process / add logger member variables if we've converted logging methods
                 fixes.add(handleLoggerMemberVariables(classTree, state, migrationContext));
             }
-
+            logger.atInfo().log("Processed %s", classTree.getSimpleName());
             return fixes;
         } catch (SkipCompilationUnitException e) {
-            System.out.printf("Skipped %s: %s\n", classTree.getSimpleName(), e.getMessage());
+            logger.atWarning().log("Skipped %s: %s", classTree.getSimpleName(), e.getMessage());
             return ImmutableList.of();
         }
     }
@@ -111,7 +116,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
                 try {
                     addSuggestedFix(loggingApiConverter.migrateLoggingMethodInvocation(methodInvocationTree, state, migrationContext));
                 } catch (SkipLogMethodException e) {
-                    System.out.printf("Skipped %s %s: %s\n", classTree.getSimpleName(), methodInvocationTree.toString(), e.getMessage());
+                    logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(), methodInvocationTree.toString(), e.getMessage());
                 }
                 return super.visitMethodInvocation(methodInvocationTree, visitorState);
             }
@@ -119,7 +124,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     }
 
     private SuggestedFix handleLoggerMemberVariables(ClassTree classTree, VisitorState state, MigrationContext migrationContext) throws SkipCompilationUnitException {
-        return refactoringConfiguration.floggerSuggestedFixGenerator().processLoggerVariables(classTree,state,migrationContext);
+        return refactoringConfiguration.floggerSuggestedFixGenerator().processLoggerVariables(classTree, state, migrationContext);
     }
 
     private List<VariableTree> findClassNamedLoggers(ClassTree classTree, VisitorState state) {
@@ -147,7 +152,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     private MigrationContext createMigrationContext(ClassTree classTree, VisitorState visitorState) {
         ImmutableMigrationContext.Builder builder = ImmutableMigrationContext.builder();
         builder.addAllClassNamedLoggers(findClassNamedLoggers(classTree, visitorState));
-        builder.addAllNonClassNamedLoggers(findNonClassNamedLoggers(classTree,visitorState));
+        builder.addAllNonClassNamedLoggers(findNonClassNamedLoggers(classTree, visitorState));
         builder.addAllFloggerLoggers(findFloggerMemberVariables(classTree, visitorState));
 
         return builder.build();
