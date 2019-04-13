@@ -22,7 +22,10 @@ import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
+import com.sun.source.util.TreeScanner;
+import com.sun.tools.javac.tree.JCTree;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -64,7 +67,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
 
     private void configureLogging() {
         URL url = Resources.getResource(getClass(), "logging.properties");
-        try(InputStream inputStream = Resources.asByteSource(url).openStream() ) {
+        try (InputStream inputStream = Resources.asByteSource(url).openStream()) {
             LogManager.getLogManager().readConfiguration(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
@@ -126,17 +129,56 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     }
 
     private List<SuggestedFix> handleMethodInvocations(ClassTree classTree, VisitorState state, MigrationContext migrationContext) {
-        return scanTree(classTree, state, new FixCollectingTreeScanner() {
+        List<MethodInvocationTree> loggingMethodInvocations = new ArrayList<>();
+        List<MethodInvocationTree> loggingEnabledMethodInvocations = new ArrayList<>();
+
+        classTree.accept(new TreeScanner<Void, VisitorState>() {
             @Override
-            public Void visitMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState visitorState) {
-                try {
-                    addSuggestedFix(loggingApiConverter.migrateLoggingMethodInvocation(methodInvocationTree, state, migrationContext));
-                } catch (SkipLogMethodException e) {
-                    logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(), methodInvocationTree.toString(), e.getMessage());
+            public Void visitMethodInvocation(MethodInvocationTree node, VisitorState visitorState) {
+                if (loggingApiConverter.matchLoggingEnabledMethod(node, visitorState) && loggingApiConverter.matchLoggingMethod(node, visitorState)) {
+                    throw new IllegalStateException("Cannot be a logging method and a logging enabled method: " + node);
                 }
-                return super.visitMethodInvocation(methodInvocationTree, visitorState);
+
+                String variableName = null;
+                Tree methodSelect = node.getMethodSelect();
+                if (methodSelect instanceof JCTree.JCFieldAccess) {
+                    variableName = ((JCTree.JCFieldAccess) methodSelect).selected.toString();
+                }
+
+                if (!isIgnoredLogger(variableName, migrationContext)) {
+                    if (loggingApiConverter.matchLoggingMethod(node, visitorState)) {
+                        loggingMethodInvocations.add(node);
+                    }
+                    if (loggingApiConverter.matchLoggingEnabledMethod(node, visitorState)) {
+                        loggingEnabledMethodInvocations.add(node);
+                    }
+                }
+                return super.visitMethodInvocation(node, visitorState);
             }
-        });
+        }, state);
+
+        final List<SuggestedFix> suggestedFixes = new ArrayList<>();
+        for (MethodInvocationTree loggingMethodInvocation : loggingMethodInvocations) {
+            try {
+                suggestedFixes.add(loggingApiConverter.migrateLoggingMethodInvocation(loggingMethodInvocation, state, migrationContext));
+            } catch (SkipLogMethodException e) {
+                logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(), loggingMethodInvocation, e.getMessage());
+            }
+        }
+
+        for (MethodInvocationTree loggingEnabledMethodInvocation : loggingEnabledMethodInvocations) {
+            try {
+                suggestedFixes.add(loggingApiConverter.migrateLoggingEnabledMethodInvocation(loggingEnabledMethodInvocation, state, migrationContext));
+            } catch( SkipLogMethodException e ) {
+                logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(), loggingEnabledMethodInvocation, e.getMessage());
+            }
+        }
+        return suggestedFixes;
+    }
+
+    private boolean isIgnoredLogger(@Nullable String variableName, MigrationContext migrationContext) {
+        return migrationContext.nonClassNamedLoggers().stream()
+                .anyMatch(loggerVariable -> loggerVariable.getName().toString().equals(variableName));
     }
 
     private SuggestedFix handleLoggerMemberVariables(ClassTree classTree, VisitorState state, MigrationContext migrationContext) throws SkipCompilationUnitException {

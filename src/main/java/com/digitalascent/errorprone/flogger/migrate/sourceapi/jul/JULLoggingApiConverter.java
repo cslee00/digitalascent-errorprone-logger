@@ -56,12 +56,12 @@ public final class JULLoggingApiConverter extends AbstractLoggingApiConverter {
     }
 
     @Override
-    protected boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+    public boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
         return loggingEnabledMethod().matches(methodInvocationTree, state);
     }
 
     @Override
-    protected boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+    public boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
         return loggingMethod().matches(methodInvocationTree, state);
     }
 

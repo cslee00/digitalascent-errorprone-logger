@@ -28,7 +28,7 @@ class LoggerApiRefactoringCheckTest {
     }
 
     @ParameterizedTest( name = "common-logging: test id {arguments}")
-    @ValueSource(ints = {0,1,2,3,4,5})
+    @ValueSource(ints = {0,1,2,3,4,5,6})
     public void testCommonsLogging( int id ) {
         executeTest("commons-logging", "CommonsLogging", id);
     }
