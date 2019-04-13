@@ -1,6 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate.target;
 
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
+import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.model.LoggerVariableDefinition;
@@ -40,13 +41,13 @@ public class FloggerSuggestedFixGenerator {
         this.loggerVariableDefinition = requireNonNull(loggerVariableDefinition, "loggerVariableDefinition");
     }
 
-    public SuggestedFix generateConditional(MethodInvocationTree tree, VisitorState state, TargetLogLevel targetLogLevel, MigrationContext migrationContext) {
+    public SuggestedFix generateConditionalMethod(FloggerConditionalStatement floggerConditionalStatement, VisitorState state, MigrationContext migrationContext) {
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);
-        String selectorMethod = generateSelectorMethod(targetLogLevel, state);
+        String selectorMethod = generateSelectorMethod(floggerConditionalStatement.targetLogLevel(), state);
         String loggerEnabledMethodCall = String.format("%s.%s.isEnabled()", loggerVariableName, selectorMethod);
         return SuggestedFix.builder()
-                .replace(tree,loggerEnabledMethodCall )
+                .replace(floggerConditionalStatement.conditionalStatement(),loggerEnabledMethodCall )
                 .build();
     }
 

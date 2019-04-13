@@ -1,6 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LoggingApiSpecification;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ExpressionStatementTree;
@@ -24,12 +25,12 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
     private final MigrationContext migrationContext;
     private final List<MethodInvocationTree> loggingMethodInvocations = new ArrayList<>();
     private final List<LoggingConditional> loggingConditionals = new ArrayList<>();
-    private final LoggingApiConverter loggingApiConverter;
+    private final LoggingApiSpecification loggingApiSpecification;
     private final List<MethodInvocationTree> loggingEnabledMethods = new ArrayList<>();
 
-    LoggerInvocationTreeScanner(MigrationContext migrationContext, LoggingApiConverter loggingApiConverter) {
+    LoggerInvocationTreeScanner(MigrationContext migrationContext, LoggingApiSpecification loggingApiSpecification) {
         this.migrationContext = requireNonNull(migrationContext, "migrationContext");
-        this.loggingApiConverter = requireNonNull(loggingApiConverter, "loggingApiConverter");
+        this.loggingApiSpecification = requireNonNull(loggingApiSpecification, "loggingApiSpecification");
     }
 
     List<MethodInvocationTree> loggingMethodInvocations() {
@@ -72,7 +73,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
     public Void visitIf(IfTree node, VisitorState visitorState) {
         ParenthesizedTree parenTree = (ParenthesizedTree) node.getCondition();
         ExpressionTree expressionTree = parenTree.getExpression();
-        if (loggingApiConverter.matchLoggingEnabledMethod(expressionTree, visitorState)) {
+        if (loggingApiSpecification.matchConditionalMethod(expressionTree, visitorState)) {
             loggingConditionals.add(createLoggingConditional(node, (MethodInvocationTree) expressionTree, visitorState));
         }
         return super.visitIf(node, visitorState);
@@ -80,7 +81,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
 
     @Override
     public Void visitMethodInvocation(MethodInvocationTree node, VisitorState visitorState) {
-        if (loggingApiConverter.matchLoggingEnabledMethod(node, visitorState) && loggingApiConverter.matchLoggingMethod(node, visitorState)) {
+        if (loggingApiSpecification.matchConditionalMethod(node, visitorState) && loggingApiSpecification.matchLoggingMethod(node, visitorState)) {
             throw new IllegalStateException("Cannot be a logging method and a logging enabled method: " + node);
         }
 
@@ -91,9 +92,9 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
         }
 
         if (!isIgnoredLogger(variableName, migrationContext)) {
-            if (loggingApiConverter.matchLoggingMethod(node, visitorState)) {
+            if (loggingApiSpecification.matchLoggingMethod(node, visitorState)) {
                 loggingMethodInvocations.add(node);
-            } else if (loggingApiConverter.matchLoggingEnabledMethod(node, visitorState)) {
+            } else if (loggingApiSpecification.matchConditionalMethod(node, visitorState)) {
                 loggingEnabledMethods.add(node);
             }
         }
@@ -124,7 +125,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
             if (blockTree.getStatements().stream()
                     .allMatch(x ->
                             x instanceof ExpressionStatementTree &&
-                                    loggingApiConverter.matchLoggingMethod(((ExpressionStatementTree) x).getExpression(), state))) {
+                                    loggingApiSpecification.matchLoggingMethod(((ExpressionStatementTree) x).getExpression(), state))) {
 
                 return LoggingConditional.elide(ifTree, conditionalExpression, blockTree.getStatements().stream()
                         .map(x -> ((ExpressionStatementTree) x).getExpression())
