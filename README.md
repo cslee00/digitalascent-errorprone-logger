@@ -4,12 +4,14 @@ Refactorings:
 * Migrate from common logging APIs to Google Flogger:
    * Commons Logging
    * Java Logging (java.util.logging)
-   * Log4J / Log4J2
+   * Log4J 
+   * Log4J2
    * SLF4J
-   * TinyLog / TinyLog2
+   * TinyLog 
+   * TinyLog2
 * Remove toString() calls on message format arguments
 * Remove Arrays.toString() calls on message format arguments
-* remove unnecessary conditionals around logging statements
+* Remove unnecessary conditionals around logging statements
 * (TODO) convert string-concatenated formatting messages into parameters
 * (TODO) make complex formatting arguments lazy
 

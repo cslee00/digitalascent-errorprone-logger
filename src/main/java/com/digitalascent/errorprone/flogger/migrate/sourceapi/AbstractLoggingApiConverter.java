@@ -120,7 +120,7 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
         }
 
         List<FloggerLogStatement> logStatements = loggingConditional.loggingMethods().stream()
-                .map(loggingMethod -> migrateLoggingMethod((MethodInvocationTree) loggingMethod, state, migrationContext))
+                .map(loggingMethod -> migrateLoggingMethod(loggingMethod, state, migrationContext))
                 .collect(toImmutableList());
 
         return getFloggerSuggestedFixGenerator().elideConditional(loggingConditional.ifTree(), state,

@@ -13,6 +13,7 @@ import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.util.ASTHelpers;
 import com.google.errorprone.util.SourceCodeEscapers;
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
@@ -88,8 +89,9 @@ public class FloggerSuggestedFixGenerator {
     private String generateLoggingCall(VisitorState state, FloggerLogStatement floggerLogStatement, String loggerVariableName, String methodInvocation) {
         String loggingCall = String.format("%s.%s", loggerVariableName, methodInvocation);
 
-        if (floggerLogStatement.thrown() != null) {
-            String thrownCode = state.getSourceForNode(floggerLogStatement.thrown());
+        ExpressionTree thrown = floggerLogStatement.thrown();
+        if (thrown != null) {
+            String thrownCode = state.getSourceForNode(thrown);
             loggingCall += String.format(".withCause(%s)", thrownCode);
         }
         return loggingCall;
