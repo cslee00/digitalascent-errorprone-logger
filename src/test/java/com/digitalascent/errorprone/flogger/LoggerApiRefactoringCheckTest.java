@@ -22,7 +22,7 @@ class LoggerApiRefactoringCheckTest {
     }
 
     @ParameterizedTest( name = "log4j2: test id {arguments}")
-    @ValueSource(ints = {0,1,2,3,4,5,6,7})
+    @ValueSource(ints = {0,1,2,3,4,5,6})
     public void testLog4j2(int id) {
         executeTest("log4j2", "Log4j2", id);
     }
@@ -52,6 +52,12 @@ class LoggerApiRefactoringCheckTest {
     @ValueSource(ints = {0,1, 2})
     public void testMultipleLoggers(int id) {
         executeTest("slf4j", "MultipleLoggers", id);
+    }
+
+    @ParameterizedTest( name = "conditionals: test id {arguments}")
+    @ValueSource(ints = {0,1})
+    public void testConditionals(int id) {
+        executeTest("slf4j", "Conditionals", id);
     }
 
     @ParameterizedTest( name = "jul: test id {arguments}")

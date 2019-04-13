@@ -18,12 +18,12 @@ public class TestClassUsingCommonsLogging_0 {
     }
 
     public void testEnabled() {
-        someLogger.atFinest().isEnabled();
-        someLogger.atFine().isEnabled();
-        someLogger.atInfo().isEnabled();
-        someLogger.atWarning().isEnabled();
-        someLogger.atSevere().isEnabled();
-        someLogger.atSevere().isEnabled();
+        someLogger.atFinest().log( "message" );
+        someLogger.atFine().log( "message" );
+        someLogger.atInfo().log( "message" );
+        someLogger.atWarning().log( "message" );
+        someLogger.atSevere().log( "message" );
+        someLogger.atSevere().log( "message" );
     }
 
     public void testMessageFormat() {

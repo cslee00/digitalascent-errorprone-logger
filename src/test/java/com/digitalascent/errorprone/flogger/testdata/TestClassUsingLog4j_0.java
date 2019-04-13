@@ -30,20 +30,38 @@ public class TestClassUsingLog4j_0 {
     }
 
     public void testEnabled() {
-        someLogger.isTraceEnabled();
-        someLogger.isEnabledFor(Level.TRACE);
+        if (someLogger.isTraceEnabled()) {
+            someLogger.trace("message");
+        }
+        if (someLogger.isEnabledFor(Level.TRACE)) {
+            someLogger.trace("message");
+        }
 
-        someLogger.isDebugEnabled();
-        someLogger.isEnabledFor(Level.DEBUG);
+        if (someLogger.isDebugEnabled()) {
+            someLogger.debug("message");
+        }
+        if (someLogger.isEnabledFor(Level.DEBUG)) {
+            someLogger.debug("message");
+        }
 
-        someLogger.isInfoEnabled();
-        someLogger.isEnabledFor(Level.INFO);
+        if (someLogger.isInfoEnabled()) {
+            someLogger.info("message");
+        }
+        if (someLogger.isEnabledFor(Level.INFO)) {
+            someLogger.info("message");
+        }
 
-        someLogger.isEnabledFor(Level.WARN);
+        if (someLogger.isEnabledFor(Level.WARN)) {
+            someLogger.warn("message");
+        }
 
-        someLogger.isEnabledFor(Level.ERROR);
+        if (someLogger.isEnabledFor(Level.ERROR)) {
+            someLogger.error("message");
+        }
 
-        someLogger.isEnabledFor(Level.FATAL);
+        if (someLogger.isEnabledFor(Level.FATAL)) {
+            someLogger.fatal("message");
+        }
     }
 
     public void testMessageFormat() {
@@ -51,15 +69,15 @@ public class TestClassUsingLog4j_0 {
         someLogger.info("some string");
         someLogger.info(10);
         someLogger.info("a" + 1 + "b");
-        someLogger.info(String.format("%s","abc"));
+        someLogger.info(String.format("%s", "abc"));
     }
 
     public void testException() {
         try {
             String s = null;
             s.trim();
-        } catch( NullPointerException e ) {
-            someLogger.error("The message",  e);
+        } catch (NullPointerException e) {
+            someLogger.error("The message", e);
         }
     }
 

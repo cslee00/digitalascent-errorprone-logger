@@ -1,14 +1,14 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
-import com.digitalascent.errorprone.flogger.migrate.target.FloggerSuggestedFixGenerator;
+import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
+import com.digitalascent.errorprone.flogger.migrate.LoggingConditional;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
-import com.digitalascent.errorprone.flogger.migrate.LoggingApiConverter;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
+import com.digitalascent.errorprone.flogger.migrate.target.FloggerSuggestedFixGenerator;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
-import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -16,7 +16,6 @@ import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Symbol;
 
 import javax.annotation.Nullable;
@@ -25,6 +24,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractLoggingApiConverter implements LoggingApiConverter {
@@ -73,29 +73,58 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
     public final SuggestedFix migrateLoggingMethodInvocation(MethodInvocationTree loggingMethodInvocation, VisitorState state, MigrationContext migrationContext) {
         checkArgument(matchLoggingMethod(loggingMethodInvocation, state), "matchLoggingMethod(loggingMethodInvocation, state) : %s", loggingMethodInvocation);
 
+        FloggerLogStatement floggerLogStatement = migrateLoggingMethod(loggingMethodInvocation, state, migrationContext);
+        return getFloggerSuggestedFixGenerator().generateLoggingMethod(loggingMethodInvocation,
+                state, floggerLogStatement, migrationContext);
+    }
+
+
+    private FloggerLogStatement migrateLoggingMethod(MethodInvocationTree loggingMethodInvocation, VisitorState state, MigrationContext migrationContext) {
         Symbol.MethodSymbol sym = ASTHelpers.getSymbol(loggingMethodInvocation);
         String methodName = sym.getSimpleName().toString();
 
-        FloggerLogStatement floggerLogStatement = migrateLoggingMethod(methodName,
-                loggingMethodInvocation, state, migrationContext);
-        return getFloggerSuggestedFixGenerator().generateLoggingMethod(loggingMethodInvocation,
-                state, floggerLogStatement, migrationContext);
-
+        return migrateLoggingMethod(methodName, loggingMethodInvocation, state, migrationContext);
     }
 
     @Override
-    public final SuggestedFix migrateLoggingEnabledMethodInvocation(MethodInvocationTree loggingEnabledMethodInvocation,
-                                                                    VisitorState state, MigrationContext migrationContext,
-                                                                    TreePath treePath) {
-        checkArgument(matchLoggingEnabledMethod(loggingEnabledMethodInvocation, state),
-                "matchLoggingMethod(loggingEnabledMethodInvocation, state) : %s", loggingEnabledMethodInvocation);
+    public final SuggestedFix migrateLoggingConditional(LoggingConditional loggingConditional,
+                                                        VisitorState state, MigrationContext migrationContext) {
+        checkArgument(matchLoggingEnabledMethod(loggingConditional.loggingConditionalInvocation(), state),
+                "matchLoggingMethod(loggingConditional.loggingConditionalInvocation(), state) : %s",
+                loggingConditional);
 
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(loggingEnabledMethodInvocation);
+        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(loggingConditional.loggingConditionalInvocation());
         String methodName = sym.getSimpleName().toString();
 
-        // check that we're in a conditional, and that the block of the conditional contains only calls to logger methods
+        switch (loggingConditional.actionType()) {
+            case MIGRATE_EXPRESSION_ONLY:
+                return migrateLoggingEnabledMethod(methodName, loggingConditional.loggingConditionalInvocation(), state, migrationContext);
 
-        return migrateLoggingEnabledMethod(methodName, loggingEnabledMethodInvocation, state, migrationContext);
+            case ELIDE:
+                return elideConditional(loggingConditional, state, migrationContext);
+        }
+        throw new AssertionError("Unknown conditional action type: " + loggingConditional.actionType());
+    }
+
+    @Override
+    public SuggestedFix migrateLoggingEnabledMethod(MethodInvocationTree loggingEnabledMethod, VisitorState state, MigrationContext migrationContext) {
+        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(loggingEnabledMethod);
+        String methodName = sym.getSimpleName().toString();
+        return migrateLoggingEnabledMethod(methodName,loggingEnabledMethod,state,migrationContext);
+    }
+
+    private SuggestedFix elideConditional(LoggingConditional loggingConditional, VisitorState state,
+                                          MigrationContext migrationContext) {
+        if (loggingConditional.loggingMethods().isEmpty()) {
+            return SuggestedFix.builder().delete(loggingConditional.ifTree()).build();
+        }
+
+        List<FloggerLogStatement> logStatements = loggingConditional.loggingMethods().stream()
+                .map(loggingMethod -> migrateLoggingMethod((MethodInvocationTree) loggingMethod, state, migrationContext))
+                .collect(toImmutableList());
+
+        return getFloggerSuggestedFixGenerator().elideConditional(loggingConditional.ifTree(), state,
+                logStatements, migrationContext);
     }
 
     protected final LogMessageModel createLogMessageModel(ExpressionTree messageFormatArgument,

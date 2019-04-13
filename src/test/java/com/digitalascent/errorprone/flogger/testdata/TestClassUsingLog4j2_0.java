@@ -46,35 +46,83 @@ public class TestClassUsingLog4j2_0 {
     }
 
     public void testEnabled() {
-        someLogger.isTraceEnabled();
-        someLogger.isTraceEnabled(DummyLog4J2Marker.INSTANCE);
-        someLogger.isEnabled(Level.TRACE);
-        someLogger.isEnabled(Level.TRACE, DummyLog4J2Marker.INSTANCE);
+        if (someLogger.isTraceEnabled()) {
+            someLogger.trace("message");
+        }
+        if (someLogger.isTraceEnabled(DummyLog4J2Marker.INSTANCE)) {
+            someLogger.trace("message");
+        }
+        if (someLogger.isEnabled(Level.TRACE)) {
+            someLogger.trace("message");
+        }
+        if (someLogger.isEnabled(Level.TRACE, DummyLog4J2Marker.INSTANCE)) {
+            someLogger.trace("message");
+        }
 
-        someLogger.isDebugEnabled();
-        someLogger.isDebugEnabled(DummyLog4J2Marker.INSTANCE);
-        someLogger.isEnabled(Level.DEBUG);
-        someLogger.isEnabled(Level.DEBUG, DummyLog4J2Marker.INSTANCE);
+        if (someLogger.isDebugEnabled()) {
+            someLogger.debug("message");
+        }
+        if (someLogger.isDebugEnabled(DummyLog4J2Marker.INSTANCE)) {
+            someLogger.debug("message");
+        }
+        if (someLogger.isEnabled(Level.DEBUG)) {
+            someLogger.debug("message");
+        }
+        if (someLogger.isEnabled(Level.DEBUG, DummyLog4J2Marker.INSTANCE)) {
+            someLogger.debug("message");
+        }
 
-        someLogger.isInfoEnabled();
-        someLogger.isInfoEnabled(DummyLog4J2Marker.INSTANCE);
-        someLogger.isEnabled(Level.INFO);
-        someLogger.isEnabled(Level.INFO, DummyLog4J2Marker.INSTANCE);
+        if (someLogger.isInfoEnabled()) {
+            someLogger.info("message");
+        }
+        if (someLogger.isInfoEnabled(DummyLog4J2Marker.INSTANCE)) {
+            someLogger.info("message");
+        }
+        if (someLogger.isEnabled(Level.INFO)) {
+            someLogger.info("message");
+        }
+        if (someLogger.isEnabled(Level.INFO, DummyLog4J2Marker.INSTANCE)) {
+            someLogger.info("message");
+        }
 
-        someLogger.isWarnEnabled();
-        someLogger.isWarnEnabled(DummyLog4J2Marker.INSTANCE);
-        someLogger.isEnabled(Level.WARN);
-        someLogger.isEnabled(Level.WARN, DummyLog4J2Marker.INSTANCE);
+        if (someLogger.isWarnEnabled()) {
+            someLogger.warn("message");
+        }
+        if (someLogger.isWarnEnabled(DummyLog4J2Marker.INSTANCE)) {
+            someLogger.warn("message");
+        }
+        if (someLogger.isEnabled(Level.WARN)) {
+            someLogger.warn("message");
+        }
+        if (someLogger.isEnabled(Level.WARN, DummyLog4J2Marker.INSTANCE)) {
+            someLogger.warn("message");
+        }
 
-        someLogger.isErrorEnabled();
-        someLogger.isErrorEnabled(DummyLog4J2Marker.INSTANCE);
-        someLogger.isEnabled(Level.ERROR);
-        someLogger.isEnabled(Level.ERROR, DummyLog4J2Marker.INSTANCE);
+        if (someLogger.isErrorEnabled()) {
+            someLogger.error("message");
+        }
+        if (someLogger.isErrorEnabled(DummyLog4J2Marker.INSTANCE)) {
+            someLogger.error("message");
+        }
+        if (someLogger.isEnabled(Level.ERROR)) {
+            someLogger.error("message");
+        }
+        if (someLogger.isEnabled(Level.ERROR, DummyLog4J2Marker.INSTANCE)) {
+            someLogger.error("message");
+        }
 
-        someLogger.isFatalEnabled();
-        someLogger.isFatalEnabled(DummyLog4J2Marker.INSTANCE);
-        someLogger.isEnabled(Level.FATAL);
-        someLogger.isEnabled(Level.FATAL, DummyLog4J2Marker.INSTANCE);
+        if (someLogger.isFatalEnabled()) {
+            someLogger.fatal("message");
+        }
+        if (someLogger.isFatalEnabled(DummyLog4J2Marker.INSTANCE)) {
+            someLogger.fatal("message");
+        }
+        if (someLogger.isEnabled(Level.FATAL)) {
+            someLogger.fatal("message");
+        }
+        if (someLogger.isEnabled(Level.FATAL, DummyLog4J2Marker.INSTANCE)) {
+            someLogger.fatal("message");
+        }
     }
 
     public void testMessageFormat() {
@@ -86,7 +134,7 @@ public class TestClassUsingLog4j2_0 {
         someLogger.info("6. Double-escaped anchor, no parameter: \\\\{}");
         someLogger.info("7. Single parameter, double-escaped anchor: {} \\\\{}", "abc");
         someLogger.info("8. Percent sign: 5% of {}", "abc");
-        someLogger.info("9. Object[] {} {}", new Object[] { "abc", "def" });
+        someLogger.info("9. Object[] {} {}", new Object[]{"abc", "def"});
     }
 
     public void testException() {
@@ -103,7 +151,7 @@ public class TestClassUsingLog4j2_0 {
         someLogger.info("a" + 1 + "b {}", "argument", new Throwable());
         someLogger.info(new Object());
         someLogger.info(new Object(), new Throwable());
-        someLogger.info(String.format("%s","abc"));
+        someLogger.info(String.format("%s", "abc"));
     }
 
     private final Logger someLogger = LogManager.getLogger(getClass());

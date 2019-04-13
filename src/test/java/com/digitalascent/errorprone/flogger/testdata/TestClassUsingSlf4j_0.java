@@ -25,20 +25,40 @@ public class TestClassUsingSlf4j_0 {
     }
 
     public void testEnabled() {
-        logger.isTraceEnabled();
-        logger.isTraceEnabled(DummySlf4JMarker.INSTANCE);
+        if (logger.isTraceEnabled()) {
+            logger.trace("message");
+        }
+        if (logger.isTraceEnabled(DummySlf4JMarker.INSTANCE)) {
+            logger.trace("message");
+        }
 
-        logger.isDebugEnabled();
-        logger.isDebugEnabled(DummySlf4JMarker.INSTANCE);
+        if (logger.isDebugEnabled()) {
+            logger.debug("message");
+        }
+        if (logger.isDebugEnabled(DummySlf4JMarker.INSTANCE)) {
+            logger.debug("message");
+        }
 
-        logger.isInfoEnabled();
-        logger.isInfoEnabled(DummySlf4JMarker.INSTANCE);
+        if (logger.isInfoEnabled()) {
+            logger.info("message");
+        }
+        if (logger.isInfoEnabled(DummySlf4JMarker.INSTANCE)) {
+            logger.info("message");
+        }
 
-        logger.isWarnEnabled();
-        logger.isWarnEnabled(DummySlf4JMarker.INSTANCE);
+        if (logger.isWarnEnabled()) {
+            logger.warn("message");
+        }
+        if (logger.isWarnEnabled(DummySlf4JMarker.INSTANCE)) {
+            logger.warn("message");
+        }
 
-        logger.isErrorEnabled();
-        logger.isErrorEnabled(DummySlf4JMarker.INSTANCE);
+        if (logger.isErrorEnabled()) {
+            logger.error("message");
+        }
+        if (logger.isErrorEnabled(DummySlf4JMarker.INSTANCE)) {
+            logger.error("message");
+        }
     }
 
     public void testMessageFormat() {

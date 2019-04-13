@@ -22,18 +22,16 @@ import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import com.sun.source.util.TreePath;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.LogManager;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static java.util.Objects.requireNonNull;
 
 @AutoService(BugChecker.class)
 @BugPattern(
@@ -132,24 +130,38 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     private List<SuggestedFix> handleMethodInvocations(ClassTree classTree, VisitorState state, MigrationContext migrationContext) {
 
         LoggerInvocationTreeScanner treeScanner = new LoggerInvocationTreeScanner(migrationContext, loggingApiConverter);
-        classTree.accept(treeScanner, state);
+        treeScanner.scan(classTree,state);
+//        classTree.accept(treeScanner, state);
 
         final List<SuggestedFix> suggestedFixes = new ArrayList<>();
+        suggestedFixes.addAll( migrateLoggingConditional(classTree, state, migrationContext, treeScanner.loggingConditionals()));
         suggestedFixes.addAll( migrateLoggingMethodInvocations(classTree, state, migrationContext, treeScanner.loggingMethodInvocations()) );
-        suggestedFixes.addAll( migrateLoggingEnabledMethodInvocations(classTree, state, migrationContext, treeScanner.loggingEnabledMethodInvocations()));
+        suggestedFixes.addAll( migrateLoggingEnabledMethods(classTree, state, migrationContext, treeScanner.loggingEnabledMethods()));
+
 
         return suggestedFixes;
     }
 
-    private ImmutableList<SuggestedFix> migrateLoggingEnabledMethodInvocations(ClassTree classTree, VisitorState state, MigrationContext migrationContext,
-                                                                               List<MethodInvocationTree> loggingEnabledMethodInvocations) {
-
-        return loggingEnabledMethodInvocations.stream().map( loggingEnabledMethodInvocation -> {
+    private List<SuggestedFix> migrateLoggingEnabledMethods(ClassTree classTree, VisitorState state,
+                                                            MigrationContext migrationContext,
+                                                            List<MethodInvocationTree> loggingEnabledMethods) {
+        return loggingEnabledMethods.stream().map( loggingEnabledMethod -> {
             try {
-                TreePath treePath = TreePath.getPath(state.getPath(), loggingEnabledMethodInvocation);
-                return loggingApiConverter.migrateLoggingEnabledMethodInvocation(loggingEnabledMethodInvocation, state, migrationContext, treePath);
+                return loggingApiConverter.migrateLoggingEnabledMethod(loggingEnabledMethod,state,migrationContext);
             } catch( SkipLogMethodException e ) {
-                logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(), loggingEnabledMethodInvocation, e.getMessage());
+                logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(), loggingEnabledMethod, e.getMessage());
+                return SuggestedFix.builder().build();
+            }
+        }).collect(toImmutableList());
+    }
+
+    private ImmutableList<SuggestedFix> migrateLoggingConditional(ClassTree classTree, VisitorState state, MigrationContext migrationContext,
+                                                                  List<LoggingConditional> loggingConditionals ) {
+        return loggingConditionals.stream().map( loggingConditional -> {
+            try {
+                return loggingApiConverter.migrateLoggingConditional(loggingConditional, state, migrationContext);
+            } catch( SkipLogMethodException e ) {
+                logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(), loggingConditional.loggingConditionalInvocation(), e.getMessage());
                 return SuggestedFix.builder().build();
             }
         }).collect(toImmutableList());
@@ -201,5 +213,4 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
 
         return builder.build();
     }
-
 }

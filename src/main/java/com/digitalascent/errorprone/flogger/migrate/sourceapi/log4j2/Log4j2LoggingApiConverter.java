@@ -48,8 +48,8 @@ public final class Log4j2LoggingApiConverter extends AbstractLoggingApiConverter
     }
 
     @Override
-    public boolean matchLoggingMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
-        return loggingMethod().matches(methodInvocationTree, state);
+    public boolean matchLoggingMethod(ExpressionTree expressionTree, VisitorState state) {
+        return loggingMethod().matches(expressionTree, state);
     }
 
     @Override

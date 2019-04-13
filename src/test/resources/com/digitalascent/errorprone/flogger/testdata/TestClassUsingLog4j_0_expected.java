@@ -30,20 +30,20 @@ public class TestClassUsingLog4j_0 {
     }
 
     public void testEnabled() {
-        someLogger.atFinest().isEnabled();
-        someLogger.atFinest().isEnabled();
+        someLogger.atFinest().log( "message" );
+        someLogger.atFinest().log( "message" );
 
-        someLogger.atFine().isEnabled();
-        someLogger.atFine().isEnabled();
+        someLogger.atFine().log( "message" );
+        someLogger.atFine().log( "message" );
 
-        someLogger.atInfo().isEnabled();
-        someLogger.atInfo().isEnabled();
+        someLogger.atInfo().log( "message" );
+        someLogger.atInfo().log( "message" );
 
-        someLogger.atWarning().isEnabled();
+        someLogger.atWarning().log( "message" );
 
-        someLogger.atSevere().isEnabled();
+        someLogger.atSevere().log( "message" );
 
-        someLogger.atSevere().isEnabled();
+        someLogger.atSevere().log( "message" );
     }
 
     public void testMessageFormat() {
@@ -62,6 +62,4 @@ public class TestClassUsingLog4j_0 {
             someLogger.atSevere().withCause(e).log( "The message" );
         }
     }
-
-
 }

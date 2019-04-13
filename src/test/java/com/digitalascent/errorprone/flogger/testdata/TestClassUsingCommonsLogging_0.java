@@ -17,12 +17,24 @@ public class TestClassUsingCommonsLogging_0 {
     }
 
     public void testEnabled() {
-        someLogger.isTraceEnabled();
-        someLogger.isDebugEnabled();
-        someLogger.isInfoEnabled();
-        someLogger.isWarnEnabled();
-        someLogger.isErrorEnabled();
-        someLogger.isFatalEnabled();
+        if (someLogger.isTraceEnabled()) {
+            someLogger.trace("message");
+        }
+        if (someLogger.isDebugEnabled()) {
+            someLogger.debug("message");
+        }
+        if (someLogger.isInfoEnabled()) {
+            someLogger.info("message");
+        }
+        if (someLogger.isWarnEnabled()) {
+            someLogger.warn("message");
+        }
+        if (someLogger.isErrorEnabled()) {
+            someLogger.error("message");
+        }
+        if (someLogger.isFatalEnabled()) {
+            someLogger.fatal("message");
+        }
     }
 
     public void testMessageFormat() {
@@ -36,8 +48,8 @@ public class TestClassUsingCommonsLogging_0 {
         try {
             String s = null;
             s.trim();
-        } catch( NullPointerException e ) {
-            someLogger.error("The message",  e);
+        } catch (NullPointerException e) {
+            someLogger.error("The message", e);
         }
     }
 
@@ -45,7 +57,7 @@ public class TestClassUsingCommonsLogging_0 {
         someLogger.info(new Object());
         someLogger.info(new Object(), new Throwable());
         someLogger.info(new Throwable());
-        someLogger.info(String.format("%s","abc"));
+        someLogger.info(String.format("%s", "abc"));
     }
 
     private final Log someLogger = LogFactory.getLog(getClass());

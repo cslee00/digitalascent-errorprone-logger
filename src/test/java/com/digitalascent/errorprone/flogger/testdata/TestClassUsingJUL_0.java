@@ -35,17 +35,37 @@ public class TestClassUsingJUL_0 {
     }
 
     public void testEnabled() {
-        someLogger.isLoggable(Level.FINEST);
-        someLogger.isLoggable(Level.FINER);
-        someLogger.isLoggable(Level.FINE);
-        someLogger.isLoggable(Level.CONFIG);
-        someLogger.isLoggable(Level.INFO);
-        someLogger.isLoggable(Level.WARNING);
-        someLogger.isLoggable(Level.SEVERE);
+        if (someLogger.isLoggable(Level.FINEST)) {
+            someLogger.finest("message");
+        }
+        if (someLogger.isLoggable(Level.FINER)) {
+            someLogger.finer("message");
+        }
+        if (someLogger.isLoggable(Level.FINE)) {
+            someLogger.fine("message");
+        }
+        if (someLogger.isLoggable(Level.CONFIG)) {
+            someLogger.config("message");
+        }
+        if (someLogger.isLoggable(Level.INFO)) {
+            someLogger.info("message");
+        }
+        if (someLogger.isLoggable(Level.WARNING)) {
+            someLogger.warning("message");
+        }
+        if (someLogger.isLoggable(Level.SEVERE)) {
+            someLogger.severe("message");
+        }
 
-        someLogger.isLoggable(CustomJULLevel.LEVEL_1);
-        someLogger.isLoggable(CustomJULLevel.LEVEL_2);
-        someLogger.isLoggable(CustomJULLevel.LEVEL_3);
+        if (someLogger.isLoggable(CustomJULLevel.LEVEL_1)) {
+            someLogger.log(CustomJULLevel.LEVEL_1,"message");
+        }
+        if (someLogger.isLoggable(CustomJULLevel.LEVEL_2)) {
+            someLogger.log(CustomJULLevel.LEVEL_2, "message");
+        }
+        if (someLogger.isLoggable(CustomJULLevel.LEVEL_3)) {
+            someLogger.log(CustomJULLevel.LEVEL_3, "message");
+        }
     }
 
     public void testMessageFormat() {
@@ -56,8 +76,8 @@ public class TestClassUsingJUL_0 {
         someLogger.log(Level.INFO, "5. Double-escaped anchor, single parameter: \\\\{0}", "abc");
         someLogger.log(Level.INFO, "6. Double-escaped anchor, no parameter: \\\\{0}");
         someLogger.log(Level.INFO, "7. Single parameter, double-escaped anchor: {0} \\\\{0}", "abc");
-        someLogger.log(Level.INFO, "8. Multi parameters: {1} {0} {0}", new Object[] {"abc", "def"});
-        someLogger.log(Level.INFO, "9. Multi parameters 2: {9} {0} {0}", new Object[] {"abc", "def", "ghi"});
+        someLogger.log(Level.INFO, "8. Multi parameters: {1} {0} {0}", new Object[]{"abc", "def"});
+        someLogger.log(Level.INFO, "9. Multi parameters 2: {9} {0} {0}", new Object[]{"abc", "def", "ghi"});
     }
 
     public void testException() {
