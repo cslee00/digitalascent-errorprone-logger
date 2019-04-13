@@ -43,7 +43,7 @@ public final class TinyLogLoggingApiConverter extends AbstractLoggingApiConverte
     }
 
     @Override
-    public boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+    public boolean matchLoggingEnabledMethod(ExpressionTree expressionTree, VisitorState state) {
         return false;
     }
 

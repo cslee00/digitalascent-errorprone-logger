@@ -8,6 +8,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
+import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
@@ -15,8 +16,8 @@ import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
+import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.tree.JCTree;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -83,12 +84,16 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
     }
 
     @Override
-    public final SuggestedFix migrateLoggingEnabledMethodInvocation(MethodInvocationTree loggingEnabledMethodInvocation, VisitorState state, MigrationContext migrationContext) {
+    public final SuggestedFix migrateLoggingEnabledMethodInvocation(MethodInvocationTree loggingEnabledMethodInvocation,
+                                                                    VisitorState state, MigrationContext migrationContext,
+                                                                    TreePath treePath) {
         checkArgument(matchLoggingEnabledMethod(loggingEnabledMethodInvocation, state),
                 "matchLoggingMethod(loggingEnabledMethodInvocation, state) : %s", loggingEnabledMethodInvocation);
 
         Symbol.MethodSymbol sym = ASTHelpers.getSymbol(loggingEnabledMethodInvocation);
         String methodName = sym.getSimpleName().toString();
+
+        // check that we're in a conditional, and that the block of the conditional contains only calls to logger methods
 
         return migrateLoggingEnabledMethod(methodName, loggingEnabledMethodInvocation, state, migrationContext);
     }

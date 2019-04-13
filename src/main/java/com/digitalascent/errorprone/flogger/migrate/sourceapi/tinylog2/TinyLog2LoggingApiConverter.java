@@ -42,7 +42,7 @@ public final class TinyLog2LoggingApiConverter extends AbstractLoggingApiConvert
     }
 
     @Override
-    public boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
+    public boolean matchLoggingEnabledMethod(ExpressionTree expressionTree, VisitorState state) {
         return false;
     }
 

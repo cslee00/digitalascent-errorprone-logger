@@ -48,8 +48,8 @@ public final class CommonsLoggingApiConverter extends AbstractLoggingApiConverte
     }
 
     @Override
-    public boolean matchLoggingEnabledMethod(MethodInvocationTree methodInvocationTree, VisitorState state) {
-        return loggingEnabledMethod().matches(methodInvocationTree, state);
+    public boolean matchLoggingEnabledMethod(ExpressionTree expressionTree, VisitorState state) {
+        return loggingEnabledMethod().matches(expressionTree, state);
     }
 
     @Override
