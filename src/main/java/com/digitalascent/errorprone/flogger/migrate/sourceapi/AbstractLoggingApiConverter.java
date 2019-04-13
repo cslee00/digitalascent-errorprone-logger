@@ -79,14 +79,15 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
 
         Symbol.MethodSymbol sym = ASTHelpers.getSymbol(methodInvocationTree);
         String methodName = sym.getSimpleName().toString();
-        if (matchLoggingMethod(methodInvocationTree, state) && !isIgnoredLogger(variableName, migrationContext)) {
+        boolean ignoreLogger = isIgnoredLogger(variableName, migrationContext);
+        if (matchLoggingMethod(methodInvocationTree, state) && !ignoreLogger) {
             FloggerLogStatement floggerLogStatement = migrateLoggingMethod(methodName,
                     methodInvocationTree, state, migrationContext);
             return Optional.of(getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree,
                     state, floggerLogStatement, migrationContext));
         }
 
-        if (matchLoggingEnabledMethod(methodInvocationTree, state) && !isIgnoredLogger(variableName, migrationContext)) {
+        if (matchLoggingEnabledMethod(methodInvocationTree, state) && !ignoreLogger) {
             return Optional.of(migrateLoggingEnabledMethod(methodName, methodInvocationTree, state, migrationContext));
         }
 
