@@ -25,6 +25,10 @@ Checks
 
 Example Gradle build script located [here](blob/master/examples/gradle/build.gradle)
 
+```
+./gradlew clean compileJava
+```
+
 ### Manual steps 
 
 Add Error Prone options to enable patch checks: (https://errorprone.info/docs/patching)
