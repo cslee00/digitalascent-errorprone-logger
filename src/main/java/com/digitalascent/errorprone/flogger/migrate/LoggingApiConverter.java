@@ -9,12 +9,10 @@ import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.VariableTree;
 
-import java.util.Optional;
-
 public interface LoggingApiConverter {
-    Optional<SuggestedFix> migrateLoggingMethodInvocation(MethodInvocationTree tree, VisitorState state, MigrationContext migrationContext);
+    SuggestedFix migrateLoggingMethodInvocation(MethodInvocationTree tree, VisitorState state, MigrationContext migrationContext);
 
     LoggerVariableNamingType determineLoggerVariableNamingType(ClassTree classTree, VariableTree tree, VisitorState state);
 
-    Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState);
+    SuggestedFix migrateImport(ImportTree importTree, VisitorState visitorState);
 }

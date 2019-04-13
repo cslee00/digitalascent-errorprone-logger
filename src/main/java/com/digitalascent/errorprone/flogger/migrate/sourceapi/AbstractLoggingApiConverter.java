@@ -20,14 +20,13 @@ import com.sun.tools.javac.tree.JCTree;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractLoggingApiConverter implements LoggingApiConverter {
-
+    private static final SuggestedFix EMPTY = SuggestedFix.builder().build();
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
     private final LogMessageHandler logMessageHandler;
@@ -41,16 +40,16 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
     }
 
     @Override
-    public final Optional<SuggestedFix> migrateImport(ImportTree importTree, VisitorState visitorState) {
+    public final SuggestedFix migrateImport(ImportTree importTree, VisitorState visitorState) {
         if (matchImport(importTree.getQualifiedIdentifier(), visitorState)) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
+            return floggerSuggestedFixGenerator.removeImport(importTree);
         }
 
         if (loggingPackagePrefixes().stream()
                 .anyMatch(x -> importTree.getQualifiedIdentifier().toString().startsWith(x))) {
-            return Optional.of(floggerSuggestedFixGenerator.removeImport(importTree));
+            return floggerSuggestedFixGenerator.removeImport(importTree);
         }
-        return Optional.empty();
+        return EMPTY;
     }
 
     @Override
@@ -69,7 +68,7 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
     }
 
     @Override
-    public final Optional<SuggestedFix> migrateLoggingMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    public final SuggestedFix migrateLoggingMethodInvocation(MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
 
         String variableName = null;
         Tree methodSelect = methodInvocationTree.getMethodSelect();
@@ -77,33 +76,36 @@ public abstract class AbstractLoggingApiConverter implements LoggingApiConverter
             variableName = ((JCTree.JCFieldAccess) methodSelect).selected.toString();
         }
 
+        if (isIgnoredLogger(variableName, migrationContext)) {
+            return EMPTY;
+        }
+
         Symbol.MethodSymbol sym = ASTHelpers.getSymbol(methodInvocationTree);
         String methodName = sym.getSimpleName().toString();
-        boolean ignoreLogger = isIgnoredLogger(variableName, migrationContext);
-        if (matchLoggingMethod(methodInvocationTree, state) && !ignoreLogger) {
+
+        if (matchLoggingMethod(methodInvocationTree, state)) {
             FloggerLogStatement floggerLogStatement = migrateLoggingMethod(methodName,
                     methodInvocationTree, state, migrationContext);
-            return Optional.of(getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree,
-                    state, floggerLogStatement, migrationContext));
+            return getFloggerSuggestedFixGenerator().generateLoggingMethod(methodInvocationTree,
+                    state, floggerLogStatement, migrationContext);
         }
 
-        if (matchLoggingEnabledMethod(methodInvocationTree, state) && !ignoreLogger) {
-            return Optional.of(migrateLoggingEnabledMethod(methodName, methodInvocationTree, state, migrationContext));
+        if (matchLoggingEnabledMethod(methodInvocationTree, state)) {
+            return migrateLoggingEnabledMethod(methodName, methodInvocationTree, state, migrationContext);
         }
 
-        return Optional.empty();
+        return EMPTY;
     }
 
-    protected final LogMessageModel createLogMessageModel( ExpressionTree messageFormatArgument,
-                                                           List<? extends ExpressionTree> remainingArguments,
-                                                           VisitorState state,
-                                                           @Nullable ExpressionTree thrownArgument,
-                                                           MigrationContext migrationContext,
-                                                           TargetLogLevel targetLogLevel ) {
+    protected final LogMessageModel createLogMessageModel(ExpressionTree messageFormatArgument,
+                                                          List<? extends ExpressionTree> remainingArguments,
+                                                          VisitorState state,
+                                                          @Nullable ExpressionTree thrownArgument,
+                                                          MigrationContext migrationContext,
+                                                          TargetLogLevel targetLogLevel) {
         return logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments,
                 state, thrownArgument, migrationContext, targetLogLevel);
     }
-
 
 
     private boolean isIgnoredLogger(@Nullable String variableName, MigrationContext migrationContext) {

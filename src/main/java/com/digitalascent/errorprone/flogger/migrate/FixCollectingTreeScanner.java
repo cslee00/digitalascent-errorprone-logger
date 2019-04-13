@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.Objects.requireNonNull;
+
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 abstract class FixCollectingTreeScanner extends TreeScanner<Void, VisitorState> {
     private final List<SuggestedFix> suggestedFixes = new ArrayList<>();
-    final void addSuggestedFix(Optional<SuggestedFix> suggestedFix) {
-        suggestedFix.ifPresent(suggestedFixes::add);
+    final void addSuggestedFix(SuggestedFix suggestedFix) {
+        suggestedFixes.add( requireNonNull(suggestedFix, "suggestedFix") );
     }
 
     final List<SuggestedFix> suggestedFixes() {

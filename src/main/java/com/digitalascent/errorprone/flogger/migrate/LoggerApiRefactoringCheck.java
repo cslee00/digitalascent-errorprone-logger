@@ -77,6 +77,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
                 .filter(ClassTree.class::isInstance)
                 .map(o -> processClassTree((ClassTree) o, state))
                 .flatMap(List::stream)
+                .filter(fix -> !fix.isEmpty())
                 .collect(toImmutableList());
 
         if (suggestedFixes.isEmpty()) {
@@ -97,7 +98,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
 
             List<SuggestedFix> fixes = new ArrayList<>(handleMethodInvocations(classTree, state, migrationContext));
 
-            if (!fixes.isEmpty()) {
+            if (!fixes.stream().allMatch(SuggestedFix::isEmpty)) {
                 // only process / add logger member variables if we've converted logging methods
                 fixes.add(handleLoggerMemberVariables(classTree, state, migrationContext));
             }
