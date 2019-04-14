@@ -4,7 +4,7 @@ import com.digitalascent.errorprone.flogger.migrate.SkipLogMethodException;
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
 import com.digitalascent.errorprone.flogger.migrate.format.converter.MessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.format.reducer.MessageFormatArgumentReducer;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.common.collect.ImmutableList;
@@ -35,36 +35,36 @@ public final class LogMessageModelFactory {
         this.messageFormatSpecification = requireNonNull(messageFormatSpecification, "messageFormatSpecification");
     }
 
-    final LogMessageModel createLogMessageModel(ExpressionTree messageFormatArgument,
-                                                List<? extends ExpressionTree> remainingArguments,
-                                                VisitorState state,
-                                                @Nullable ExpressionTree thrownArgument,
-                                                MigrationContext migrationContext,
-                                                TargetLogLevel targetLogLevel) {
+    final LogMessage createLogMessageModel(ExpressionTree messageFormatArgument,
+                                           List<? extends ExpressionTree> remainingArguments,
+                                           VisitorState state,
+                                           @Nullable ExpressionTree thrownArgument,
+                                           MigrationContext migrationContext,
+                                           TargetLogLevel targetLogLevel) {
         if (messageFormatSpecification.shouldSkipMessageFormatArgument(messageFormatArgument, state)) {
             throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
         }
 
         if (thrownArgument == messageFormatArgument) {
-            // if only argument is a Throwable w/ no message, create a message
-            return LogMessageModel.fromStringFormat("Exception", ImmutableList.of());
+            // if only extract is a Throwable w/ no message, create a message
+            return LogMessage.fromStringFormat("Exception", ImmutableList.of());
         }
 
         if (!Arguments.isStringType(messageFormatArgument, state)) {
-            // message format argument is some other type (some loggers allow Object for the format)
+            // message format extract is some other type (some loggers allow Object for the format)
             // emit as "%s", arg
-            return LogMessageModel.fromStringFormat("%s",
+            return LogMessage.fromStringFormat("%s",
                     processArguments(Arguments.prependArgument(remainingArguments, messageFormatArgument), state, targetLogLevel));
         }
 
         if (remainingArguments.isEmpty()) {
-            // no arguments left after message format; check if message format argument is String.format
-            LogMessageModel result = maybeUnpackStringFormat(messageFormatArgument, state, targetLogLevel);
+            // no arguments left after message format; check if message format extract is String.format
+            LogMessage result = maybeUnpackStringFormat(messageFormatArgument, state, targetLogLevel);
             if (result != null) {
                 return result;
             }
 
-            return LogMessageModel.fromMessageFormatArgument(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
+            return LogMessage.fromMessageFormatArgument(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
         }
 
         if (Arguments.isStringLiteral(messageFormatArgument, state)) {
@@ -75,17 +75,17 @@ public final class LogMessageModelFactory {
             return messageFormatSpecification.convertMessageFormat(sourceMessageFormat, processArguments(remainingArguments, state, targetLogLevel), migrationContext);
         }
 
-        return LogMessageModel.unableToConvert(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
+        return LogMessage.unableToConvert(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
     }
 
     @Nullable
-    private LogMessageModel maybeUnpackStringFormat(ExpressionTree messageFormatArgument, VisitorState state, TargetLogLevel targetLogLevel) {
+    private LogMessage maybeUnpackStringFormat(ExpressionTree messageFormatArgument, VisitorState state, TargetLogLevel targetLogLevel) {
         if (STRING_FORMAT.matches(messageFormatArgument, state)) {
             MethodInvocationTree stringFormatTree = (MethodInvocationTree) messageFormatArgument;
             ExpressionTree firstArgument = stringFormatTree.getArguments().get(0);
             if ((firstArgument instanceof JCTree.JCLiteral)) {
                 String messageFormat = (String) ((JCTree.JCLiteral) firstArgument).value;
-                return LogMessageModel.fromStringFormat(messageFormat,
+                return LogMessage.fromStringFormat(messageFormat,
                         processArguments(Arguments.removeFirst(stringFormatTree.getArguments()), state, targetLogLevel));
             }
         }

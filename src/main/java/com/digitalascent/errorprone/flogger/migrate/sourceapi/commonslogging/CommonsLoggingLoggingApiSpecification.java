@@ -4,13 +4,15 @@ import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStat
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.ArgumentParser;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFactory;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
@@ -62,7 +64,7 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
 
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation) {
+    public FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
 
         String level = methodInvocation.methodName().substring(2).replace("Enabled", "");
@@ -79,19 +81,17 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
-        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, methodInvocation.state());
-        if (throwableArgument != null) {
-            remainingArguments = Arguments.removeLast(remainingArguments);
-            builder.thrown(throwableArgument);
-        }
+        ArgumentParser argumentParser = ArgumentParser.forArgumentsOf(methodInvocation);
 
-        ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
-        remainingArguments = Arguments.removeFirst(remainingArguments);
+        ExpressionTree throwableArgument = argumentParser.trailingThrowable();
+        builder.thrown(throwableArgument);
 
-        LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument, remainingArguments,
+        ExpressionTree messageFormatArgument = argumentParser.extractOrElse(throwableArgument);
+
+        Verify.verify(messageFormatArgument != null);
+        LogMessage logMessage = createLogMessageModel(messageFormatArgument, argumentParser.remainingArguments(),
                 methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
-        builder.logMessageModel(logMessageModel);
+        builder.logMessageModel(logMessage);
         return builder.build();
     }
 }

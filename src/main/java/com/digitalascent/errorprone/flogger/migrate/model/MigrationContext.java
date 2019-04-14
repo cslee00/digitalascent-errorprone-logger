@@ -12,4 +12,5 @@ public interface MigrationContext {
     List<VariableTree> classNamedLoggers();
     List<VariableTree> nonClassNamedLoggers();
     List<VariableTree> floggerLoggers();
+    String className();
 }

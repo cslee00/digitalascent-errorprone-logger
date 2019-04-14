@@ -5,11 +5,12 @@ import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStat
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.ArgumentParser;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFactory;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
@@ -24,11 +25,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.logManagerMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMatchers.loggingMethod;
+import static com.google.errorprone.matchers.Matchers.argument;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 
 public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecification {
@@ -65,22 +68,26 @@ public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecif
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation) {
+    public FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
-        builder.targetLogLevel(determineTargetLogLevel( methodInvocation));
+        builder.targetLogLevel(determineTargetLogLevel(methodInvocation));
         builder.conditionalStatement(methodInvocation);
         return builder.build();
     }
 
-    private TargetLogLevel determineTargetLogLevel( MethodInvocation methodInvocation) {
+    private TargetLogLevel determineTargetLogLevel(MethodInvocation methodInvocation) {
         TargetLogLevel targetLogLevel;
         if (methodInvocation.methodName().equals("isEnabledFor")) {
             targetLogLevel = resolveLogLevelFromArgument(methodInvocation.tree().getArguments().get(0));
         } else {
-            String level = methodInvocation.methodName().substring(2).replace("Enabled", "");
+            String level = parseLevelFromMethodName(methodInvocation);
             targetLogLevel = mapLogLevel(level);
         }
         return targetLogLevel;
+    }
+
+    private String parseLevelFromMethodName(MethodInvocation methodInvocation) {
+        return methodInvocation.methodName().substring(2).replace("Enabled", "");
     }
 
     private TargetLogLevel resolveLogLevelFromArgument(ExpressionTree levelArgument) {
@@ -98,50 +105,35 @@ public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecif
     public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
                                                   MigrationContext migrationContext) {
 
-        List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
-        TargetLogLevel targetLogLevel;
-        if (methodInvocation.methodName().equals("log")) {
-            ExpressionTree logLevelArgument = findLogLevelArgument(remainingArguments, methodInvocation.state());
-            targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
-            remainingArguments = Arguments.findRemainingAfter(remainingArguments, methodInvocation.state(), logLevelArgument);
-        } else {
-            targetLogLevel = mapLogLevel(methodInvocation.methodName());
-        }
+        ArgumentParser argumentParser = ArgumentParser.forArgumentsOf(methodInvocation);
+
+        TargetLogLevel targetLogLevel = determineTargetLogLevel(methodInvocation, argumentParser);
 
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        // extract message format argument
-        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
-        remainingArguments = Arguments.removeFirst(remainingArguments);
+        // extract message format extract
+        ExpressionTree messageFormatArgument = argumentParser.extract();
 
-        // extract throwable as last argument, if present
-        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, methodInvocation.state());
-        if (throwableArgument != null) {
-            remainingArguments = Arguments.removeLast(remainingArguments);
-            builder.thrown(throwableArgument);
-        }
+        // extract throwable as last extract, if present
+        ExpressionTree throwableArgument = argumentParser.trailingThrowable();
+        builder.thrown(throwableArgument);
 
-        LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument,
-                remainingArguments, methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
-        builder.logMessageModel(logMessageModel);
+        LogMessage logMessage = createLogMessageModel(messageFormatArgument,
+                argumentParser.remainingArguments(), methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
+        builder.logMessageModel(logMessage);
         return builder.build();
     }
 
-    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {
-        if (arguments.isEmpty()) {
-            throw new IllegalStateException("Unable to find required message format argument");
+    private TargetLogLevel determineTargetLogLevel(MethodInvocation methodInvocation, ArgumentParser argumentParser) {
+        TargetLogLevel targetLogLevel;
+        if (methodInvocation.methodName().equals("log")) {
+            ExpressionTree logLevelArgument = argumentParser.firstMatching(
+                    argument -> isSubtypeOf("org.apache.log4j.Priority").matches(argument, methodInvocation.state()));
+            targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
+        } else {
+            targetLogLevel = mapLogLevel(methodInvocation.methodName());
         }
-        return arguments.get(0);
-    }
-
-    private ExpressionTree findLogLevelArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
-        Optional<MatchResult> optionalArgumentMatchResult =
-                Arguments.firstMatching(arguments, state, isSubtypeOf("org.apache.log4j.Priority"));
-        MatchResult matchResult = optionalArgumentMatchResult.orElseThrow(() -> new IllegalArgumentException("Unable to locate required Priority parameter"));
-        if (matchResult.index() > 1) {
-            throw new IllegalArgumentException("Unable to locate required Priority parameter");
-        }
-        return matchResult.argument();
+        return targetLogLevel;
     }
 }

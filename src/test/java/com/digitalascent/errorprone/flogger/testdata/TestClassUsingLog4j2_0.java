@@ -148,7 +148,7 @@ public class TestClassUsingLog4j2_0 {
 
     public void testOther() {
         someLogger.info("a" + 1 + "b");
-        someLogger.info("a" + 1 + "b {}", "argument", new Throwable());
+        someLogger.info("a" + 1 + "b {}", "extract", new Throwable());
         someLogger.info(new Object());
         someLogger.info(new Object(), new Throwable());
         someLogger.info(String.format("%s", "abc"));

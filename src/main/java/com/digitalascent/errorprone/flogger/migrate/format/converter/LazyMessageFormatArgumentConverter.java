@@ -11,7 +11,7 @@ import com.sun.source.tree.NewClassTree;
 import static com.google.errorprone.matchers.Matchers.anyMethod;
 
 /**
- * Wrap method-invoking message format arguments in lazy( argument ) to defer evaluation until it's been determined
+ * Wrap method-invoking message format arguments in lazy( extract ) to defer evaluation until it's been determined
  * that the log level is enabled
  */
 public final class LazyMessageFormatArgumentConverter implements MessageFormatArgumentConverter {

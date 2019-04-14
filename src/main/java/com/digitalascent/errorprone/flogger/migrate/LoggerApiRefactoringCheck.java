@@ -21,6 +21,7 @@ import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.Tree;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -46,14 +47,16 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     private final RefactoringConfiguration refactoringConfiguration;
     private final LoggingApiSpecification loggingApiSpecification;
     private final FloggerSuggestedFixGenerator floggerSuggestedFixGenerator;
+    private final MigrationContextFactory migrationContextFactory;
 
     @SuppressWarnings("unused")
     public LoggerApiRefactoringCheck() {
-        // EMPTY; required as Error Prone loads via ServiceLoader; actual constructor used will be the one with
-        // ErrorProneFlags
+        // EMPTY; required as Error Prone loads via ServiceLoader; actual constructor used will be the one taking
+        // ErrorProneFlags parameter
         this.refactoringConfiguration = null;
         this.loggingApiSpecification = null;
         this.floggerSuggestedFixGenerator = null;
+        this.migrationContextFactory = null;
     }
 
     public LoggerApiRefactoringCheck(ErrorProneFlags flags) {
@@ -63,6 +66,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
         this.refactoringConfiguration = new RefactoringConfigurationLoader().loadRefactoringConfiguration("", sourceApi);
         this.loggingApiSpecification = refactoringConfiguration.loggingApiSpecification();
         this.floggerSuggestedFixGenerator = refactoringConfiguration.floggerSuggestedFixGenerator();
+        this.migrationContextFactory = new MigrationContextFactory(loggingApiSpecification, refactoringConfiguration.loggerVariableDefinition());
     }
 
     private void configureLogging() {
@@ -78,7 +82,8 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     public Description matchCompilationUnit(CompilationUnitTree compilationUnitTree, VisitorState state) {
         List<SuggestedFix> suggestedFixes = compilationUnitTree.getTypeDecls().stream()
                 .filter(ClassTree.class::isInstance)
-                .map(o -> processClassTree((ClassTree) o, state))
+                .map(ClassTree.class::cast)
+                .map(classTree -> processClassTree(classTree, state))
                 .flatMap(List::stream)
                 .filter(fix -> !fix.isEmpty())
                 .collect(toImmutableList());
@@ -88,19 +93,19 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
         }
 
         List<SuggestedFix> fixes = new ArrayList<>(suggestedFixes);
-        fixes.addAll(handleImports(compilationUnitTree, state));
+        fixes.addAll(processImports(compilationUnitTree, state));
 
         return describeMatch(compilationUnitTree, SuggestedFixes.merge(fixes));
     }
 
     private List<SuggestedFix> processClassTree(ClassTree classTree, VisitorState state) {
+        logger.atInfo().log("Processing %s", classTree.getSimpleName());
+        MigrationContext migrationContext = migrationContextFactory.createMigrationContext(classTree, state);
+
         try {
-            logger.atInfo().log("Processing %s", classTree.getSimpleName());
-            MigrationContext migrationContext = new MigrationContextFactory(loggingApiSpecification, refactoringConfiguration.loggerVariableDefinition())
-                    .createMigrationContext(classTree, state);
             logger.atFine().log("Migration context: %s", migrationContext);
 
-            List<SuggestedFix> fixes = new ArrayList<>(handleMethodInvocations(classTree, state, migrationContext));
+            List<SuggestedFix> fixes = new ArrayList<>(processMethodInvocations(classTree, state, migrationContext));
 
             if (!fixes.stream().allMatch(SuggestedFix::isEmpty)) {
                 // only process / add logger member variables if we've converted logging methods
@@ -109,17 +114,17 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
             logger.atInfo().log("Processed %s", classTree.getSimpleName());
             return fixes;
         } catch (SkipCompilationUnitException e) {
-            logger.atWarning().log("Skipped %s: %s", classTree.getSimpleName(), e.getMessage());
+            logger.atWarning().log("Skipped %s: %s",migrationContext.className(), e.getMessage());
             return ImmutableList.of();
         }
     }
 
-    private List<SuggestedFix> handleImports(CompilationUnitTree compilationUnitTree, VisitorState state) {
+    private List<SuggestedFix> processImports(CompilationUnitTree compilationUnitTree, VisitorState state) {
         return scanTree(compilationUnitTree, state, new FixCollectingTreeScanner() {
             @Override
-            public Void visitImport(ImportTree importTree, VisitorState visitorState) {
-                addSuggestedFix(migrateImport(importTree, visitorState));
-                return super.visitImport(importTree, visitorState);
+            public Void visitImport(ImportTree importTree, VisitorState state) {
+                addSuggestedFix(migrateImport(importTree, state));
+                return super.visitImport(importTree, state);
             }
         });
     }
@@ -141,58 +146,54 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
         return treeScanner.suggestedFixes();
     }
 
-    private List<SuggestedFix> handleMethodInvocations(ClassTree classTree, VisitorState state, MigrationContext migrationContext) {
+    private List<SuggestedFix> processMethodInvocations(ClassTree classTree, VisitorState state, MigrationContext migrationContext) {
 
         LoggerInvocationTreeScanner treeScanner = new LoggerInvocationTreeScanner(migrationContext, loggingApiSpecification);
         //noinspection ResultOfMethodCallIgnored
         treeScanner.scan(classTree, state);
 
-        final List<SuggestedFix> suggestedFixes = new ArrayList<>();
-        suggestedFixes.addAll(migrateLoggingConditionals(classTree, migrationContext, treeScanner.loggingConditionals()));
-        suggestedFixes.addAll(migrateLoggingMethodInvocations(classTree, migrationContext, treeScanner.loggingMethodInvocations()));
-        suggestedFixes.addAll(migrateLoggingConditionalMethods(classTree, migrationContext, treeScanner.loggingEnabledMethods()));
+        final List<SuggestedFix> suggestedFixes = new ArrayList<>(100);
+        suggestedFixes.addAll(migrateLoggingConditionals(migrationContext, treeScanner.loggingConditionals()));
+        suggestedFixes.addAll(migrateLoggingMethodInvocations(migrationContext, treeScanner.loggingMethodInvocations()));
+        suggestedFixes.addAll(migrateLoggingConditionalMethods(migrationContext, treeScanner.loggingConditionalMethods()));
 
         return suggestedFixes;
     }
 
-    private List<SuggestedFix> migrateLoggingConditionalMethods(ClassTree classTree,
-                                                                MigrationContext migrationContext,
-                                                                List<MethodInvocation> loggingEnabledMethods) {
-        return loggingEnabledMethods.stream().map(loggingEnabledMethod -> {
+    private List<SuggestedFix> migrateLoggingConditionalMethods(MigrationContext migrationContext,
+                                                                List<MethodInvocation> conditionalMethods) {
+        return conditionalMethods.stream().map(conditionalMethod -> {
             try {
-                FloggerConditionalStatement floggerConditionalStatement = migrateConditionalMethod(loggingEnabledMethod, migrationContext);
+                FloggerConditionalStatement floggerConditionalStatement =
+                        loggingApiSpecification.parseConditionalMethod(conditionalMethod);
                 return floggerSuggestedFixGenerator.generateConditionalMethod(floggerConditionalStatement, migrationContext);
             } catch (SkipLogMethodException e) {
-                logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(), loggingEnabledMethod, e.getMessage());
+                logger.atWarning().log("Skipped %s %s: %s", migrationContext.className(), conditionalMethod, e.getMessage());
                 return SuggestedFix.builder().build();
             }
         }).collect(toImmutableList());
     }
 
-    private FloggerConditionalStatement migrateConditionalMethod(MethodInvocation loggingEnabledMethod, MigrationContext migrationContext) {
-        return loggingApiSpecification.parseLoggingConditionalMethod(loggingEnabledMethod);
-    }
-
-    private ImmutableList<SuggestedFix> migrateLoggingConditionals(ClassTree classTree, MigrationContext migrationContext,
+    private ImmutableList<SuggestedFix> migrateLoggingConditionals(MigrationContext migrationContext,
                                                                    List<LoggingConditional> loggingConditionals) {
         return loggingConditionals.stream().map(loggingConditional -> {
             try {
                 return migrateLoggingConditionals(loggingConditional, migrationContext);
             } catch (SkipLogMethodException e) {
-                logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(),
+                logger.atWarning().log("Skipped %s %s: %s", migrationContext.className(),
                         loggingConditional.loggingConditionalInvocation(), e.getMessage());
                 return SuggestedFix.builder().build();
             }
         }).collect(toImmutableList());
     }
 
-    private ImmutableList<SuggestedFix> migrateLoggingMethodInvocations(ClassTree classTree, MigrationContext migrationContext,
+    private ImmutableList<SuggestedFix> migrateLoggingMethodInvocations(MigrationContext migrationContext,
                                                                         List<MethodInvocation> loggingMethodInvocations) {
         return loggingMethodInvocations.stream().map(loggingMethodInvocation -> {
             try {
                 return migrateLoggingMethodInvocation(loggingMethodInvocation, migrationContext);
             } catch (SkipLogMethodException e) {
-                logger.atWarning().log("Skipped %s %s: %s", classTree.getSimpleName(), loggingMethodInvocation, e.getMessage());
+                logger.atWarning().log("Skipped %s %s: %s", migrationContext.className(), loggingMethodInvocation, e.getMessage());
                 return SuggestedFix.builder().build();
             }
         }).collect(toImmutableList());
@@ -209,13 +210,15 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
 
     private SuggestedFix migrateLoggingConditionals(LoggingConditional loggingConditional,
                                                     MigrationContext migrationContext) {
-        checkArgument(loggingApiSpecification.matchConditionalMethod(loggingConditional.loggingConditionalInvocation().tree(), loggingConditional.loggingConditionalInvocation().state()),
+        checkArgument(
+                loggingApiSpecification.matchConditionalMethod(loggingConditional.loggingConditionalInvocation().tree(),
+                        loggingConditional.loggingConditionalInvocation().state()),
                 "matchLoggingMethod(loggingConditional.loggingConditionalInvocation(), state) : %s",
                 loggingConditional);
 
         switch (loggingConditional.actionType()) {
             case MIGRATE_EXPRESSION_ONLY: {
-                FloggerConditionalStatement conditionalStatement = loggingApiSpecification.parseLoggingConditionalMethod(loggingConditional.loggingConditionalInvocation());
+                FloggerConditionalStatement conditionalStatement = loggingApiSpecification.parseConditionalMethod(loggingConditional.loggingConditionalInvocation());
                 return floggerSuggestedFixGenerator.generateConditionalMethod(conditionalStatement, migrationContext);
             }
 
@@ -228,6 +231,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     private SuggestedFix elideConditional(LoggingConditional loggingConditional,
                                           MigrationContext migrationContext) {
         if (loggingConditional.loggingMethods().isEmpty()) {
+            // empty if statement - remove
             return SuggestedFix.builder().delete(loggingConditional.ifTree()).build();
         }
 
@@ -236,6 +240,6 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
                 .collect(toImmutableList());
 
         return floggerSuggestedFixGenerator.elideConditional(loggingConditional.ifTree(),
-                logStatements, migrationContext, loggingConditional.loggingConditionalInvocation().state() );
+                logStatements, migrationContext, loggingConditional.loggingConditionalInvocation().state());
     }
 }

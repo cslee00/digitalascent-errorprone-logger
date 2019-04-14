@@ -42,7 +42,7 @@ public class TestClassUsingTinyLog_0 {
     }
     public void testOther() {
         Logger.info( "a" + 1 + "b");
-        Logger.info( new Throwable(), "a" + 1 + "b {}", "argument");
+        Logger.info( new Throwable(), "a" + 1 + "b {}", "extract");
         Logger.info( new Throwable() );
         Logger.info( new Object() );
         Logger.info( String.format("%s", "abc") );

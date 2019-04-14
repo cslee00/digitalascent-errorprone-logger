@@ -86,7 +86,7 @@ public class TestClassUsingSlf4j_0 {
 
     public void testOther() {
         logger.info("a" + 1 + "b");
-        logger.info("a" + 1 + "b {}", "argument", new Throwable());
+        logger.info("a" + 1 + "b {}", "extract", new Throwable());
         logger.info(String.format("%s", "abc"));
     }
 

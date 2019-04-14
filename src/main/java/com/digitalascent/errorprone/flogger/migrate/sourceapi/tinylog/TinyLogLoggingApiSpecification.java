@@ -3,27 +3,22 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.ArgumentParser;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFactory;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
-import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-import static com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments.matchAtIndex;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggerImports;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMatchers.throwableType;
@@ -53,7 +48,7 @@ public final class TinyLogLoggingApiSpecification extends AbstractLoggingApiSpec
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation) {
+    public FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation) {
         throw new UnsupportedOperationException("TinyLog doesn't have logging enabled methods");
     }
 
@@ -75,28 +70,16 @@ public final class TinyLogLoggingApiSpecification extends AbstractLoggingApiSpec
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
+        ArgumentParser argumentParser = ArgumentParser.forArgumentsOf(methodInvocation);
+        ExpressionTree throwableArgument = argumentParser.extractIfMatches(
+                argument ->  throwableType().matches(argument, methodInvocation.state()));
+        builder.thrown(throwableArgument);
+        ExpressionTree messageFormatArgument = argumentParser.extractOrElse( throwableArgument );
+        argumentParser.maybeUnpackVarArgs();
 
-        // extract throwable as first parameter, if present
-        ExpressionTree throwableArgument = findThrowableArgument(remainingArguments, methodInvocation.state());
-        if (throwableArgument != null) {
-            builder.thrown(throwableArgument);
-            remainingArguments = Arguments.removeFirst(remainingArguments);
-        }
-
-        // extract message format argument, if present
-        ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
-        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, methodInvocation.state());
-
-        LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument,
-                remainingArguments, methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
-        builder.logMessageModel(logMessageModel);
+        LogMessage logMessage = createLogMessageModel(messageFormatArgument,
+                argumentParser.remainingArguments(), methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
+        builder.logMessageModel(logMessage);
         return builder.build();
-    }
-
-    @Nullable
-    private ExpressionTree findThrowableArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
-        Optional<MatchResult> optionalThrownMatchResult = matchAtIndex(arguments, state, throwableType(), 0);
-        return optionalThrownMatchResult.map(MatchResult::argument).orElse(null);
     }
 }

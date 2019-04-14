@@ -3,11 +3,12 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.ArgumentParser;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFactory;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
@@ -52,7 +53,7 @@ public final class TinyLog2LoggingApiSpecification extends AbstractLoggingApiSpe
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation) {
+    public FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation) {
         throw new UnsupportedOperationException("TinyLog2 doesn't have logging enabled methods");
     }
 
@@ -74,25 +75,16 @@ public final class TinyLog2LoggingApiSpecification extends AbstractLoggingApiSpe
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
-        ExpressionTree throwableArgument = findThrowableArgument(remainingArguments,methodInvocation.state());
-        if( throwableArgument != null ) {
-            builder.thrown(throwableArgument);
-            remainingArguments = Arguments.removeFirst( remainingArguments );
-        }
+        ArgumentParser argumentParser = ArgumentParser.forArgumentsOf(methodInvocation);
+        ExpressionTree throwableArgument = argumentParser.extractIfMatches(
+                argument ->  TinyLog2Matchers.throwableType().matches(argument, methodInvocation.state()));
+        builder.thrown(throwableArgument);
+        ExpressionTree messageFormatArgument = argumentParser.extractOrElse( throwableArgument );
+        argumentParser.maybeUnpackVarArgs();
 
-        ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
-        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments,methodInvocation.state());
-
-        LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument,
-                remainingArguments, methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
-        builder.logMessageModel( logMessageModel );
+        LogMessage logMessage = createLogMessageModel(messageFormatArgument,
+                argumentParser.remainingArguments(), methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
+        builder.logMessageModel(logMessage);
         return builder.build();
-    }
-
-    @Nullable
-    private ExpressionTree findThrowableArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
-        Optional<MatchResult> optionalThrownMatchResult = matchAtIndex(arguments, state, TinyLog2Matchers.throwableType(), 0);
-        return optionalThrownMatchResult.map(MatchResult::argument).orElse(null);
     }
 }

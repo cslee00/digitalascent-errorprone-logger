@@ -5,12 +5,12 @@ import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStat
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.ArgumentParser;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFactory;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
@@ -19,7 +19,6 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.tree.JCTree;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -64,7 +63,7 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation) {
+    public FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
         builder.targetLogLevel(determineTargetLogLevel(methodInvocation));
         builder.conditionalStatement(methodInvocation);
@@ -97,57 +96,37 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
     public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
                                                   MigrationContext migrationContext) {
 
-        List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
-        TargetLogLevel targetLogLevel;
-        if (methodInvocation.methodName().equals("log")) {
-            ExpressionTree logLevelArgument = remainingArguments.get(0);
-            targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
-            remainingArguments = Arguments.removeFirst(remainingArguments);
-        } else {
-            targetLogLevel = mapLogLevel(methodInvocation.methodName());
-        }
+        ArgumentParser argumentParser = ArgumentParser.forArgumentsOf(methodInvocation);
+        TargetLogLevel targetLogLevel = determineTargetLogLevel(methodInvocation, argumentParser);
 
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
         // skip marker object, if present
-        remainingArguments = maybeSkipMarkerArgument(methodInvocation.state(), remainingArguments);
+        argumentParser.skipIfPresent(argument -> markerType().matches(argument, methodInvocation.state()));
 
-        // extract message format argument and it's arguments
-        ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
-        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, methodInvocation.state());
+        // extract message format extract and it's arguments
+        ExpressionTree messageFormatArgument = argumentParser.extract();
+        argumentParser.maybeUnpackVarArgs();
 
         // extract tailing exception, if present
-        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, methodInvocation.state());
-        if (throwableArgument != null) {
-            remainingArguments = Arguments.removeLast(remainingArguments);
-            builder.thrown(throwableArgument);
-        }
+        ExpressionTree throwableArgument = argumentParser.trailingThrowable();
+        builder.thrown(throwableArgument);
 
-        LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument,
-                remainingArguments, methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
-        builder.logMessageModel(logMessageModel);
+        LogMessage logMessage = createLogMessageModel(messageFormatArgument,
+                argumentParser.remainingArguments(), methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
+        builder.logMessageModel(logMessage);
         return builder.build();
     }
 
-    private List<? extends ExpressionTree> maybeSkipMarkerArgument(VisitorState state, List<? extends ExpressionTree> remainingArguments) {
-        if (hasMarkerArgument(remainingArguments, state)) {
-            remainingArguments = Arguments.removeFirst(remainingArguments);
+    private TargetLogLevel determineTargetLogLevel(MethodInvocation methodInvocation, ArgumentParser argumentParser) {
+        TargetLogLevel targetLogLevel;
+        if (methodInvocation.methodName().equals("log")) {
+            ExpressionTree logLevelArgument = argumentParser.extract();
+            targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
+        } else {
+            targetLogLevel = mapLogLevel(methodInvocation.methodName());
         }
-        return remainingArguments;
-    }
-
-    private boolean hasMarkerArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
-        if (arguments.isEmpty()) {
-            return false;
-        }
-        return markerType().matches(arguments.get(0), state);
-    }
-
-    private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {
-        if (arguments.isEmpty()) {
-            throw new IllegalStateException("Unable to find required message format argument");
-        }
-        return arguments.get(0);
+        return targetLogLevel;
     }
 }

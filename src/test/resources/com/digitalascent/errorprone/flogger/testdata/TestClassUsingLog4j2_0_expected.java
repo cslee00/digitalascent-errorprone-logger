@@ -101,7 +101,7 @@ public class TestClassUsingLog4j2_0 {
         someLogger.atInfo().log( "a" + 1 + "b" );
 
 // TODO [LoggerApiRefactoringCheck] Unable to convert message format expression - not a string literal
-        someLogger.atInfo().withCause(new Throwable()).log( "a" + 1 + "b {}", "argument" );
+        someLogger.atInfo().withCause(new Throwable()).log( "a" + 1 + "b {}", "extract" );
         someLogger.atInfo().log( "%s", new Object() );
         someLogger.atInfo().withCause(new Throwable()).log( "%s", new Object() );
         someLogger.atInfo().log( "%s", "abc" );

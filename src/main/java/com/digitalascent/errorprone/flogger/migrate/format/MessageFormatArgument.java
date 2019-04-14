@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * Represents a format argument to a logging message.
+ * Represents a format extract to a logging message.
  */
 public final class MessageFormatArgument {
     private final List<String> staticImports;

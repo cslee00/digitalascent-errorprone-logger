@@ -3,7 +3,7 @@ package com.digitalascent.errorprone.flogger.migrate.target;
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.LoggerVariableDefinition;
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
@@ -41,10 +41,11 @@ public class FloggerSuggestedFixGenerator {
     public SuggestedFix generateConditionalMethod(FloggerConditionalStatement floggerConditionalStatement, MigrationContext migrationContext) {
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);
-        String selectorMethod = generateSelectorMethod(floggerConditionalStatement.targetLogLevel(), floggerConditionalStatement.conditionalStatement().state());
+        String selectorMethod = generateSelectorMethod(floggerConditionalStatement.targetLogLevel(),
+                floggerConditionalStatement.conditionalStatement().state());
         String loggerEnabledMethodCall = String.format("%s.%s.isEnabled()", loggerVariableName, selectorMethod);
         return SuggestedFix.builder()
-                .replace(floggerConditionalStatement.conditionalStatement().tree(),loggerEnabledMethodCall )
+                .replace(floggerConditionalStatement.conditionalStatement().tree(), loggerEnabledMethodCall)
                 .build();
     }
 
@@ -59,7 +60,7 @@ public class FloggerSuggestedFixGenerator {
     public SuggestedFix generateLoggingMethod(MethodInvocation loggerMethodInvocation,
                                               FloggerLogStatement floggerLogStatement, MigrationContext migrationContext) {
 
-        String loggerMethodCall = generateLoggingMethodInvocation( floggerLogStatement, loggerMethodInvocation.tree(),
+        String loggerMethodCall = generateLoggingMethodInvocation(floggerLogStatement, loggerMethodInvocation.tree(),
                 loggerMethodInvocation.state(), migrationContext);
         SuggestedFix.Builder builder = SuggestedFix.builder()
                 .replace(loggerMethodInvocation.tree(), loggerMethodCall);
@@ -70,17 +71,17 @@ public class FloggerSuggestedFixGenerator {
         return builder.build();
     }
 
-    private String generateLoggingMethodInvocation( FloggerLogStatement floggerLogStatement, Tree nodeToComment,
-                                                    VisitorState visitorState, MigrationContext migrationContext) {
+    private String generateLoggingMethodInvocation(FloggerLogStatement floggerLogStatement, Tree nodeToComment,
+                                                   VisitorState visitorState, MigrationContext migrationContext) {
         StringBuilder sb = new StringBuilder(200);
 
-        LogMessageModel logMessageModel = floggerLogStatement.logMessageModel();
-        emitComments(nodeToComment, visitorState, logMessageModel, sb);
+        LogMessage logMessage = floggerLogStatement.logMessageModel();
+        emitComments(nodeToComment, visitorState, logMessage, sb);
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);
         String selectorMethod = generateSelectorMethod(floggerLogStatement.targetLogLevel(), visitorState);
         String loggingCall = generateLoggingCall(visitorState, floggerLogStatement, loggerVariableName, selectorMethod);
-        emitLoggingCall(visitorState, logMessageModel, loggingCall, sb);
+        emitLoggingCall(visitorState, logMessage, loggingCall, sb);
         return sb.toString();
     }
 
@@ -95,57 +96,57 @@ public class FloggerSuggestedFixGenerator {
         return loggingCall;
     }
 
-    private void addArgumentImports(LogMessageModel logMessageModel, SuggestedFix.Builder builder) {
-        logMessageModel.arguments().stream().map(MessageFormatArgument::imports).flatMap(Collection::stream)
+    private void addArgumentImports(LogMessage logMessage, SuggestedFix.Builder builder) {
+        logMessage.arguments().stream().map(MessageFormatArgument::imports).flatMap(Collection::stream)
                 .forEach(builder::addImport);
 
-        logMessageModel.arguments().stream().map(MessageFormatArgument::staticImports).flatMap(Collection::stream)
+        logMessage.arguments().stream().map(MessageFormatArgument::staticImports).flatMap(Collection::stream)
                 .forEach(builder::addStaticImport);
     }
 
-    private void emitLoggingCall(VisitorState state, LogMessageModel logMessageModel, String loggingCall, StringBuilder sb) {
+    private void emitLoggingCall(VisitorState state, LogMessage logMessage, String loggingCall, StringBuilder sb) {
         sb.append(loggingCall);
         sb.append(".log( ");
 
-        emitMessageFormat(state, logMessageModel, sb);
-        emitMessageFormatArguments(state, logMessageModel, sb);
+        emitMessageFormat(state, logMessage, sb);
+        emitMessageFormatArguments(state, logMessage, sb);
 
         sb.append(" )");
     }
 
-    private void emitComments(Tree tree, VisitorState state, LogMessageModel logMessageModel, StringBuilder sb) {
-        for (String comment : logMessageModel.migrationIssues()) {
+    private void emitComments(Tree tree, VisitorState state, LogMessage logMessage, StringBuilder sb) {
+        for (String comment : logMessage.migrationIssues()) {
             sb.append(ToDoCommentGenerator.singleLineCommentForNode(comment, tree, state));
         }
     }
 
-    private void emitMessageFormatArguments(VisitorState state, LogMessageModel logMessageModel, StringBuilder sb) {
-        for (MessageFormatArgument argument : logMessageModel.arguments()) {
+    private void emitMessageFormatArguments(VisitorState state, LogMessage logMessage, StringBuilder sb) {
+        for (MessageFormatArgument argument : logMessage.arguments()) {
             sb.append(", ");
             String argumentSrc = argument.code(state);
             sb.append(argumentSrc);
         }
     }
 
-    private void emitMessageFormat(VisitorState state, LogMessageModel logMessageModel, StringBuilder sb) {
-        if (logMessageModel.messageFormat() != null) {
-            String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(logMessageModel.messageFormat()) + "\"";
+    private void emitMessageFormat(VisitorState state, LogMessage logMessage, StringBuilder sb) {
+        if (logMessage.messageFormat() != null) {
+            String argumentSrc = "\"" + SourceCodeEscapers.javaCharEscaper().escape(logMessage.messageFormat()) + "\"";
             sb.append(argumentSrc);
         } else {
-            if (logMessageModel.messageFormatArgument() == null) {
+            if (logMessage.messageFormatArgument() == null) {
                 throw new AssertionError("One of messageFormat or messageFormatArgument required");
             }
-            sb.append(state.getSourceForNode(logMessageModel.messageFormatArgument()));
+            sb.append(state.getSourceForNode(logMessage.messageFormatArgument()));
         }
     }
 
     private String determineLoggerVariableName(MigrationContext migrationContext) {
 
         Optional<String> existingFloggerLoggerVariable = migrationContext.floggerLoggers().stream()
-                .map( x -> x.getName().toString() )
+                .map(x -> x.getName().toString())
                 .findFirst();
 
-        if( existingFloggerLoggerVariable.isPresent() ) {
+        if (existingFloggerLoggerVariable.isPresent()) {
             return existingFloggerLoggerVariable.get();
         }
 
@@ -187,13 +188,13 @@ public class FloggerSuggestedFixGenerator {
     }
 
     private SuggestedFix generateFloggerLogger(Tree firstMember, StringBuilder sb, MigrationContext migrationContext) {
-        if( !migrationContext.floggerLoggers().isEmpty()) {
+        if (!migrationContext.floggerLoggers().isEmpty()) {
             return SuggestedFix.builder().build();
         }
         return SuggestedFix.builder()
-                    .prefixWith(firstMember, sb.toString())
-                    .addImport(loggerVariableDefinition.typeQualified())
-                    .build();
+                .prefixWith(firstMember, sb.toString())
+                .addImport(loggerVariableDefinition.typeQualified())
+                .build();
     }
 
     private SuggestedFix deleteOriginalLoggers(MigrationContext migrationContext, SuggestedFix suggestedFix) {
@@ -225,11 +226,11 @@ public class FloggerSuggestedFixGenerator {
 
         boolean first = true;
         for (FloggerLogStatement logStatement : logStatements) {
-            if( !first ) {
+            if (!first) {
                 sb.append("\n");
-                sb.append( ASTUtil.determineIndent( ifTree, state));
+                sb.append(ASTUtil.determineIndent(ifTree, state));
             }
-            sb.append( generateLoggingMethodInvocation(logStatement, ifTree, state, migrationContext) );
+            sb.append(generateLoggingMethodInvocation(logStatement, ifTree, state, migrationContext));
             sb.append(";");
             first = false;
 

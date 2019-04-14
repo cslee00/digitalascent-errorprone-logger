@@ -32,6 +32,7 @@ final class MigrationContextFactory {
         builder.addAllClassNamedLoggers(findClassNamedLoggers(classTree, visitorState));
         builder.addAllNonClassNamedLoggers(findNonClassNamedLoggers(classTree, visitorState));
         builder.addAllFloggerLoggers(findFloggerMemberVariables(classTree, visitorState));
+        builder.className(classTree.getSimpleName().toString());
 
         return builder.build();
     }

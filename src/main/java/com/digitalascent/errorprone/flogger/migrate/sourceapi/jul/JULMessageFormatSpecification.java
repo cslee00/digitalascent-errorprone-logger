@@ -1,7 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.jul;
 
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatSpecification;
 import com.google.common.base.CharMatcher;
@@ -28,7 +28,7 @@ public final class JULMessageFormatSpecification implements MessageFormatSpecifi
     }
 
     @Override
-    public LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
+    public LogMessage convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
 
         List<MessageFormatArgument> argumentList = new ArrayList<>();
         List<String> migrationIssues = new ArrayList<>();
@@ -54,6 +54,6 @@ public final class JULMessageFormatSpecification implements MessageFormatSpecifi
             }
         }
 
-        return LogMessageModel.fromStringFormat(sb.toString(), argumentList, migrationIssues);
+        return LogMessage.fromStringFormat(sb.toString(), argumentList, migrationIssues);
     }
 }

@@ -27,7 +27,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
     private final List<MethodInvocation> loggingMethodInvocations = new ArrayList<>();
     private final List<LoggingConditional> loggingConditionals = new ArrayList<>();
     private final LoggingApiSpecification loggingApiSpecification;
-    private final List<MethodInvocation> loggingEnabledMethods = new ArrayList<>();
+    private final List<MethodInvocation> loggingConditionalMethods = new ArrayList<>();
 
     LoggerInvocationTreeScanner(MigrationContext migrationContext, LoggingApiSpecification loggingApiSpecification) {
         this.migrationContext = requireNonNull(migrationContext, "migrationContext");
@@ -42,8 +42,8 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
         return loggingConditionals;
     }
 
-    List<MethodInvocation> loggingEnabledMethods() {
-        return loggingEnabledMethods;
+    List<MethodInvocation> loggingConditionalMethods() {
+        return loggingConditionalMethods;
     }
 
     @Override
@@ -56,7 +56,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
 
     private void resolveUniqueLoggingEnabledMethodInvocations() {
         for (LoggingConditional loggingConditional : loggingConditionals) {
-            loggingEnabledMethods.remove( loggingConditional.loggingConditionalInvocation() );
+            loggingConditionalMethods.remove( loggingConditional.loggingConditionalInvocation() );
         }
     }
 
@@ -96,7 +96,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
             if (loggingApiSpecification.matchLoggingMethod(node, visitorState)) {
                 loggingMethodInvocations.add(MethodInvocation.from(node, visitorState));
             } else if (loggingApiSpecification.matchConditionalMethod(node, visitorState)) {
-                loggingEnabledMethods.add(MethodInvocation.from(node, visitorState));
+                loggingConditionalMethods.add(MethodInvocation.from(node, visitorState));
             }
         }
         return super.visitMethodInvocation(node, visitorState);

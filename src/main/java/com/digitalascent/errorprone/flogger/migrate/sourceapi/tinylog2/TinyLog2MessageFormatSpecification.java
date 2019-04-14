@@ -1,7 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2;
 
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatSpecification;
 import com.google.errorprone.VisitorState;
@@ -22,7 +22,7 @@ public final class TinyLog2MessageFormatSpecification implements MessageFormatSp
     }
 
     @Override
-    public LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
-        return LogMessageModel.fromStringFormat( TinyLog2MessageFormatter.format(sourceMessageFormat), formatArguments);
+    public LogMessage convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
+        return LogMessage.fromStringFormat( TinyLog2MessageFormatter.format(sourceMessageFormat), formatArguments);
     }
 }

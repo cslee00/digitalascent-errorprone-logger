@@ -1,6 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.errorprone.VisitorState;
@@ -27,12 +27,12 @@ public abstract class AbstractLoggingApiSpecification implements LoggingApiSpeci
         return targetLogLevelFunction.apply(level);
     }
 
-    protected final LogMessageModel createLogMessageModel(ExpressionTree messageFormatArgument,
-                                                          List<? extends ExpressionTree> remainingArguments,
-                                                          VisitorState state,
-                                                          @Nullable ExpressionTree thrownArgument,
-                                                          MigrationContext migrationContext,
-                                                          TargetLogLevel targetLogLevel) {
+    protected final LogMessage createLogMessageModel(ExpressionTree messageFormatArgument,
+                                                     List<? extends ExpressionTree> remainingArguments,
+                                                     VisitorState state,
+                                                     @Nullable ExpressionTree thrownArgument,
+                                                     MigrationContext migrationContext,
+                                                     TargetLogLevel targetLogLevel) {
         return logMessageModelFactory.createLogMessageModel(messageFormatArgument, remainingArguments,
                 state, thrownArgument, migrationContext, targetLogLevel);
     }
