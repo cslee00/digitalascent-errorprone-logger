@@ -12,6 +12,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.ArgumentParser;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageFactory;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.SourceApiUtil;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
@@ -75,7 +76,7 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
         if (methodInvocation.methodName().equals("isEnabled")) {
             targetLogLevel = resolveLogLevelFromArgument(methodInvocation.tree().getArguments().get(0));
         } else {
-            String level = methodInvocation.methodName().substring(2).replace("Enabled", "");
+            String level = SourceApiUtil.logLevelFromMethodName(methodInvocation);
             targetLogLevel = mapLogLevel(level);
         }
         return targetLogLevel;

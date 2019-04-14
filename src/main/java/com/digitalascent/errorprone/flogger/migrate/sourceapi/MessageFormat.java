@@ -23,7 +23,6 @@ public final class MessageFormat {
 
             // determine the number of arguments
             int[] argumentNumbers = determineArgumentNumbers(messageFormat);
-//            int numArgs = Arrays.stream(argumentNumbers).max().getAsInt() + 1;
 
             int maxOffset = determineMaxOffset(messageFormat);
 

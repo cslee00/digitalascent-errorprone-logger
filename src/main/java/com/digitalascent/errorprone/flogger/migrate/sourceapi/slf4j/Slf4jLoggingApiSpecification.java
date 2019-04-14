@@ -11,6 +11,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.ArgumentParser;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageFactory;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.SourceApiUtil;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
@@ -63,13 +64,9 @@ public final class Slf4jLoggingApiSpecification extends AbstractLoggingApiSpecif
     @Override
     public FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
-        builder.targetLogLevel(mapLogLevel(parseLevelFromMethodName(methodInvocation)));
+        builder.targetLogLevel(mapLogLevel(SourceApiUtil.logLevelFromMethodName(methodInvocation)));
         builder.conditionalStatement(methodInvocation);
         return builder.build();
-    }
-
-    private String parseLevelFromMethodName(MethodInvocation methodInvocation) {
-        return methodInvocation.methodName().substring(2).replace("Enabled", "");
     }
 
     @Override

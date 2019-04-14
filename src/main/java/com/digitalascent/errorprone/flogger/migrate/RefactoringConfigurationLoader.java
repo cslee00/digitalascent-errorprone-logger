@@ -132,7 +132,7 @@ final class RefactoringConfigurationLoader {
     private LoggingApiSpecification determineSourceApiConverter(String sourceApi,
                                                                 Function<String, TargetLogLevel> targetLogLevelFunction,
                                                                 @Nullable MessageFormatStyle messageFormatStyle) {
-        Map<String, LoggingApiSpecification> converterMap = buildConverterMap(targetLogLevelFunction, messageFormatStyle);
+        Map<String, LoggingApiSpecification> converterMap = createLoggingApiSpecifications(targetLogLevelFunction, messageFormatStyle);
         LoggingApiSpecification converter = converterMap.get(sourceApi.toLowerCase().trim());
         if (converter == null) {
             throw new IllegalArgumentException("Unknown source API specified: " + sourceApi);
@@ -140,42 +140,58 @@ final class RefactoringConfigurationLoader {
         return converter;
     }
 
-    private ImmutableMap<String, LoggingApiSpecification> buildConverterMap(Function<String, TargetLogLevel> targetLogLevelFunction,
-                                                                            @Nullable MessageFormatStyle messageFormatStyle) {
+    private ImmutableMap<String, LoggingApiSpecification> createLoggingApiSpecifications(
+            Function<String, TargetLogLevel> targetLogLevelFunction,
+            @Nullable MessageFormatStyle messageFormatStyle) {
 
         MessageFormatArgumentConverter messageFormatArgumentConverter = createMessageFormatArgumentConverter();
         MessageFormatArgumentReducer messageFormatArgumentReducer = createMessageFormatArgumentReducer();
 
         ImmutableMap.Builder<String, LoggingApiSpecification> converterMapBuilder = builder();
 
-        converterMapBuilder.put("slf4j", new Slf4jLoggingApiSpecification(targetLogLevelFunction,
-                new LogMessageFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new Slf4jMessageFormatSpecification())));
+        converterMapBuilder.put("slf4j",
+                new Slf4jLoggingApiSpecification(targetLogLevelFunction, new LogMessageFactory(
+                        messageFormatArgumentConverter
+                        , messageFormatArgumentReducer,
+                        new Slf4jMessageFormatSpecification())));
 
-        converterMapBuilder.put("log4j", new Log4JLoggingApiSpecification(targetLogLevelFunction,
-                new LogMessageFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new Log4jMessageFormatSpecification())));
+        converterMapBuilder.put("log4j",
+                new Log4JLoggingApiSpecification(targetLogLevelFunction, new LogMessageFactory(
+                        messageFormatArgumentConverter,
+                        messageFormatArgumentReducer,
+                        new Log4jMessageFormatSpecification())));
 
-        converterMapBuilder.put("log4j2", createLog4j2LoggingApiConverter(targetLogLevelFunction,
-                messageFormatStyle, messageFormatArgumentConverter, messageFormatArgumentReducer) );
+        converterMapBuilder.put("log4j2",
+                new Log4j2LoggingApiSpecification(targetLogLevelFunction, new LogMessageFactory(
+                        messageFormatArgumentConverter,
+                        messageFormatArgumentReducer,
+                        new Log4j2MessageFormatSpecification(messageFormatStyle))));
 
-        LoggingApiSpecification loggingApiSpecification = new CommonsLoggingLoggingApiSpecification(targetLogLevelFunction,
-                new LogMessageFactory(messageFormatArgumentConverter, messageFormatArgumentReducer, new CommonsLoggingMessageFormatSpecification()));
-        converterMapBuilder.put("commons-logging", loggingApiSpecification);
+        converterMapBuilder.put("commons-logging",
+                new CommonsLoggingLoggingApiSpecification(targetLogLevelFunction, new LogMessageFactory(
+                        messageFormatArgumentConverter,
+                        messageFormatArgumentReducer,
+                        new CommonsLoggingMessageFormatSpecification())));
 
-        converterMapBuilder.put("tinylog", new TinyLogLoggingApiSpecification(targetLogLevelFunction,
-                new LogMessageFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new TinyLogMessageFormatSpecification())));
+        converterMapBuilder.put("tinylog",
+                new TinyLogLoggingApiSpecification(targetLogLevelFunction, new LogMessageFactory(
+                        messageFormatArgumentConverter,
+                        messageFormatArgumentReducer,
+                        new TinyLogMessageFormatSpecification())));
 
-        converterMapBuilder.put("tinylog2", new TinyLog2LoggingApiSpecification(targetLogLevelFunction,
-                new LogMessageFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new TinyLog2MessageFormatSpecification())));
+        converterMapBuilder.put("tinylog2",
+                new TinyLog2LoggingApiSpecification(targetLogLevelFunction, new LogMessageFactory(
+                        messageFormatArgumentConverter,
+                        messageFormatArgumentReducer,
+                        new TinyLog2MessageFormatSpecification())));
 
-        converterMapBuilder.put("jul", new JULLoggingApiSpecification(targetLogLevelFunction,
-                new LogMessageFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new JULMessageFormatSpecification())));
+        converterMapBuilder.put("jul",
+                new JULLoggingApiSpecification(targetLogLevelFunction, new LogMessageFactory(
+                        messageFormatArgumentConverter,
+                        messageFormatArgumentReducer,
+                        new JULMessageFormatSpecification())));
 
         return converterMapBuilder.build();
-    }
-
-    private LoggingApiSpecification createLog4j2LoggingApiConverter(Function<String, TargetLogLevel> targetLogLevelFunction, @Nullable MessageFormatStyle messageFormatStyle, MessageFormatArgumentConverter messageFormatArgumentConverter, MessageFormatArgumentReducer messageFormatArgumentReducer) {
-        return new Log4j2LoggingApiSpecification(targetLogLevelFunction,
-                new LogMessageFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new Log4j2MessageFormatSpecification(messageFormatStyle)));
     }
 
     private MessageFormatArgumentReducer createMessageFormatArgumentReducer() {

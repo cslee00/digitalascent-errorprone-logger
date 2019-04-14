@@ -18,6 +18,9 @@ import static com.google.errorprone.matchers.Matchers.isSameType;
 import static com.google.errorprone.matchers.Matchers.kindIs;
 import static com.sun.source.tree.Tree.Kind.PLUS;
 
+/**
+ * Converts string concatenation into a parameterized format/argument construct
+ */
 final class StringConcatenationEmptyArgumentsHandler implements EmptyArgumentsHandler {
     private static final Matcher<BinaryTree> STRING_CONCATENATION_MATCHER =
             allOf(kindIs(PLUS),

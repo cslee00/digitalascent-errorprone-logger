@@ -30,7 +30,7 @@ public final class MessageFormatConversionResult {
         return arguments;
     }
 
-    public List<String> conversionIssues() {
+    List<String> conversionIssues() {
         return conversionIssues;
     }
 }

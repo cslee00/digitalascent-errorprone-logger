@@ -12,6 +12,9 @@ import java.util.List;
 
 import static com.google.errorprone.matchers.Matchers.staticMethod;
 
+/**
+ * Unpacks MessageFormat.format calls, converting placeholders to printf style
+ */
 final class MessageFormatEmptyArgumentsHandler implements EmptyArgumentsHandler {
     private static final MethodMatchers.MethodNameMatcher MESSAGE_FORMAT = staticMethod().onClass("java.text.MessageFormat").named("format");
 

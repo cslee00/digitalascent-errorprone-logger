@@ -12,6 +12,9 @@ import java.util.List;
 
 import static com.google.errorprone.matchers.Matchers.staticMethod;
 
+/**
+ * Unpacks String.format calls
+ */
 final class StringFormatEmprtArgumentsHandler implements EmptyArgumentsHandler {
     private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = staticMethod().onClass("java.lang.String").named("format");
 

@@ -11,6 +11,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.ArgumentParser;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageFactory;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.SourceApiUtil;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
@@ -68,8 +69,7 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
     public FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
 
-        // TODO - pull this pattern out to utility method (it's used in a few places)
-        String level = methodInvocation.methodName().substring(2).replace("Enabled", "");
+        String level = SourceApiUtil.logLevelFromMethodName(methodInvocation);
         builder.targetLogLevel(mapLogLevel(level));
         builder.conditionalStatement(methodInvocation);
         return builder.build();
