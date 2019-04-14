@@ -29,13 +29,10 @@ public final class JULMessageFormatSpecification implements MessageFormatSpecifi
 
     @Override
     public LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
-        return doConvert(sourceMessageFormat, formatArguments);
-    }
 
-    private LogMessageModel doConvert(String messageFormat, List<MessageFormatArgument> formatArguments) {
         List<MessageFormatArgument> argumentList = new ArrayList<>();
         List<String> migrationIssues = new ArrayList<>();
-        Matcher matcher = PARAM_PATTERN.matcher(messageFormat);
+        Matcher matcher = PARAM_PATTERN.matcher(sourceMessageFormat);
         StringBuffer sb = new StringBuffer();
         while( matcher.find() ) {
             String text = matcher.group(1);
@@ -46,7 +43,7 @@ public final class JULMessageFormatSpecification implements MessageFormatSpecifi
                 argumentList.add(formatArguments.get(index));
                 matcher.appendReplacement(sb,"%s");
             } else {
-                migrationIssues.add( "Invalid parameter index: " + matcher.group(1) + ": \"" + messageFormat + "\"");
+                migrationIssues.add( "Invalid parameter index: " + matcher.group(1) + ": \"" + sourceMessageFormat + "\"");
             }
         }
         matcher.appendTail(sb);

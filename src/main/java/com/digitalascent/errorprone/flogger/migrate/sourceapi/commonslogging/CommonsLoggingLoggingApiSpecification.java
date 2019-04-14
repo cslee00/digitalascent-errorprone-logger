@@ -62,8 +62,7 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
 
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation,
-                                                                     MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
 
         String level = methodInvocation.methodName().substring(2).replace("Enabled", "");

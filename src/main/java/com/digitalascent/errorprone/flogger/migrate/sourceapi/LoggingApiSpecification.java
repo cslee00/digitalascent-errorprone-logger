@@ -23,7 +23,7 @@ public interface LoggingApiSpecification {
 
     boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState);
 
-    FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, MigrationContext migrationContext);
+    FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation);
 
     FloggerLogStatement parseLoggingMethod(MethodInvocation loggingMethodInvocation, MigrationContext migrationContext);
 }

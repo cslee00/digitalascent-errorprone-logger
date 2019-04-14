@@ -65,7 +65,7 @@ public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecif
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
         builder.targetLogLevel(determineTargetLogLevel( methodInvocation));
         builder.conditionalStatement(methodInvocation);

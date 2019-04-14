@@ -170,7 +170,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     }
 
     private FloggerConditionalStatement migrateConditionalMethod(MethodInvocation loggingEnabledMethod, MigrationContext migrationContext) {
-        return loggingApiSpecification.parseLoggingConditionalMethod(loggingEnabledMethod, migrationContext);
+        return loggingApiSpecification.parseLoggingConditionalMethod(loggingEnabledMethod);
     }
 
     private ImmutableList<SuggestedFix> migrateLoggingConditionals(ClassTree classTree, MigrationContext migrationContext,
@@ -215,7 +215,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
 
         switch (loggingConditional.actionType()) {
             case MIGRATE_EXPRESSION_ONLY: {
-                FloggerConditionalStatement conditionalStatement = loggingApiSpecification.parseLoggingConditionalMethod(loggingConditional.loggingConditionalInvocation(), migrationContext);
+                FloggerConditionalStatement conditionalStatement = loggingApiSpecification.parseLoggingConditionalMethod(loggingConditional.loggingConditionalInvocation());
                 return floggerSuggestedFixGenerator.generateConditionalMethod(conditionalStatement, migrationContext);
             }
 

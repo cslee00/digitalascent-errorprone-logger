@@ -52,7 +52,7 @@ public final class TinyLog2LoggingApiSpecification extends AbstractLoggingApiSpe
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation) {
         throw new UnsupportedOperationException("TinyLog2 doesn't have logging enabled methods");
     }
 
