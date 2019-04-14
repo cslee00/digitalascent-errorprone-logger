@@ -20,8 +20,7 @@ import static com.sun.source.tree.Tree.Kind.PLUS;
 
 final class StringConcatenationEmptyArgumentsHandler implements EmptyArgumentsHandler {
     private static final Matcher<BinaryTree> STRING_CONCATENATION_MATCHER =
-            allOf(
-                    kindIs(PLUS),
+            allOf(kindIs(PLUS),
                     binaryTree(anything(), isSameType("java.lang.String")));
 
     @Nullable
@@ -39,17 +38,17 @@ final class StringConcatenationEmptyArgumentsHandler implements EmptyArgumentsHa
         StringBuilder sb = new StringBuilder();
         List<ExpressionTree> arguments = new ArrayList<>();
 
-        handleStringConcat(binaryTree, sb, arguments);
+        handleBinaryTree(binaryTree, sb, arguments);
 
         return new MessageFormatConversionResult(sb.toString(), arguments);
     }
 
-    private void handleStringConcat(BinaryTree binaryTree, StringBuilder sb, List<ExpressionTree> arguments) {
+    private void handleBinaryTree(BinaryTree binaryTree, StringBuilder sb, List<ExpressionTree> arguments) {
         ExpressionTree lhs = binaryTree.getLeftOperand();
         ExpressionTree rhs = binaryTree.getRightOperand();
 
         if (lhs instanceof BinaryTree) {
-            handleStringConcat((BinaryTree) lhs, sb, arguments);
+            handleBinaryTree((BinaryTree) lhs, sb, arguments);
         } else {
             if (lhs instanceof LiteralTree) {
                 handleLiteral(sb, arguments, lhs);
