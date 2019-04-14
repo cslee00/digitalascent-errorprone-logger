@@ -12,23 +12,23 @@ import com.digitalascent.errorprone.flogger.migrate.model.ImmutableRefactoringCo
 import com.digitalascent.errorprone.flogger.migrate.model.LoggerVariableDefinition;
 import com.digitalascent.errorprone.flogger.migrate.model.RefactoringConfiguration;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFactory;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatStyle;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingLogMessageHandler;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingLoggingApiSpecification;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULLogMessageHandler;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULLoggingApiSpecification;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.jul.JULMessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4JLoggingApiSpecification;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jLogMessageHandler;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2LogMessageHandler;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j.Log4jMessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2LoggingApiSpecification;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jLogMessageHandler;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2.Log4j2MessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jLoggingApiSpecification;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogLogMessageHandler;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogLoggingApiSpecification;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2LogMessageHandler;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog.TinyLogMessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2LoggingApiSpecification;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog2.TinyLog2MessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.target.FloggerSuggestedFixGenerator;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -66,7 +66,7 @@ final class RefactoringConfigurationLoader {
         MessageFormatStyle messageFormatStyle = determineMessageFormatStyle(sourceApi, properties);
 
         Function<String, TargetLogLevel> targetLogLevelFunction = readLogLevelMappings(properties);
-        LoggingApiSpecification loggingApiSpecification = determineSourceApiConverter(sourceApi, floggerSuggestedFixGenerator, targetLogLevelFunction, messageFormatStyle);
+        LoggingApiSpecification loggingApiSpecification = determineSourceApiConverter(sourceApi, targetLogLevelFunction, messageFormatStyle);
         builder.loggingApiSpecification(loggingApiSpecification);
 
         // TODO
@@ -130,9 +130,8 @@ final class RefactoringConfigurationLoader {
     }
 
     private LoggingApiSpecification determineSourceApiConverter(String sourceApi,
-                                                            FloggerSuggestedFixGenerator floggerSuggestedFixGenerator,
-                                                            Function<String, TargetLogLevel> targetLogLevelFunction,
-                                                            @Nullable MessageFormatStyle messageFormatStyle) {
+                                                                Function<String, TargetLogLevel> targetLogLevelFunction,
+                                                                @Nullable MessageFormatStyle messageFormatStyle) {
         Map<String, LoggingApiSpecification> converterMap = buildConverterMap(targetLogLevelFunction, messageFormatStyle);
         LoggingApiSpecification converter = converterMap.get(sourceApi.toLowerCase().trim());
         if (converter == null) {
@@ -149,34 +148,34 @@ final class RefactoringConfigurationLoader {
 
         ImmutableMap.Builder<String, LoggingApiSpecification> converterMapBuilder = builder();
 
-        LogMessageHandler logMessageHandler3 = new Slf4jLogMessageHandler(messageFormatArgumentConverter, messageFormatArgumentReducer);
-        converterMapBuilder.put("slf4j", new Slf4jLoggingApiSpecification(targetLogLevelFunction, logMessageHandler3));
+        converterMapBuilder.put("slf4j", new Slf4jLoggingApiSpecification(targetLogLevelFunction,
+                new LogMessageModelFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new Slf4jMessageFormatSpecification())));
 
-        LogMessageHandler logMessageHandler2 =  new Log4jLogMessageHandler(messageFormatArgumentConverter, messageFormatArgumentReducer);
-        converterMapBuilder.put("log4j", new Log4JLoggingApiSpecification(targetLogLevelFunction, logMessageHandler2));
+        converterMapBuilder.put("log4j", new Log4JLoggingApiSpecification(targetLogLevelFunction,
+                new LogMessageModelFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new Log4jMessageFormatSpecification())));
 
         converterMapBuilder.put("log4j2", createLog4j2LoggingApiConverter(targetLogLevelFunction,
                 messageFormatStyle, messageFormatArgumentConverter, messageFormatArgumentReducer) );
 
-        LogMessageHandler logMessageHandler = new CommonsLoggingLogMessageHandler(messageFormatArgumentConverter, messageFormatArgumentReducer);
-        LoggingApiSpecification loggingApiSpecification = new CommonsLoggingLoggingApiSpecification(targetLogLevelFunction, logMessageHandler);
+        LoggingApiSpecification loggingApiSpecification = new CommonsLoggingLoggingApiSpecification(targetLogLevelFunction,
+                new LogMessageModelFactory(messageFormatArgumentConverter, messageFormatArgumentReducer, new CommonsLoggingMessageFormatSpecification()));
         converterMapBuilder.put("commons-logging", loggingApiSpecification);
 
-        LogMessageHandler logMessageHandler4 = new TinyLogLogMessageHandler(messageFormatArgumentConverter, messageFormatArgumentReducer);
-        converterMapBuilder.put("tinylog", new TinyLogLoggingApiSpecification(targetLogLevelFunction, logMessageHandler4));
+        converterMapBuilder.put("tinylog", new TinyLogLoggingApiSpecification(targetLogLevelFunction,
+                new LogMessageModelFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new TinyLogMessageFormatSpecification())));
 
-        LogMessageHandler logMessageHandler5 =  new TinyLog2LogMessageHandler(messageFormatArgumentConverter, messageFormatArgumentReducer);
-        converterMapBuilder.put("tinylog2", new TinyLog2LoggingApiSpecification(targetLogLevelFunction, logMessageHandler5));
+        converterMapBuilder.put("tinylog2", new TinyLog2LoggingApiSpecification(targetLogLevelFunction,
+                new LogMessageModelFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new TinyLog2MessageFormatSpecification())));
 
-        LogMessageHandler logMessageHandler1 = new JULLogMessageHandler(messageFormatArgumentConverter, messageFormatArgumentReducer);
-        converterMapBuilder.put("jul", new JULLoggingApiSpecification(targetLogLevelFunction, logMessageHandler1));
+        converterMapBuilder.put("jul", new JULLoggingApiSpecification(targetLogLevelFunction,
+                new LogMessageModelFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new JULMessageFormatSpecification())));
 
         return converterMapBuilder.build();
     }
 
     private LoggingApiSpecification createLog4j2LoggingApiConverter(Function<String, TargetLogLevel> targetLogLevelFunction, @Nullable MessageFormatStyle messageFormatStyle, MessageFormatArgumentConverter messageFormatArgumentConverter, MessageFormatArgumentReducer messageFormatArgumentReducer) {
-        LogMessageHandler logMessageHandler = new Log4j2LogMessageHandler(messageFormatStyle, messageFormatArgumentConverter, messageFormatArgumentReducer);
-        return new Log4j2LoggingApiSpecification(targetLogLevelFunction, logMessageHandler);
+        return new Log4j2LoggingApiSpecification(targetLogLevelFunction,
+                new LogMessageModelFactory(messageFormatArgumentConverter,messageFormatArgumentReducer,new Log4j2MessageFormatSpecification(messageFormatStyle)));
     }
 
     private MessageFormatArgumentReducer createMessageFormatArgumentReducer() {

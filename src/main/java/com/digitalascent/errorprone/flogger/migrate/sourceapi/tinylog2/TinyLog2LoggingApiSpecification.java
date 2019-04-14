@@ -8,7 +8,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFactory;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
@@ -32,8 +32,8 @@ public final class TinyLog2LoggingApiSpecification extends AbstractLoggingApiSpe
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.tinylog");
 
     public TinyLog2LoggingApiSpecification(Function<String, TargetLogLevel> targetLogLevelFunction,
-                                           LogMessageHandler logMessageHandler) {
-        super(targetLogLevelFunction, logMessageHandler);
+                                           LogMessageModelFactory logMessageModelFactory) {
+        super(targetLogLevelFunction, logMessageModelFactory);
     }
 
     @Override

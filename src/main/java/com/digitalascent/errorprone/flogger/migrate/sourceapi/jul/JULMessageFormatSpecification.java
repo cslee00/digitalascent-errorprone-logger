@@ -1,11 +1,9 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.jul;
 
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
-import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLogMessageHandler;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
-import com.digitalascent.errorprone.flogger.migrate.format.converter.MessageFormatArgumentConverter;
-import com.digitalascent.errorprone.flogger.migrate.format.reducer.MessageFormatArgumentReducer;
+import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatSpecification;
 import com.google.common.base.CharMatcher;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matchers;
@@ -16,7 +14,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class JULLogMessageHandler extends AbstractLogMessageHandler {
+public final class JULMessageFormatSpecification implements MessageFormatSpecification {
 
     private static final Pattern PARAM_PATTERN = Pattern.compile("(\\{[0-9]})");
     private static final CharMatcher PARAM_PATTERN_DELIMITERS = CharMatcher.anyOf("{}");
@@ -24,18 +22,13 @@ public final class JULLogMessageHandler extends AbstractLogMessageHandler {
             Matchers.isSubtypeOf("java.util.function.Supplier")
     );
 
-    public JULLogMessageHandler(MessageFormatArgumentConverter messageFormatArgumentConverter,
-                                MessageFormatArgumentReducer messageFormatArgumentReducer) {
-        super(messageFormatArgumentConverter, messageFormatArgumentReducer);
-    }
-
     @Override
-    protected boolean shouldSkipMessageFormatArgument(ExpressionTree messageFormatArgument, VisitorState state) {
+    public boolean shouldSkipMessageFormatArgument(ExpressionTree messageFormatArgument, VisitorState state) {
        return INVALID_MSG_FORMAT_TYPES.matches(messageFormatArgument,state);
     }
 
     @Override
-    protected LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
+    public LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
         return doConvert(sourceMessageFormat, formatArguments);
     }
 

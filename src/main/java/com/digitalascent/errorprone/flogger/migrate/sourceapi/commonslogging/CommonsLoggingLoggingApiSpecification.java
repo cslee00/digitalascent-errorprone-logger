@@ -9,7 +9,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageHandler;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFactory;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
@@ -31,8 +31,8 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
     private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.commons.logging");
 
     public CommonsLoggingLoggingApiSpecification(Function<String, TargetLogLevel> targetLogLevelFunction,
-                                                 LogMessageHandler logMessageHandler) {
-        super(targetLogLevelFunction, logMessageHandler);
+                                                 LogMessageModelFactory logMessageModelFactory) {
+        super(targetLogLevelFunction, logMessageModelFactory);
     }
 
     @Override

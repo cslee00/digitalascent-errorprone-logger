@@ -15,11 +15,12 @@ import static java.util.Objects.requireNonNull;
 public abstract class AbstractLoggingApiSpecification implements LoggingApiSpecification {
 
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
-    private final LogMessageHandler logMessageHandler;
+    private final LogMessageModelFactory logMessageModelFactory;
 
-    public AbstractLoggingApiSpecification(Function<String, TargetLogLevel> targetLogLevelFunction, LogMessageHandler logMessageHandler) {
+    public AbstractLoggingApiSpecification(Function<String, TargetLogLevel> targetLogLevelFunction,
+                                           LogMessageModelFactory logMessageModelFactory) {
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "targetLogLevelFunction");
-        this.logMessageHandler = requireNonNull(logMessageHandler, "logMessageHandler");
+        this.logMessageModelFactory = requireNonNull(logMessageModelFactory, "logMessageModelFactory");
     }
 
     protected final TargetLogLevel mapLogLevel(String level) {
@@ -32,7 +33,7 @@ public abstract class AbstractLoggingApiSpecification implements LoggingApiSpeci
                                                           @Nullable ExpressionTree thrownArgument,
                                                           MigrationContext migrationContext,
                                                           TargetLogLevel targetLogLevel) {
-        return logMessageHandler.processLogMessage(messageFormatArgument, remainingArguments,
+        return logMessageModelFactory.createLogMessageModel(messageFormatArgument, remainingArguments,
                 state, thrownArgument, migrationContext, targetLogLevel);
     }
 }

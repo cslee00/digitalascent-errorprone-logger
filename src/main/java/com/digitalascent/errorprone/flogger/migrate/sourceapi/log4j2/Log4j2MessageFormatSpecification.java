@@ -1,12 +1,10 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2;
 
 import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatStyle;
-import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLogMessageHandler;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
-import com.digitalascent.errorprone.flogger.migrate.format.converter.MessageFormatArgumentConverter;
-import com.digitalascent.errorprone.flogger.migrate.format.reducer.MessageFormatArgumentReducer;
+import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatSpecification;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatStyle;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.matchers.Matchers;
@@ -18,7 +16,7 @@ import com.sun.tools.javac.code.Symbol;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public final class Log4j2LogMessageHandler extends AbstractLogMessageHandler  {
+public final class Log4j2MessageFormatSpecification implements MessageFormatSpecification {
     @Nullable
     private final MessageFormatStyle messageFormatStyle;
 
@@ -28,20 +26,17 @@ public final class Log4j2LogMessageHandler extends AbstractLogMessageHandler  {
             Matchers.isSubtypeOf("org.apache.logging.log4j.util.Supplier")
     );
 
-    public Log4j2LogMessageHandler(@Nullable MessageFormatStyle messageFormatStyle,
-                            MessageFormatArgumentConverter messageFormatArgumentConverter,
-                            MessageFormatArgumentReducer messageFormatArgumentReducer) {
-        super(messageFormatArgumentConverter, messageFormatArgumentReducer);
+    public Log4j2MessageFormatSpecification(@Nullable MessageFormatStyle messageFormatStyle) {
         this.messageFormatStyle = messageFormatStyle;
     }
 
     @Override
-    protected boolean shouldSkipMessageFormatArgument(ExpressionTree messageFormatArgument, VisitorState state) {
+    public boolean shouldSkipMessageFormatArgument(ExpressionTree messageFormatArgument, VisitorState state) {
         return INVALID_MSG_FORMAT_TYPES.matches( messageFormatArgument, state);
     }
 
     @Override
-    protected LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
+    public LogMessageModel convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
         return internalMessageFormat(sourceMessageFormat, formatArguments, migrationContext);
     }
 

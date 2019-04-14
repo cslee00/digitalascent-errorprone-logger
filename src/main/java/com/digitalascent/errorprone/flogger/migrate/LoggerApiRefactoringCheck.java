@@ -303,5 +303,4 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
         return refactoringConfiguration.floggerSuggestedFixGenerator().elideConditional(loggingConditional.ifTree(), state,
                 logStatements, migrationContext);
     }
-
 }
