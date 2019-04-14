@@ -10,7 +10,6 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.tools.javac.tree.JCTree;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,7 +21,6 @@ import static com.google.errorprone.matchers.Matchers.staticFieldAccess;
 
 public final class Arguments {
     private static final Matcher<ExpressionTree> STRING_MATCHER = isSubtypeOf(String.class);
-    private static final Matcher<ExpressionTree> THROWABLE_MATCHER = isSubtypeOf(Throwable.class);
 
     static List<? extends ExpressionTree> removeLast(List<? extends ExpressionTree> expressions) {
         if (expressions.size() <= 1) {
@@ -31,16 +29,10 @@ public final class Arguments {
         return expressions.subList(0, expressions.size() - 1);
     }
 
-    @Nullable
-    static ExpressionTree findTrailingThrowable(List<? extends ExpressionTree> remainingArguments, VisitorState state) {
-        Optional<MatchResult> matchResult = trailing(remainingArguments, state, THROWABLE_MATCHER);
-        return matchResult.map(MatchResult::argument).orElse(null);
-    }
-
     static List<? extends ExpressionTree> maybeUnpackVarArgs(List<? extends ExpressionTree> arguments, VisitorState state) {
         if (arguments.size() == 1) {
             ExpressionTree argument = arguments.get(0);
-            // if Object[] unpack
+            // if Object[] then unpack
             if (Matchers.isArrayType().matches(argument, state)) {
                 JCTree.JCNewArray newArray = (JCTree.JCNewArray) argument;
                 return newArray.elems;
@@ -65,18 +57,14 @@ public final class Arguments {
         return arguments.subList(1, arguments.size());
     }
 
-    private static Optional<MatchResult> trailing(List<? extends ExpressionTree> expressions, VisitorState state, Matcher<ExpressionTree> expressionTreeMatcher) {
-        return matchAtIndex(expressions, state, expressionTreeMatcher, expressions.size() - 1);
-    }
-
-    public static Optional<MatchResult> matchAtIndex(List<? extends ExpressionTree> expressions, VisitorState state, Matcher<ExpressionTree> expressionTreeMatcher, int index) {
+    public static Optional<ExpressionTree> matchAtIndex(List<? extends ExpressionTree> expressions, VisitorState state, Matcher<ExpressionTree> expressionTreeMatcher, int index) {
         if (index < 0 || index > expressions.size() - 1) {
             return Optional.empty();
         }
 
         ExpressionTree candidateArgument = expressions.get(index);
         if (expressionTreeMatcher.matches(candidateArgument, state)) {
-            return Optional.of(new MatchResult(index, candidateArgument));
+            return Optional.of(candidateArgument);
         }
         return Optional.empty();
     }

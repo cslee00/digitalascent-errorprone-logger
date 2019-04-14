@@ -41,6 +41,7 @@ public final class LogMessageModelFactory {
                                            @Nullable ExpressionTree thrownArgument,
                                            MigrationContext migrationContext,
                                            TargetLogLevel targetLogLevel) {
+
         if (messageFormatSpecification.shouldSkipMessageFormatArgument(messageFormatArgument, state)) {
             throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
         }

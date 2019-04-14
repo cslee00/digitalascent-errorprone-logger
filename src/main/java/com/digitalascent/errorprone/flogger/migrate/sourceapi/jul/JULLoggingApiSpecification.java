@@ -20,7 +20,6 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.tree.JCTree;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
