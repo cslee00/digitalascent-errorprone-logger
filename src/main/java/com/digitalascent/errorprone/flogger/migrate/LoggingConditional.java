@@ -8,6 +8,9 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Represents if( logging.isXXXEnabled() ) construct
+ */
 final class LoggingConditional {
     private final IfTree ifTree;
     private final MethodInvocation loggingConditionalInvocation;

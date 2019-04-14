@@ -7,11 +7,9 @@ import com.sun.source.util.TreeScanner;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 abstract class FixCollectingTreeScanner extends TreeScanner<Void, VisitorState> {
     private final List<SuggestedFix> suggestedFixes = new ArrayList<>();
     final void addSuggestedFix(SuggestedFix suggestedFix) {

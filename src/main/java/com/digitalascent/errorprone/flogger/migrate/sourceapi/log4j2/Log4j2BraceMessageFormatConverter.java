@@ -11,10 +11,6 @@ final class Log4j2BraceMessageFormatConverter {
     private static final char ESCAPE_CHAR = '\\';
 
     static String convertMessageFormat(String messagePattern ) {
-        if (messagePattern == null ) {
-            return null;
-        }
-
         final StringBuilder buffer = new StringBuilder( messagePattern.length() + 50 );
         messagePattern = messagePattern.replace("%", "%%");
 

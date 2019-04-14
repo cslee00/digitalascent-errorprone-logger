@@ -17,7 +17,7 @@ public abstract class AbstractLoggingApiSpecification implements LoggingApiSpeci
     private final Function<String, TargetLogLevel> targetLogLevelFunction;
     private final LogMessageModelFactory logMessageModelFactory;
 
-    public AbstractLoggingApiSpecification(Function<String, TargetLogLevel> targetLogLevelFunction,
+    protected AbstractLoggingApiSpecification(Function<String, TargetLogLevel> targetLogLevelFunction,
                                            LogMessageModelFactory logMessageModelFactory) {
         this.targetLogLevelFunction = requireNonNull(targetLogLevelFunction, "targetLogLevelFunction");
         this.logMessageModelFactory = requireNonNull(logMessageModelFactory, "logMessageModelFactory");
