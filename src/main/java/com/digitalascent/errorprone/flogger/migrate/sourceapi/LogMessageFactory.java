@@ -9,7 +9,6 @@ import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
-import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.matchers.method.MethodMatchers;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.LiteralTree;
@@ -20,10 +19,13 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.errorprone.matchers.Matchers.staticMethod;
 import static java.util.Objects.requireNonNull;
 
 public final class LogMessageFactory {
-    private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = Matchers.staticMethod().onClass("java.lang.String").named("format");
+    private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = staticMethod().onClass("java.lang.String").named("format");
+    private static final MethodMatchers.MethodNameMatcher MESSAGE_FORMAT = staticMethod().onClass("java.text.MessageFormat").named("format");
+
     private final MessageFormatArgumentConverter messageFormatArgumentConverter;
     private final MessageFormatArgumentReducer messageFormatArgumentReducer;
     private final MessageFormatSpecification messageFormatSpecification;
@@ -66,6 +68,11 @@ public final class LogMessageFactory {
                 return result;
             }
 
+            result = maybeUnpackMessageFormat(messageFormatArgument,state,targetLogLevel);
+            if( result != null ) {
+                return result;
+            }
+
             return LogMessage.fromMessageFormatArgument(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
         }
 
@@ -78,6 +85,20 @@ public final class LogMessageFactory {
         }
 
         return LogMessage.unableToConvert(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
+    }
+
+    private LogMessage maybeUnpackMessageFormat(ExpressionTree messageFormatArgument, VisitorState state, TargetLogLevel targetLogLevel) {
+        if (MESSAGE_FORMAT.matches(messageFormatArgument, state)) {
+            MethodInvocationTree messageFormatTree = (MethodInvocationTree) messageFormatArgument;
+            ExpressionTree firstArgument = messageFormatTree.getArguments().get(0);
+            if (firstArgument instanceof LiteralTree) {
+                String messageFormat = (String) ((LiteralTree) firstArgument).getValue();
+                List<? extends ExpressionTree> remainingArguments = Arguments.removeFirst(messageFormatTree.getArguments());
+                return MessageFormat.convertJavaTextMessageFormat(messageFormat, processArguments(remainingArguments, state, targetLogLevel) );
+            }
+        }
+
+        return null;
     }
 
     @Nullable
