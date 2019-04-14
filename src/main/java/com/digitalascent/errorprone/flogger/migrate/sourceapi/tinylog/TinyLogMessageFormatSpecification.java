@@ -1,6 +1,5 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.tinylog;
 
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatConversionResult;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatSpecification;

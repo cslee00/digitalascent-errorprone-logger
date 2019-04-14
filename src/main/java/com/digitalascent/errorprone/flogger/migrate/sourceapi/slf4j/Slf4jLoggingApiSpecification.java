@@ -25,7 +25,6 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4j
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.slf4j.Slf4jMatchers.markerType;
-import static com.google.common.base.Preconditions.checkArgument;
 
 public final class Slf4jLoggingApiSpecification extends AbstractLoggingApiSpecification {
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.slf4j");
