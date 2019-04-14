@@ -1,6 +1,7 @@
 package com.digitalascent.errorprone.flogger.testdata;
 
 import com.google.common.flogger.FluentLogger;
+import java.text.MessageFormat;
 import java.util.Arrays;
 
 public class TestClassUsingMessageFormatArguments_0 {
@@ -11,5 +12,7 @@ public class TestClassUsingMessageFormatArguments_0 {
         logger.atInfo().log( "%s", new Object() );
         logger.atInfo().log( "%s", new Object() );
         logger.atInfo().log( "%s", new Object[] { "abc", "def", "ghi"} );
+        logger.atInfo().log( "%s", "abc" );
+        logger.atInfo().log( "%s", "abc" );
     }
 }
