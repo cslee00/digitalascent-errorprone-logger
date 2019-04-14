@@ -5,6 +5,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
@@ -13,7 +14,6 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFac
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
@@ -62,23 +62,25 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
 
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
-        String level = methodName.substring(2).replace("Enabled", "");
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation,
+                                                                     VisitorState state, MigrationContext migrationContext) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
+
+        String level = methodInvocation.methodName().substring(2).replace("Enabled", "");
         builder.targetLogLevel(mapLogLevel(level));
-        builder.conditionalStatement(methodInvocationTree);
+        builder.conditionalStatement(methodInvocation);
         return builder.build();
     }
 
     @Override
-    public FloggerLogStatement parseLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+    public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
                                                   VisitorState state, MigrationContext migrationContext) {
-        TargetLogLevel targetLogLevel = mapLogLevel(methodName);
+        TargetLogLevel targetLogLevel = mapLogLevel(methodInvocation.methodName());
 
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
+        List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);

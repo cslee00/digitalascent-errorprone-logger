@@ -5,6 +5,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStat
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
 import com.digitalascent.errorprone.flogger.migrate.model.LoggerVariableDefinition;
+import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.common.base.Verify;
@@ -17,7 +18,6 @@ import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.ImportTree;
-import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
@@ -33,8 +33,6 @@ import static java.util.Objects.requireNonNull;
  * Generates code for Flogger logging constructs - loggers & logger invocations
  */
 public class FloggerSuggestedFixGenerator {
-    private final FluentLogger logger = FluentLogger.forEnclosingClass();
-
     private final LoggerVariableDefinition loggerVariableDefinition;
 
     public FloggerSuggestedFixGenerator(LoggerVariableDefinition loggerVariableDefinition) {
@@ -47,7 +45,7 @@ public class FloggerSuggestedFixGenerator {
         String selectorMethod = generateSelectorMethod(floggerConditionalStatement.targetLogLevel(), state);
         String loggerEnabledMethodCall = String.format("%s.%s.isEnabled()", loggerVariableName, selectorMethod);
         return SuggestedFix.builder()
-                .replace(floggerConditionalStatement.conditionalStatement(),loggerEnabledMethodCall )
+                .replace(floggerConditionalStatement.conditionalStatement().tree(),loggerEnabledMethodCall )
                 .build();
     }
 
@@ -59,13 +57,13 @@ public class FloggerSuggestedFixGenerator {
         return methodInvocation;
     }
 
-    public SuggestedFix generateLoggingMethod(MethodInvocationTree loggerMethodInvocation, VisitorState state,
+    public SuggestedFix generateLoggingMethod(MethodInvocation loggerMethodInvocation, VisitorState state,
                                               FloggerLogStatement floggerLogStatement, MigrationContext migrationContext) {
 
-        String loggerMethodCall = generateLoggingMethodInvocation( floggerLogStatement, loggerMethodInvocation,
+        String loggerMethodCall = generateLoggingMethodInvocation( floggerLogStatement, loggerMethodInvocation.tree(),
                 state, migrationContext);
         SuggestedFix.Builder builder = SuggestedFix.builder()
-                .replace(loggerMethodInvocation, loggerMethodCall);
+                .replace(loggerMethodInvocation.tree(), loggerMethodCall);
 
         // add in any imports the arguments may have added
         addArgumentImports(floggerLogStatement.logMessageModel(), builder);

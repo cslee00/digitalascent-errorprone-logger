@@ -2,6 +2,7 @@ package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
+import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
@@ -23,7 +24,7 @@ public interface LoggingApiSpecification {
 
     boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState);
 
-    FloggerConditionalStatement parseLoggingConditionalMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext);
+    FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocationTree, VisitorState state, MigrationContext migrationContext);
 
-    FloggerLogStatement parseLoggingMethod(String methodName, MethodInvocationTree loggingMethodInvocation, VisitorState state, MigrationContext migrationContext);
+    FloggerLogStatement parseLoggingMethod(MethodInvocation loggingMethodInvocation, VisitorState state, MigrationContext migrationContext);
 }

@@ -4,6 +4,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStat
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
@@ -13,7 +14,6 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.MatchResult;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
@@ -52,7 +52,7 @@ public final class TinyLog2LoggingApiSpecification extends AbstractLoggingApiSpe
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
         throw new UnsupportedOperationException("TinyLog2 doesn't have logging enabled methods");
     }
 
@@ -68,13 +68,13 @@ public final class TinyLog2LoggingApiSpecification extends AbstractLoggingApiSpe
 
 
     @Override
-    public FloggerLogStatement parseLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+    public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
                                                   VisitorState state, MigrationContext migrationContext) {
-        TargetLogLevel targetLogLevel = mapLogLevel(methodName);
+        TargetLogLevel targetLogLevel = mapLogLevel(methodInvocation.methodName());
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
+        List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
         ExpressionTree throwableArgument = findThrowableArgument(remainingArguments,state);
         if( throwableArgument != null ) {
             builder.thrown(throwableArgument);

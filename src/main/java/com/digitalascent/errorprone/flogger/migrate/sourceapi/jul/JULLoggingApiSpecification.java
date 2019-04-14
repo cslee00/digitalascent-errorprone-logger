@@ -7,6 +7,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
@@ -15,7 +16,6 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFac
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.tree.JCTree;
@@ -64,10 +64,10 @@ public final class JULLoggingApiSpecification extends AbstractLoggingApiSpecific
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, VisitorState state, MigrationContext migrationContext) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
-        builder.targetLogLevel(resolveLogLevelFromArgument(methodInvocationTree.getArguments().get(0)));
-        builder.conditionalStatement(methodInvocationTree);
+        builder.targetLogLevel(resolveLogLevelFromArgument(methodInvocation.tree().getArguments().get(0)));
+        builder.conditionalStatement(methodInvocation);
         return builder.build();
     }
 
@@ -86,12 +86,12 @@ public final class JULLoggingApiSpecification extends AbstractLoggingApiSpecific
     }
 
     @Override
-    public FloggerLogStatement parseLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree,
+    public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
                                                   VisitorState state, MigrationContext migrationContext) {
-        List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
+        List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
 
         TargetLogLevel targetLogLevel;
-        if (methodName.equals("log")) {
+        if (methodInvocation.methodName().equals("log")) {
             ExpressionTree logLevelArgument = remainingArguments.get(0);
             if (logLevelType().matches(logLevelArgument, state)) {
                 targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
@@ -100,7 +100,7 @@ public final class JULLoggingApiSpecification extends AbstractLoggingApiSpecific
                 throw new SkipLogMethodException("Unable to determine log level");
             }
         } else {
-            targetLogLevel = mapLogLevel(methodName);
+            targetLogLevel = mapLogLevel(methodInvocation.methodName());
         }
 
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();

@@ -5,6 +5,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableFloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessageModel;
+import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
@@ -62,35 +63,35 @@ public final class Slf4jLoggingApiSpecification extends AbstractLoggingApiSpecif
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
-        String level = methodName.substring(2).replace("Enabled", "");
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, VisitorState state, MigrationContext migrationContext) {
+        String level = methodInvocation.methodName().substring(2).replace("Enabled", "");
         TargetLogLevel targetLogLevel = mapLogLevel(level);
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
         builder.targetLogLevel(targetLogLevel);
-        builder.conditionalStatement( methodInvocationTree);
+        builder.conditionalStatement(methodInvocation);
         return builder.build();
     }
 
 
     @Override
-    public FloggerLogStatement parseLoggingMethod(String methodName, MethodInvocationTree methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
-        TargetLogLevel targetLogLevel = mapLogLevel(methodName);
+    public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation, VisitorState state, MigrationContext migrationContext) {
+        TargetLogLevel targetLogLevel = mapLogLevel(methodInvocation.methodName());
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        List<? extends ExpressionTree> remainingArguments = methodInvocationTree.getArguments();
+        List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
 
         // skip the marker object, if present
         remainingArguments = maybeSkipMarkerArgument(state, remainingArguments);
 
         // extract the message format argument and it's arguments
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
-        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state );
+        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
 
         // extract throwable as last argument, if present
         ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
         if (throwableArgument != null) {
-            remainingArguments = Arguments.removeLast( remainingArguments );
+            remainingArguments = Arguments.removeLast(remainingArguments);
             builder.thrown(throwableArgument);
         }
 
@@ -102,23 +103,23 @@ public final class Slf4jLoggingApiSpecification extends AbstractLoggingApiSpecif
     }
 
     private List<? extends ExpressionTree> maybeSkipMarkerArgument(VisitorState state, List<? extends ExpressionTree> remainingArguments) {
-        if( hasMarkerArgument(remainingArguments,state)) {
+        if (hasMarkerArgument(remainingArguments, state)) {
             remainingArguments = Arguments.removeFirst(remainingArguments);
         }
         return remainingArguments;
     }
 
     private ExpressionTree findMessageFormatArgument(List<? extends ExpressionTree> arguments) {
-        if( arguments.isEmpty() ) {
+        if (arguments.isEmpty()) {
             throw new IllegalStateException("Unable to locate required message format argument");
         }
         return arguments.get(0);
     }
 
     private boolean hasMarkerArgument(List<? extends ExpressionTree> arguments, VisitorState state) {
-        if( arguments.isEmpty() ) {
+        if (arguments.isEmpty()) {
             return false;
         }
-        return markerType().matches(arguments.get(0),state);
+        return markerType().matches(arguments.get(0), state);
     }
 }

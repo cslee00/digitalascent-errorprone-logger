@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
+import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.LoggingApiSpecification;
 import com.google.errorprone.VisitorState;
@@ -23,17 +24,17 @@ import static java.util.Objects.requireNonNull;
 
 final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> {
     private final MigrationContext migrationContext;
-    private final List<MethodInvocationTree> loggingMethodInvocations = new ArrayList<>();
+    private final List<MethodInvocation> loggingMethodInvocations = new ArrayList<>();
     private final List<LoggingConditional> loggingConditionals = new ArrayList<>();
     private final LoggingApiSpecification loggingApiSpecification;
-    private final List<MethodInvocationTree> loggingEnabledMethods = new ArrayList<>();
+    private final List<MethodInvocation> loggingEnabledMethods = new ArrayList<>();
 
     LoggerInvocationTreeScanner(MigrationContext migrationContext, LoggingApiSpecification loggingApiSpecification) {
         this.migrationContext = requireNonNull(migrationContext, "migrationContext");
         this.loggingApiSpecification = requireNonNull(loggingApiSpecification, "loggingApiSpecification");
     }
 
-    List<MethodInvocationTree> loggingMethodInvocations() {
+    List<MethodInvocation> loggingMethodInvocations() {
         return loggingMethodInvocations;
     }
 
@@ -41,7 +42,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
         return loggingConditionals;
     }
 
-    List<MethodInvocationTree> loggingEnabledMethods() {
+    List<MethodInvocation> loggingEnabledMethods() {
         return loggingEnabledMethods;
     }
 
@@ -60,7 +61,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
     }
 
     private void resolveUniqueLoggingMethodInvocations() {
-        List<MethodInvocationTree> finalList = new ArrayList<>(loggingMethodInvocations);
+        List<MethodInvocation> finalList = new ArrayList<>(loggingMethodInvocations);
         loggingMethodInvocations.clear();
         for (LoggingConditional loggingConditional : loggingConditionals) {
             // TODO - type safety
@@ -74,7 +75,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
         ParenthesizedTree parenTree = (ParenthesizedTree) node.getCondition();
         ExpressionTree expressionTree = parenTree.getExpression();
         if (loggingApiSpecification.matchConditionalMethod(expressionTree, visitorState)) {
-            loggingConditionals.add(createLoggingConditional(node, (MethodInvocationTree) expressionTree, visitorState));
+            loggingConditionals.add(createLoggingConditional(node, MethodInvocation.from((MethodInvocationTree) expressionTree), visitorState));
         }
         return super.visitIf(node, visitorState);
     }
@@ -93,9 +94,9 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
 
         if (!isIgnoredLogger(variableName, migrationContext)) {
             if (loggingApiSpecification.matchLoggingMethod(node, visitorState)) {
-                loggingMethodInvocations.add(node);
+                loggingMethodInvocations.add(MethodInvocation.from(node));
             } else if (loggingApiSpecification.matchConditionalMethod(node, visitorState)) {
-                loggingEnabledMethods.add(node);
+                loggingEnabledMethods.add(MethodInvocation.from(node));
             }
         }
         return super.visitMethodInvocation(node, visitorState);
@@ -106,7 +107,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
                 .anyMatch(loggerVariable -> loggerVariable.getName().toString().equals(variableName));
     }
 
-    private LoggingConditional createLoggingConditional(IfTree ifTree, MethodInvocationTree conditionalExpression, VisitorState state) {
+    private LoggingConditional createLoggingConditional(IfTree ifTree, MethodInvocation conditionalExpression, VisitorState state) {
         if (ifTree.getElseStatement() != null) {
             // 'else' on logging conditional isn't idiomatic, unclear what the intent was - don't elide conditional
             return LoggingConditional.migrateExpression(ifTree, conditionalExpression);
@@ -130,6 +131,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
                 return LoggingConditional.elide(ifTree, conditionalExpression, blockTree.getStatements().stream()
                         .map(x -> ((ExpressionStatementTree) x).getExpression())
                         .map(MethodInvocationTree.class::cast)
+                        .map(MethodInvocation::from)
                         .collect(toImmutableList()));
             }
         }

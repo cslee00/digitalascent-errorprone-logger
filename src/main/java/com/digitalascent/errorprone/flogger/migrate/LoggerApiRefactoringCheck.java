@@ -3,6 +3,7 @@ package com.digitalascent.errorprone.flogger.migrate;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableMigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.RefactoringConfiguration;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.Arguments;
@@ -20,14 +21,12 @@ import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Description;
 import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.matchers.Matchers;
-import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import com.sun.tools.javac.code.Symbol;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -156,13 +155,12 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
         suggestedFixes.addAll(migrateLoggingMethodInvocations(classTree, state, migrationContext, treeScanner.loggingMethodInvocations()));
         suggestedFixes.addAll(migrateLoggingConditionalMethods(classTree, state, migrationContext, treeScanner.loggingEnabledMethods()));
 
-
         return suggestedFixes;
     }
 
     private List<SuggestedFix> migrateLoggingConditionalMethods(ClassTree classTree, VisitorState state,
                                                                 MigrationContext migrationContext,
-                                                                List<MethodInvocationTree> loggingEnabledMethods) {
+                                                                List<MethodInvocation> loggingEnabledMethods) {
         return loggingEnabledMethods.stream().map(loggingEnabledMethod -> {
             try {
                 FloggerConditionalStatement floggerConditionalStatement = migrateConditionalMethod(loggingEnabledMethod, state, migrationContext);
@@ -174,10 +172,8 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
         }).collect(toImmutableList());
     }
 
-    private FloggerConditionalStatement migrateConditionalMethod(MethodInvocationTree loggingEnabledMethod, VisitorState state, MigrationContext migrationContext) {
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(loggingEnabledMethod);
-        String methodName = sym.getSimpleName().toString();
-        return loggingApiSpecification.parseLoggingConditionalMethod(methodName, loggingEnabledMethod, state, migrationContext);
+    private FloggerConditionalStatement migrateConditionalMethod(MethodInvocation loggingEnabledMethod, VisitorState state, MigrationContext migrationContext) {
+        return loggingApiSpecification.parseLoggingConditionalMethod(loggingEnabledMethod, state, migrationContext);
     }
 
     private ImmutableList<SuggestedFix> migrateLoggingConditional(ClassTree classTree, VisitorState state, MigrationContext migrationContext,
@@ -194,7 +190,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
 
 
     private ImmutableList<SuggestedFix> migrateLoggingMethodInvocations(ClassTree classTree, VisitorState state, MigrationContext migrationContext,
-                                                                        List<MethodInvocationTree> loggingMethodInvocations) {
+                                                                        List<MethodInvocation> loggingMethodInvocations) {
         return loggingMethodInvocations.stream().map(loggingMethodInvocation -> {
             try {
                 return migrateLoggingMethodInvocation(loggingMethodInvocation, state, migrationContext);
@@ -205,19 +201,12 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
         }).collect(toImmutableList());
     }
 
-    private SuggestedFix migrateLoggingMethodInvocation(MethodInvocationTree loggingMethodInvocation, VisitorState state, MigrationContext migrationContext) {
-        checkArgument(loggingApiSpecification.matchLoggingMethod(loggingMethodInvocation, state), "matchLoggingMethod(loggingMethodInvocation, state) : %s", loggingMethodInvocation);
+    private SuggestedFix migrateLoggingMethodInvocation(MethodInvocation loggingMethodInvocation, VisitorState state, MigrationContext migrationContext) {
+        checkArgument(loggingApiSpecification.matchLoggingMethod(loggingMethodInvocation.tree(), state), "matchLoggingMethod(loggingMethodInvocation, state) : %s", loggingMethodInvocation);
 
-        FloggerLogStatement floggerLogStatement = migrateLoggingMethod(loggingMethodInvocation, state, migrationContext);
+        FloggerLogStatement floggerLogStatement = loggingApiSpecification.parseLoggingMethod(loggingMethodInvocation, state, migrationContext);
         return refactoringConfiguration.floggerSuggestedFixGenerator().generateLoggingMethod(loggingMethodInvocation,
                 state, floggerLogStatement, migrationContext);
-    }
-
-    private FloggerLogStatement migrateLoggingMethod(MethodInvocationTree loggingMethodInvocation, VisitorState state, MigrationContext migrationContext) {
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(loggingMethodInvocation);
-        String methodName = sym.getSimpleName().toString();
-
-        return loggingApiSpecification.parseLoggingMethod(methodName, loggingMethodInvocation, state, migrationContext);
     }
 
     private SuggestedFix handleLoggerMemberVariables(ClassTree classTree, VisitorState state, MigrationContext migrationContext) throws SkipCompilationUnitException {
@@ -270,18 +259,15 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
     }
 
     private SuggestedFix migrateLoggingConditional(LoggingConditional loggingConditional,
-                                                        VisitorState state, MigrationContext migrationContext) {
-        checkArgument(loggingApiSpecification.matchConditionalMethod(loggingConditional.loggingConditionalInvocation(), state),
+                                                   VisitorState state, MigrationContext migrationContext) {
+        checkArgument(loggingApiSpecification.matchConditionalMethod(loggingConditional.loggingConditionalInvocation().tree(), state),
                 "matchLoggingMethod(loggingConditional.loggingConditionalInvocation(), state) : %s",
                 loggingConditional);
 
-        Symbol.MethodSymbol sym = ASTHelpers.getSymbol(loggingConditional.loggingConditionalInvocation());
-        String methodName = sym.getSimpleName().toString();
-
         switch (loggingConditional.actionType()) {
             case MIGRATE_EXPRESSION_ONLY: {
-                FloggerConditionalStatement conditionalStatement =  loggingApiSpecification.parseLoggingConditionalMethod(methodName, loggingConditional.loggingConditionalInvocation(), state, migrationContext);
-                return refactoringConfiguration.floggerSuggestedFixGenerator().generateConditionalMethod(conditionalStatement,state,migrationContext);
+                FloggerConditionalStatement conditionalStatement = loggingApiSpecification.parseLoggingConditionalMethod(loggingConditional.loggingConditionalInvocation(), state, migrationContext);
+                return refactoringConfiguration.floggerSuggestedFixGenerator().generateConditionalMethod(conditionalStatement, state, migrationContext);
             }
 
             case ELIDE:
@@ -297,7 +283,7 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
         }
 
         List<FloggerLogStatement> logStatements = loggingConditional.loggingMethods().stream()
-                .map(loggingMethod -> migrateLoggingMethod(loggingMethod, state, migrationContext))
+                .map(loggingMethod -> loggingApiSpecification.parseLoggingMethod(loggingMethod, state, migrationContext))
                 .collect(toImmutableList());
 
         return refactoringConfiguration.floggerSuggestedFixGenerator().elideConditional(loggingConditional.ifTree(), state,

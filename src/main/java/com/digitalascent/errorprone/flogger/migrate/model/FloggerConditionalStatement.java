@@ -8,12 +8,12 @@ import org.immutables.value.Value;
 import javax.annotation.Nullable;
 
 /**
- * Represents a Flogger log statement - the log level, log message, and (optional) thrown exception
+ * Represents a Flogger conditional statement to determine if logging is enabled or not, for a given log level
  */
 @ImmutableStyle
 @Value.Immutable
 public interface FloggerConditionalStatement {
     TargetLogLevel targetLogLevel();
 
-    MethodInvocationTree conditionalStatement();
+    MethodInvocation conditionalStatement();
 }

@@ -1,55 +1,53 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
+import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.google.common.collect.ImmutableList;
-import com.sun.javafx.util.Logging;
-import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IfTree;
-import com.sun.source.tree.MethodInvocationTree;
 
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-public final class LoggingConditional {
+final class LoggingConditional {
     private final IfTree ifTree;
-    private final MethodInvocationTree loggingConditionalInvocation;
+    private final MethodInvocation loggingConditionalInvocation;
     private final LoggingConditionalActionType actionType;
-    private final List<MethodInvocationTree> loggingMethods;
+    private final List<MethodInvocation> loggingMethods;
 
-    static LoggingConditional migrateExpression( IfTree ifTree, MethodInvocationTree loggingConditionalInvocation ) {
+    static LoggingConditional migrateExpression( IfTree ifTree, MethodInvocation loggingConditionalInvocation ) {
         return new LoggingConditional( ifTree, loggingConditionalInvocation, LoggingConditionalActionType.MIGRATE_EXPRESSION_ONLY, ImmutableList.of());
     }
 
-    static LoggingConditional elide( IfTree ifTree, MethodInvocationTree loggingConditionalInvocation ) {
+    static LoggingConditional elide( IfTree ifTree, MethodInvocation loggingConditionalInvocation ) {
         return elide( ifTree, loggingConditionalInvocation, ImmutableList.of());
     }
 
-    static LoggingConditional elide( IfTree ifTree,  MethodInvocationTree loggingConditionalInvocation, List<MethodInvocationTree> loggingMethods ) {
+    static LoggingConditional elide( IfTree ifTree,  MethodInvocation loggingConditionalInvocation, List<MethodInvocation> loggingMethods ) {
         return new LoggingConditional(ifTree, loggingConditionalInvocation, LoggingConditionalActionType.ELIDE, loggingMethods);
     }
     private LoggingConditional(IfTree ifTree,
-                       MethodInvocationTree loggingConditionalInvocation,
+                               MethodInvocation loggingConditionalInvocation,
                        LoggingConditionalActionType actionType,
-                       List<MethodInvocationTree> loggingMethods) {
+                       List<MethodInvocation> loggingMethods) {
         this.ifTree = requireNonNull(ifTree, "ifTree");
         this.loggingConditionalInvocation = requireNonNull(loggingConditionalInvocation, "loggingConditionalInvocation");
         this.actionType = requireNonNull(actionType, "actionType");
         this.loggingMethods = ImmutableList.copyOf(loggingMethods);
     }
 
-    public IfTree ifTree() {
+    IfTree ifTree() {
         return ifTree;
     }
 
-    public MethodInvocationTree loggingConditionalInvocation() {
+    MethodInvocation loggingConditionalInvocation() {
         return loggingConditionalInvocation;
     }
 
-    public LoggingConditionalActionType actionType() {
+    LoggingConditionalActionType actionType() {
         return actionType;
     }
 
-    public List<MethodInvocationTree> loggingMethods() {
+    List<MethodInvocation> loggingMethods() {
         return loggingMethods;
     }
 }
