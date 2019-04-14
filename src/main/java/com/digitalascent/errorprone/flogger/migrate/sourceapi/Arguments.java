@@ -7,6 +7,7 @@ import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.tools.javac.tree.JCTree;
 
@@ -74,7 +75,7 @@ public final class Arguments {
     }
 
     static boolean isStringLiteral(ExpressionTree expressionTree, VisitorState state) {
-        return expressionTree instanceof JCTree.JCLiteral && STRING_MATCHER.matches(expressionTree, state);
+        return expressionTree instanceof LiteralTree && STRING_MATCHER.matches(expressionTree, state);
     }
 
     public static boolean isLoggerNamedAfterClass(ClassTree classTree, ExpressionTree argument, VisitorState state) {

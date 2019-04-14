@@ -12,7 +12,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.ArgumentParser;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFactory;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageFactory;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
@@ -33,8 +33,8 @@ public final class JULLoggingApiSpecification extends AbstractLoggingApiSpecific
     private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("java.util.logging");
 
     public JULLoggingApiSpecification(Function<String, TargetLogLevel> targetLogLevelFunction,
-                                      LogMessageModelFactory logMessageModelFactory) {
-        super(targetLogLevelFunction, logMessageModelFactory);
+                                      LogMessageFactory logMessageFactory) {
+        super(targetLogLevelFunction, logMessageFactory);
     }
 
     @Override

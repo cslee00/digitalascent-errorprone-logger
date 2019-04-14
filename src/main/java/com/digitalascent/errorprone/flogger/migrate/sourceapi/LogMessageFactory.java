@@ -12,6 +12,7 @@ import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.matchers.method.MethodMatchers;
 import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.tools.javac.tree.JCTree;
 
@@ -21,26 +22,26 @@ import java.util.List;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 
-public final class LogMessageModelFactory {
+public final class LogMessageFactory {
     private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = Matchers.staticMethod().onClass("java.lang.String").named("format");
     private final MessageFormatArgumentConverter messageFormatArgumentConverter;
     private final MessageFormatArgumentReducer messageFormatArgumentReducer;
     private final MessageFormatSpecification messageFormatSpecification;
 
-    public LogMessageModelFactory(MessageFormatArgumentConverter messageFormatArgumentConverter,
-                                  MessageFormatArgumentReducer messageFormatArgumentReducer,
-                                  MessageFormatSpecification messageFormatSpecification) {
+    public LogMessageFactory(MessageFormatArgumentConverter messageFormatArgumentConverter,
+                             MessageFormatArgumentReducer messageFormatArgumentReducer,
+                             MessageFormatSpecification messageFormatSpecification) {
         this.messageFormatArgumentConverter = requireNonNull(messageFormatArgumentConverter, "messageFormatArgumentConverter");
         this.messageFormatArgumentReducer = requireNonNull(messageFormatArgumentReducer, "messageFormatArgumentReducer");
         this.messageFormatSpecification = requireNonNull(messageFormatSpecification, "messageFormatSpecification");
     }
 
-    final LogMessage createLogMessageModel(ExpressionTree messageFormatArgument,
-                                           List<? extends ExpressionTree> remainingArguments,
-                                           VisitorState state,
-                                           @Nullable ExpressionTree thrownArgument,
-                                           MigrationContext migrationContext,
-                                           TargetLogLevel targetLogLevel) {
+    final LogMessage create(ExpressionTree messageFormatArgument,
+                            List<? extends ExpressionTree> remainingArguments,
+                            VisitorState state,
+                            @Nullable ExpressionTree thrownArgument,
+                            MigrationContext migrationContext,
+                            TargetLogLevel targetLogLevel) {
 
         if (messageFormatSpecification.shouldSkipMessageFormatArgument(messageFormatArgument, state)) {
             throw new SkipLogMethodException("Unable to convert message format: " + messageFormatArgument);
@@ -84,8 +85,8 @@ public final class LogMessageModelFactory {
         if (STRING_FORMAT.matches(messageFormatArgument, state)) {
             MethodInvocationTree stringFormatTree = (MethodInvocationTree) messageFormatArgument;
             ExpressionTree firstArgument = stringFormatTree.getArguments().get(0);
-            if ((firstArgument instanceof JCTree.JCLiteral)) {
-                String messageFormat = (String) ((JCTree.JCLiteral) firstArgument).value;
+            if (firstArgument instanceof LiteralTree) {
+                String messageFormat = (String) ((LiteralTree) firstArgument).getValue();
                 return LogMessage.fromStringFormat(messageFormat,
                         processArguments(Arguments.removeFirst(stringFormatTree.getArguments()), state, targetLogLevel));
             }
@@ -93,7 +94,6 @@ public final class LogMessageModelFactory {
 
         return null;
     }
-
 
     private List<MessageFormatArgument> processArguments(List<? extends ExpressionTree> arguments,
                                                          VisitorState state,
