@@ -60,6 +60,12 @@ class LoggerApiRefactoringCheckTest {
         executeTest("slf4j", "Conditionals", id);
     }
 
+    @ParameterizedTest( name = "string-concatenation: test id {arguments}")
+    @ValueSource(ints = {0})
+    public void testStringConcatenation(int id) {
+        executeTest("slf4j", "StringConcatenation", id);
+    }
+
     @ParameterizedTest( name = "jul: test id {arguments}")
     @ValueSource(ints = {0,1,2,3,4})
     public void testJUL(int id) {

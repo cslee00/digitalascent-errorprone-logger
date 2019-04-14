@@ -12,7 +12,8 @@ Refactorings:
 * Remove toString() calls on message format arguments
 * Remove Arrays.toString() calls on message format arguments
 * Remove unnecessary conditionals around logging statements
-* (TODO) convert string-concatenated formatting messages into parameters
+* Convert String.format and MessageFormat.format calls
+* Convert string-concatenated messages into parameterized messages
 * (TODO) make complex formatting arguments lazy
 
 Checks
