@@ -52,7 +52,7 @@ public final class TinyLog2LoggingApiSpecification extends AbstractLoggingApiSpe
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocationTree, VisitorState state, MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, MigrationContext migrationContext) {
         throw new UnsupportedOperationException("TinyLog2 doesn't have logging enabled methods");
     }
 
@@ -69,23 +69,23 @@ public final class TinyLog2LoggingApiSpecification extends AbstractLoggingApiSpe
 
     @Override
     public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
-                                                  VisitorState state, MigrationContext migrationContext) {
+                                                  MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel = mapLogLevel(methodInvocation.methodName());
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
         List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
-        ExpressionTree throwableArgument = findThrowableArgument(remainingArguments,state);
+        ExpressionTree throwableArgument = findThrowableArgument(remainingArguments,methodInvocation.state());
         if( throwableArgument != null ) {
             builder.thrown(throwableArgument);
             remainingArguments = Arguments.removeFirst( remainingArguments );
         }
 
         ExpressionTree messageFormatArgument = remainingArguments.isEmpty() ? throwableArgument : remainingArguments.get(0);
-        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments,state);
+        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments,methodInvocation.state());
 
         LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument,
-                remainingArguments, state, throwableArgument, migrationContext, targetLogLevel);
+                remainingArguments, methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel( logMessageModel );
         return builder.build();
     }

@@ -2,6 +2,7 @@ package com.digitalascent.errorprone.flogger.migrate.model;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.errorprone.VisitorState;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.tools.javac.code.Symbol;
@@ -11,19 +12,21 @@ import static java.util.Objects.requireNonNull;
 public final class MethodInvocation {
     private final MethodInvocationTree tree;
     private final String methodName;
+    private final VisitorState state;
 
-    public static MethodInvocation from( MethodInvocationTree tree ) {
+    public static MethodInvocation from(MethodInvocationTree tree, VisitorState state) {
         Symbol.MethodSymbol sym = ASTHelpers.getSymbol(tree);
         if( sym == null ) {
             throw new IllegalArgumentException("Invalid tree: " + tree );
         }
         String methodName = sym.getSimpleName().toString();
-        return new MethodInvocation( tree, methodName );
+        return new MethodInvocation( tree, methodName, state );
     }
 
-    private MethodInvocation(MethodInvocationTree tree, String methodName) {
+    private MethodInvocation(MethodInvocationTree tree, String methodName, VisitorState state) {
         this.tree = requireNonNull(tree, "tree");
         this.methodName = requireNonNull(methodName, "methodName");
+        this.state = requireNonNull(state, "state");
     }
 
     public MethodInvocationTree tree() {
@@ -32,6 +35,10 @@ public final class MethodInvocation {
 
     public String methodName() {
         return methodName;
+    }
+
+    public VisitorState state() {
+        return state;
     }
 
     @Override

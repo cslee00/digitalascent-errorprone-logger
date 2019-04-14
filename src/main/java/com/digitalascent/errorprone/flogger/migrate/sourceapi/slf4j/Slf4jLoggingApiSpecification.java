@@ -14,7 +14,6 @@ import com.digitalascent.errorprone.flogger.migrate.sourceapi.LogMessageModelFac
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
@@ -63,7 +62,7 @@ public final class Slf4jLoggingApiSpecification extends AbstractLoggingApiSpecif
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, VisitorState state, MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, MigrationContext migrationContext) {
         String level = methodInvocation.methodName().substring(2).replace("Enabled", "");
         TargetLogLevel targetLogLevel = mapLogLevel(level);
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
@@ -74,7 +73,7 @@ public final class Slf4jLoggingApiSpecification extends AbstractLoggingApiSpecif
 
 
     @Override
-    public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation, VisitorState state, MigrationContext migrationContext) {
+    public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation, MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel = mapLogLevel(methodInvocation.methodName());
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
@@ -82,21 +81,21 @@ public final class Slf4jLoggingApiSpecification extends AbstractLoggingApiSpecif
         List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
 
         // skip the marker object, if present
-        remainingArguments = maybeSkipMarkerArgument(state, remainingArguments);
+        remainingArguments = maybeSkipMarkerArgument(methodInvocation.state(), remainingArguments);
 
         // extract the message format argument and it's arguments
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
-        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
+        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, methodInvocation.state());
 
         // extract throwable as last argument, if present
-        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
+        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, methodInvocation.state());
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);
             builder.thrown(throwableArgument);
         }
 
         LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument, remainingArguments,
-                state, throwableArgument, migrationContext, targetLogLevel);
+                methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
 
         return builder.build();

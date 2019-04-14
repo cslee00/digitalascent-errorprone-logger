@@ -75,7 +75,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
         ParenthesizedTree parenTree = (ParenthesizedTree) node.getCondition();
         ExpressionTree expressionTree = parenTree.getExpression();
         if (loggingApiSpecification.matchConditionalMethod(expressionTree, visitorState)) {
-            loggingConditionals.add(createLoggingConditional(node, MethodInvocation.from((MethodInvocationTree) expressionTree), visitorState));
+            loggingConditionals.add(createLoggingConditional(node, MethodInvocation.from((MethodInvocationTree) expressionTree, visitorState)));
         }
         return super.visitIf(node, visitorState);
     }
@@ -94,9 +94,9 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
 
         if (!isIgnoredLogger(variableName, migrationContext)) {
             if (loggingApiSpecification.matchLoggingMethod(node, visitorState)) {
-                loggingMethodInvocations.add(MethodInvocation.from(node));
+                loggingMethodInvocations.add(MethodInvocation.from(node, visitorState));
             } else if (loggingApiSpecification.matchConditionalMethod(node, visitorState)) {
-                loggingEnabledMethods.add(MethodInvocation.from(node));
+                loggingEnabledMethods.add(MethodInvocation.from(node, visitorState));
             }
         }
         return super.visitMethodInvocation(node, visitorState);
@@ -107,7 +107,7 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
                 .anyMatch(loggerVariable -> loggerVariable.getName().toString().equals(variableName));
     }
 
-    private LoggingConditional createLoggingConditional(IfTree ifTree, MethodInvocation conditionalExpression, VisitorState state) {
+    private LoggingConditional createLoggingConditional(IfTree ifTree, MethodInvocation conditionalExpression) {
         if (ifTree.getElseStatement() != null) {
             // 'else' on logging conditional isn't idiomatic, unclear what the intent was - don't elide conditional
             return LoggingConditional.migrateExpression(ifTree, conditionalExpression);
@@ -126,12 +126,12 @@ final class LoggerInvocationTreeScanner extends TreeScanner<Void, VisitorState> 
             if (blockTree.getStatements().stream()
                     .allMatch(x ->
                             x instanceof ExpressionStatementTree &&
-                                    loggingApiSpecification.matchLoggingMethod(((ExpressionStatementTree) x).getExpression(), state))) {
+                                    loggingApiSpecification.matchLoggingMethod(((ExpressionStatementTree) x).getExpression(), conditionalExpression.state()))) {
 
                 return LoggingConditional.elide(ifTree, conditionalExpression, blockTree.getStatements().stream()
                         .map(x -> ((ExpressionStatementTree) x).getExpression())
                         .map(MethodInvocationTree.class::cast)
-                        .map(MethodInvocation::from)
+                        .map(x -> MethodInvocation.from(x,conditionalExpression.state()))
                         .collect(toImmutableList()));
             }
         }

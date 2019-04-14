@@ -65,7 +65,7 @@ public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecif
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, VisitorState state, MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, MigrationContext migrationContext) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
         builder.targetLogLevel(determineTargetLogLevel( methodInvocation));
         builder.conditionalStatement(methodInvocation);
@@ -95,15 +95,15 @@ public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecif
     }
 
     @Override
-    public FloggerLogStatement parseLoggingMethod( MethodInvocation methodInvocation,
-                                                  VisitorState state, MigrationContext migrationContext) {
+    public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
+                                                  MigrationContext migrationContext) {
 
         List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
         TargetLogLevel targetLogLevel;
         if (methodInvocation.methodName().equals("log")) {
-            ExpressionTree logLevelArgument = findLogLevelArgument(remainingArguments, state);
+            ExpressionTree logLevelArgument = findLogLevelArgument(remainingArguments, methodInvocation.state());
             targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
-            remainingArguments = Arguments.findRemainingAfter(remainingArguments, state, logLevelArgument);
+            remainingArguments = Arguments.findRemainingAfter(remainingArguments, methodInvocation.state(), logLevelArgument);
         } else {
             targetLogLevel = mapLogLevel(methodInvocation.methodName());
         }
@@ -116,14 +116,14 @@ public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecif
         remainingArguments = Arguments.removeFirst(remainingArguments);
 
         // extract throwable as last argument, if present
-        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
+        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, methodInvocation.state());
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);
             builder.thrown(throwableArgument);
         }
 
         LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument,
-                remainingArguments, state, throwableArgument, migrationContext, targetLogLevel);
+                remainingArguments, methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
     }

@@ -6,7 +6,6 @@ import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
@@ -24,7 +23,7 @@ public interface LoggingApiSpecification {
 
     boolean matchLogFactory(VariableTree variableTree, VisitorState visitorState);
 
-    FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocationTree, VisitorState state, MigrationContext migrationContext);
+    FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, MigrationContext migrationContext);
 
-    FloggerLogStatement parseLoggingMethod(MethodInvocation loggingMethodInvocation, VisitorState state, MigrationContext migrationContext);
+    FloggerLogStatement parseLoggingMethod(MethodInvocation loggingMethodInvocation, MigrationContext migrationContext);
 }

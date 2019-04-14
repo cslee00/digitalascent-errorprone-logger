@@ -64,7 +64,7 @@ public final class JULLoggingApiSpecification extends AbstractLoggingApiSpecific
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, VisitorState state, MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, MigrationContext migrationContext) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
         builder.targetLogLevel(resolveLogLevelFromArgument(methodInvocation.tree().getArguments().get(0)));
         builder.conditionalStatement(methodInvocation);
@@ -87,13 +87,13 @@ public final class JULLoggingApiSpecification extends AbstractLoggingApiSpecific
 
     @Override
     public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
-                                                  VisitorState state, MigrationContext migrationContext) {
+                                                  MigrationContext migrationContext) {
         List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
 
         TargetLogLevel targetLogLevel;
         if (methodInvocation.methodName().equals("log")) {
             ExpressionTree logLevelArgument = remainingArguments.get(0);
-            if (logLevelType().matches(logLevelArgument, state)) {
+            if (logLevelType().matches(logLevelArgument, methodInvocation.state())) {
                 targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
                 remainingArguments = Arguments.removeFirst(remainingArguments);
             } else {
@@ -108,17 +108,17 @@ public final class JULLoggingApiSpecification extends AbstractLoggingApiSpecific
 
         // extract message format argument and it's arguments
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
-        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
+        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, methodInvocation.state());
 
         // extract throwable argument at the end, if present
-        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
+        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, methodInvocation.state());
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);
             builder.thrown(throwableArgument);
         }
 
         LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument, remainingArguments,
-                state, throwableArgument, migrationContext, targetLogLevel);
+                methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
     }

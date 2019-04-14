@@ -64,7 +64,7 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
     }
 
     @Override
-    public FloggerConditionalStatement parseLoggingConditionalMethod( MethodInvocation methodInvocation, VisitorState state, MigrationContext migrationContext) {
+    public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation, MigrationContext migrationContext) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
         builder.targetLogLevel(determineTargetLogLevel(methodInvocation));
         builder.conditionalStatement(methodInvocation);
@@ -95,7 +95,7 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
 
     @Override
     public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
-                                                  VisitorState state, MigrationContext migrationContext) {
+                                                  MigrationContext migrationContext) {
 
         List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
         TargetLogLevel targetLogLevel;
@@ -111,21 +111,21 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
         builder.targetLogLevel(targetLogLevel);
 
         // skip marker object, if present
-        remainingArguments = maybeSkipMarkerArgument(state, remainingArguments);
+        remainingArguments = maybeSkipMarkerArgument(methodInvocation.state(), remainingArguments);
 
         // extract message format argument and it's arguments
         ExpressionTree messageFormatArgument = findMessageFormatArgument(remainingArguments);
-        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, state);
+        remainingArguments = Arguments.findMessageFormatArguments(remainingArguments, methodInvocation.state());
 
         // extract tailing exception, if present
-        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
+        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, methodInvocation.state());
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);
             builder.thrown(throwableArgument);
         }
 
         LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument,
-                remainingArguments, state, throwableArgument, migrationContext, targetLogLevel);
+                remainingArguments, methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
     }

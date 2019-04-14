@@ -63,7 +63,7 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
 
     @Override
     public FloggerConditionalStatement parseLoggingConditionalMethod(MethodInvocation methodInvocation,
-                                                                     VisitorState state, MigrationContext migrationContext) {
+                                                                     MigrationContext migrationContext) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
 
         String level = methodInvocation.methodName().substring(2).replace("Enabled", "");
@@ -74,14 +74,14 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
 
     @Override
     public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
-                                                  VisitorState state, MigrationContext migrationContext) {
+                                                  MigrationContext migrationContext) {
         TargetLogLevel targetLogLevel = mapLogLevel(methodInvocation.methodName());
 
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
         List<? extends ExpressionTree> remainingArguments = methodInvocation.tree().getArguments();
-        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, state);
+        ExpressionTree throwableArgument = Arguments.findTrailingThrowable(remainingArguments, methodInvocation.state());
         if (throwableArgument != null) {
             remainingArguments = Arguments.removeLast(remainingArguments);
             builder.thrown(throwableArgument);
@@ -91,7 +91,7 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
         remainingArguments = Arguments.removeFirst(remainingArguments);
 
         LogMessageModel logMessageModel = createLogMessageModel(messageFormatArgument, remainingArguments,
-                state, throwableArgument, migrationContext, targetLogLevel);
+                methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
         builder.logMessageModel(logMessageModel);
         return builder.build();
     }
