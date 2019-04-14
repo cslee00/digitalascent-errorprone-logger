@@ -2,7 +2,7 @@ package com.digitalascent.errorprone.flogger.migrate;
 
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LoggingApiSpecification;
+import com.digitalascent.errorprone.flogger.migrate.source.api.LoggingApiSpecification;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ExpressionStatementTree;

@@ -1,6 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate.target;
 
-import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
+import com.digitalascent.errorprone.flogger.migrate.source.format.MessageFormatArgument;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerConditionalStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;

@@ -5,7 +5,7 @@ import com.digitalascent.errorprone.flogger.migrate.model.FloggerLogStatement;
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.RefactoringConfiguration;
-import com.digitalascent.errorprone.flogger.migrate.sourceapi.LoggingApiSpecification;
+import com.digitalascent.errorprone.flogger.migrate.source.api.LoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.target.FloggerSuggestedFixGenerator;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
