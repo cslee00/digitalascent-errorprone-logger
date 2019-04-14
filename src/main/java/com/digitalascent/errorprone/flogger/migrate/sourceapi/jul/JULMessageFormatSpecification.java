@@ -23,7 +23,7 @@ public final class JULMessageFormatSpecification implements MessageFormatSpecifi
     }
 
     @Override
-    public LogMessage convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
-        return MessageFormat.convertJavaTextMessageFormat(sourceMessageFormat,formatArguments);
+    public LogMessage convertMessageFormat(ExpressionTree messageFormatArgument, String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
+        return MessageFormat.convertJavaTextMessageFormat(messageFormatArgument, sourceMessageFormat,formatArguments);
     }
 }

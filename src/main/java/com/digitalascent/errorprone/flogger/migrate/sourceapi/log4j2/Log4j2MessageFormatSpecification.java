@@ -36,7 +36,7 @@ public final class Log4j2MessageFormatSpecification implements MessageFormatSpec
     }
 
     @Override
-    public LogMessage convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
+    public LogMessage convertMessageFormat(ExpressionTree messageFormatArgument, String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
         if( migrationContext.classNamedLoggers().isEmpty() && messageFormatStyle != null ) {
             // no logger variable definition (possibly from superclass or elsewhere); we can't accurately know
             // whether the logger was acquired via getLogger (brace-format) or getFormatter (printf-format)

@@ -81,7 +81,7 @@ public final class LogMessageFactory {
             String sourceMessageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
 
             // convert from source message format (e.g. {} placeholders) to printf format specifiers
-            return messageFormatSpecification.convertMessageFormat(sourceMessageFormat, processArguments(remainingArguments, state, targetLogLevel), migrationContext);
+            return messageFormatSpecification.convertMessageFormat(messageFormatArgument, sourceMessageFormat, processArguments(remainingArguments, state, targetLogLevel), migrationContext);
         }
 
         return LogMessage.unableToConvert(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
@@ -94,7 +94,8 @@ public final class LogMessageFactory {
             if (firstArgument instanceof LiteralTree) {
                 String messageFormat = (String) ((LiteralTree) firstArgument).getValue();
                 List<? extends ExpressionTree> remainingArguments = Arguments.removeFirst(messageFormatTree.getArguments());
-                return MessageFormat.convertJavaTextMessageFormat(messageFormat, processArguments(remainingArguments, state, targetLogLevel) );
+                remainingArguments = Arguments.maybeUnpackVarArgs(remainingArguments, state);
+                return MessageFormat.convertJavaTextMessageFormat(messageFormatArgument, messageFormat, processArguments(remainingArguments, state, targetLogLevel) );
             }
         }
 
@@ -108,8 +109,10 @@ public final class LogMessageFactory {
             ExpressionTree firstArgument = stringFormatTree.getArguments().get(0);
             if (firstArgument instanceof LiteralTree) {
                 String messageFormat = (String) ((LiteralTree) firstArgument).getValue();
+                List<? extends  ExpressionTree> remainingArguments = Arguments.removeFirst(stringFormatTree.getArguments());
+                remainingArguments = Arguments.maybeUnpackVarArgs(remainingArguments, state);
                 return LogMessage.fromStringFormat(messageFormat,
-                        processArguments(Arguments.removeFirst(stringFormatTree.getArguments()), state, targetLogLevel));
+                        processArguments(remainingArguments, state, targetLogLevel));
             }
         }
 

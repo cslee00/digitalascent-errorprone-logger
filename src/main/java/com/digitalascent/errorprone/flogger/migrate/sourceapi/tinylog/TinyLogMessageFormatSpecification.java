@@ -22,7 +22,7 @@ public final class TinyLogMessageFormatSpecification implements MessageFormatSpe
     }
 
     @Override
-    public LogMessage convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
+    public LogMessage convertMessageFormat(ExpressionTree messageFormatArgument, String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
         return LogMessage.fromStringFormat( TinyLogMessageFormatter.format(sourceMessageFormat), formatArguments);
     }
 }

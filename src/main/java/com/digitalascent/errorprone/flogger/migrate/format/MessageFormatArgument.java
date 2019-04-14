@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate.format;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
@@ -28,6 +29,15 @@ public final class MessageFormatArgument {
         this.staticImports = ImmutableList.copyOf(staticImports);
     }
 
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("staticImports", staticImports)
+                .add("imports", imports)
+                .add("code", code)
+                .add("argument", argument)
+                .toString();
+    }
 
     public static MessageFormatArgument fromExpressionTree(ExpressionTree argument) {
         return new MessageFormatArgument(null, argument, ImmutableList.of(), ImmutableList.of());

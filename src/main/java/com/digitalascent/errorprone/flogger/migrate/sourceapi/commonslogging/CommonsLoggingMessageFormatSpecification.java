@@ -12,7 +12,7 @@ import java.util.List;
 public final class CommonsLoggingMessageFormatSpecification implements MessageFormatSpecification {
 
     @Override
-    public LogMessage convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> formatArguments,
+    public LogMessage convertMessageFormat(ExpressionTree messageFormatArgument, String sourceMessageFormat, List<MessageFormatArgument> formatArguments,
                                            MigrationContext migrationContext) {
         // no conversion required as Commons Logging doesn't support message formats
         return LogMessage.fromStringFormat(sourceMessageFormat, formatArguments);

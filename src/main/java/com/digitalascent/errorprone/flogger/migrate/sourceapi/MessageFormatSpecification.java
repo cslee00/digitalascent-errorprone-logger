@@ -9,7 +9,7 @@ import com.sun.source.tree.ExpressionTree;
 import java.util.List;
 
 public interface MessageFormatSpecification {
-    LogMessage convertMessageFormat(String sourceMessageFormat, List<MessageFormatArgument> processArguments, MigrationContext migrationContext);
+    LogMessage convertMessageFormat(ExpressionTree messageFormatArgument, String sourceMessageFormat, List<MessageFormatArgument> processArguments, MigrationContext migrationContext);
 
     boolean shouldSkipMessageFormatArgument(ExpressionTree messageFormatArgument, VisitorState state);
 }
