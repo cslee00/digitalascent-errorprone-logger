@@ -88,9 +88,9 @@ public final class Slf4jLoggingApiSpecification extends AbstractLoggingApiSpecif
         ExpressionTree throwableArgument = argumentParser.trailingThrowable();
         builder.thrown(throwableArgument);
 
-        LogMessage logMessage = createLogMessageModel(messageFormatArgument, argumentParser.remainingArguments(),
+        LogMessage logMessage = createLogMessage(messageFormatArgument, argumentParser.remainingArguments(),
                 methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
-        builder.logMessageModel(logMessage);
+        builder.logMessage(logMessage);
 
         return builder.build();
     }

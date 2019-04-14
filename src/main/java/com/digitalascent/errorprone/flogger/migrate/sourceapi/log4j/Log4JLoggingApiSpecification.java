@@ -113,9 +113,9 @@ public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecif
         ExpressionTree throwableArgument = argumentParser.trailingThrowable();
         builder.thrown(throwableArgument);
 
-        LogMessage logMessage = createLogMessageModel(messageFormatArgument,
+        LogMessage logMessage = createLogMessage(messageFormatArgument,
                 argumentParser.remainingArguments(), methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
-        builder.logMessageModel(logMessage);
+        builder.logMessage(logMessage);
         return builder.build();
     }
 

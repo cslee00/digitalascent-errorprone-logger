@@ -77,9 +77,9 @@ public final class TinyLogLoggingApiSpecification extends AbstractLoggingApiSpec
         ExpressionTree messageFormatArgument = argumentParser.extractOrElse( throwableArgument );
         argumentParser.maybeUnpackVarArgs();
 
-        LogMessage logMessage = createLogMessageModel(messageFormatArgument,
+        LogMessage logMessage = createLogMessage(messageFormatArgument,
                 argumentParser.remainingArguments(), methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
-        builder.logMessageModel(logMessage);
+        builder.logMessage(logMessage);
         return builder.build();
     }
 }

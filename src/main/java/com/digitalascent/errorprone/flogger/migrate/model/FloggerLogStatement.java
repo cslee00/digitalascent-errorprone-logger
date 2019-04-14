@@ -12,7 +12,7 @@ import javax.annotation.Nullable;
 @ImmutableStyle
 @Value.Immutable
 public interface FloggerLogStatement {
-    LogMessage logMessageModel();
+    LogMessage logMessage();
 
     TargetLogLevel targetLogLevel();
 

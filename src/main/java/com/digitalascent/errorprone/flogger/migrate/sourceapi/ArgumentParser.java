@@ -8,9 +8,7 @@ import com.sun.source.tree.ExpressionTree;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.regex.MatchResult;
 
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 import static java.util.Objects.requireNonNull;

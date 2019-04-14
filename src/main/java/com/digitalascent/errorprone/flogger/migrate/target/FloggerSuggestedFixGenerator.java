@@ -66,7 +66,7 @@ public class FloggerSuggestedFixGenerator {
                 .replace(loggerMethodInvocation.tree(), loggerMethodCall);
 
         // add in any imports the arguments may have added
-        addArgumentImports(floggerLogStatement.logMessageModel(), builder);
+        addArgumentImports(floggerLogStatement.logMessage(), builder);
 
         return builder.build();
     }
@@ -75,7 +75,7 @@ public class FloggerSuggestedFixGenerator {
                                                    VisitorState visitorState, MigrationContext migrationContext) {
         StringBuilder sb = new StringBuilder(200);
 
-        LogMessage logMessage = floggerLogStatement.logMessageModel();
+        LogMessage logMessage = floggerLogStatement.logMessage();
         emitComments(nodeToComment, visitorState, logMessage, sb);
 
         String loggerVariableName = determineLoggerVariableName(migrationContext);
@@ -235,7 +235,7 @@ public class FloggerSuggestedFixGenerator {
             first = false;
 
             // add in any imports the arguments may have added
-            addArgumentImports(logStatement.logMessageModel(), builder);
+            addArgumentImports(logStatement.logMessage(), builder);
         }
 
         return builder

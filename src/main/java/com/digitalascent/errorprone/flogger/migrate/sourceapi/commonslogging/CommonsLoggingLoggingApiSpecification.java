@@ -26,6 +26,9 @@ import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogg
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingEnabledMethod;
 import static com.digitalascent.errorprone.flogger.migrate.sourceapi.commonslogging.CommonsLoggingMatchers.loggingMethod;
 
+/**
+ * Commons Logging API: https://commons.apache.org/proper/commons-logging/apidocs/index.html
+ */
 public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpecification {
 
     private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.commons.logging");
@@ -65,6 +68,7 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
     public FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation) {
         ImmutableFloggerConditionalStatement.Builder builder = ImmutableFloggerConditionalStatement.builder();
 
+        // TODO - pull this pattern out to utility method (it's used in a few places)
         String level = methodInvocation.methodName().substring(2).replace("Enabled", "");
         builder.targetLogLevel(mapLogLevel(level));
         builder.conditionalStatement(methodInvocation);
@@ -87,9 +91,9 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
         ExpressionTree messageFormatArgument = argumentParser.extractOrElse(throwableArgument);
 
         Verify.verify(messageFormatArgument != null);
-        LogMessage logMessage = createLogMessageModel(messageFormatArgument, argumentParser.remainingArguments(),
+        LogMessage logMessage = createLogMessage(messageFormatArgument, argumentParser.remainingArguments(),
                 methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);
-        builder.logMessageModel(logMessage);
+        builder.logMessage(logMessage);
         return builder.build();
     }
 }
