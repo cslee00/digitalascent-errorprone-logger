@@ -1,8 +1,8 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.log4j2;
 
-import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
 import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatConversionResult;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatStyle;
 import com.google.errorprone.VisitorState;
@@ -36,7 +36,7 @@ public final class Log4j2MessageFormatSpecification implements MessageFormatSpec
     }
 
     @Override
-    public LogMessage convertMessageFormat(ExpressionTree messageFormatArgument, String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
+    public MessageFormatConversionResult convertMessageFormat(ExpressionTree messageFormatArgument, String sourceMessageFormat, List<? extends ExpressionTree> formatArguments, MigrationContext migrationContext) {
         if( migrationContext.classNamedLoggers().isEmpty() && messageFormatStyle != null ) {
             // no logger variable definition (possibly from superclass or elsewhere); we can't accurately know
             // whether the logger was acquired via getLogger (brace-format) or getFormatter (printf-format)
@@ -44,9 +44,9 @@ public final class Log4j2MessageFormatSpecification implements MessageFormatSpec
             switch( messageFormatStyle ) {
                 case LOG4J2_BRACE:
                     String format = Log4j2BraceMessageFormatConverter.convertMessageFormat(sourceMessageFormat);
-                    return LogMessage.fromStringFormat(format, formatArguments );
+                    return new MessageFormatConversionResult(format, formatArguments );
                 case PRINTF:
-                    return LogMessage.fromStringFormat(sourceMessageFormat, formatArguments);
+                    return new MessageFormatConversionResult(sourceMessageFormat, formatArguments);
             }
             throw new AssertionError("Unknown message format style: " + messageFormatStyle );
         }
@@ -57,9 +57,9 @@ public final class Log4j2MessageFormatSpecification implements MessageFormatSpec
         String methodName = sym.getSimpleName().toString();
         if ("getLogger".equals(methodName)) {
             String format = Log4j2BraceMessageFormatConverter.convertMessageFormat(sourceMessageFormat);
-            return LogMessage.fromStringFormat(format, formatArguments);
+            return new MessageFormatConversionResult(format, formatArguments);
         }
         // getFormatterLogger case, no need to convert message format as it's already printf-style
-        return LogMessage.fromStringFormat(sourceMessageFormat, formatArguments);
+        return new MessageFormatConversionResult(sourceMessageFormat, formatArguments);
     }
 }

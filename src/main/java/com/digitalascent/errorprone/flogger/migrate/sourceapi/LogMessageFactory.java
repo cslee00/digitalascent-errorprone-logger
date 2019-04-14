@@ -9,36 +9,23 @@ import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
-import com.google.errorprone.matchers.Matcher;
-import com.google.errorprone.matchers.method.MethodMatchers;
-import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.LiteralTree;
-import com.sun.source.tree.MethodInvocationTree;
 import com.sun.tools.javac.tree.JCTree;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.errorprone.matchers.Matchers.allOf;
-import static com.google.errorprone.matchers.Matchers.anything;
-import static com.google.errorprone.matchers.Matchers.binaryTree;
-import static com.google.errorprone.matchers.Matchers.isSameType;
-import static com.google.errorprone.matchers.Matchers.kindIs;
-import static com.google.errorprone.matchers.Matchers.staticMethod;
-import static com.sun.source.tree.Tree.Kind.PLUS;
-import static java.util.List.of;
 import static java.util.Objects.requireNonNull;
 
 public final class LogMessageFactory {
-    private static final MethodMatchers.MethodNameMatcher STRING_FORMAT = staticMethod().onClass("java.lang.String").named("format");
-    private static final MethodMatchers.MethodNameMatcher MESSAGE_FORMAT = staticMethod().onClass("java.text.MessageFormat").named("format");
 
     private final MessageFormatArgumentConverter messageFormatArgumentConverter;
     private final MessageFormatArgumentReducer messageFormatArgumentReducer;
     private final MessageFormatSpecification messageFormatSpecification;
+    private final List<EmptyArgumentsHandler> emptyArgumentsHandlers;
 
     public LogMessageFactory(MessageFormatArgumentConverter messageFormatArgumentConverter,
                              MessageFormatArgumentReducer messageFormatArgumentReducer,
@@ -46,6 +33,12 @@ public final class LogMessageFactory {
         this.messageFormatArgumentConverter = requireNonNull(messageFormatArgumentConverter, "messageFormatArgumentConverter");
         this.messageFormatArgumentReducer = requireNonNull(messageFormatArgumentReducer, "messageFormatArgumentReducer");
         this.messageFormatSpecification = requireNonNull(messageFormatSpecification, "messageFormatSpecification");
+
+        emptyArgumentsHandlers = ImmutableList.<EmptyArgumentsHandler>builder()
+                .add(new StringFormatEmprtArgumentsHandler())
+                .add(new MessageFormatEmptyArgumentsHandler())
+                .add(new StringConcatenationEmptyArgumentsHandler())
+                .build();
     }
 
     final LogMessage create(ExpressionTree messageFormatArgument,
@@ -72,23 +65,23 @@ public final class LogMessageFactory {
         }
 
         if (remainingArguments.isEmpty()) {
-            // no arguments left after message format; check if message format extract is String.format
-            LogMessage result = maybeUnpackStringFormat(messageFormatArgument, state, targetLogLevel);
-            if (result != null) {
-                return result;
-            }
+            Optional<MessageFormatConversionResult> first = emptyArgumentsHandlers.stream()
+                    .map(handler -> {
+                        try {
+                            return handler.handle(messageFormatArgument, state, targetLogLevel);
+                        } catch( MessageFormatConversionFailedException e ) {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .findFirst();
 
-            result = maybeUnpackMessageFormat(messageFormatArgument, state, targetLogLevel);
-            if (result != null) {
-                return result;
-            }
-
-            result = maybeHandleStringConcatenation(messageFormatArgument, state, targetLogLevel);
-            if (result != null) {
-                return result;
-            }
-
-            return LogMessage.fromMessageFormatArgument(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
+            return first
+                    .map(result -> {
+                        List<? extends ExpressionTree> arguments = Arguments.maybeUnpackVarArgs(result.arguments(), state);
+                        return LogMessage.fromStringFormat(result.messageFormat(), processArguments(arguments, state, targetLogLevel), result.conversionIssues());
+                    })
+                    .orElse(LogMessage.fromMessageFormatArgument(messageFormatArgument, ImmutableList.of()));
         }
 
         if (Arguments.isStringLiteral(messageFormatArgument, state)) {
@@ -96,101 +89,11 @@ public final class LogMessageFactory {
             String sourceMessageFormat = (String) ((JCTree.JCLiteral) messageFormatArgument).value;
 
             // convert from source message format (e.g. {} placeholders) to printf format specifiers
-            return messageFormatSpecification.convertMessageFormat(messageFormatArgument, sourceMessageFormat, processArguments(remainingArguments, state, targetLogLevel), migrationContext);
+            MessageFormatConversionResult result = messageFormatSpecification.convertMessageFormat(messageFormatArgument, sourceMessageFormat, remainingArguments, migrationContext );
+            return LogMessage.fromStringFormat( result.messageFormat(), processArguments(result.arguments(), state, targetLogLevel), result.conversionIssues());
         }
 
         return LogMessage.unableToConvert(messageFormatArgument, processArguments(remainingArguments, state, targetLogLevel));
-    }
-
-    private static final Matcher<BinaryTree> stringConcatenationMatcher =
-            allOf(
-                    kindIs(PLUS),
-                    binaryTree(anything(), isSameType("java.lang.String")));
-
-    private LogMessage maybeHandleStringConcatenation(ExpressionTree messageFormatArgument, VisitorState state, TargetLogLevel targetLogLevel) {
-        if (!(messageFormatArgument instanceof BinaryTree)) {
-            return null;
-        }
-
-        BinaryTree binaryTree = (BinaryTree) messageFormatArgument;
-        if (!stringConcatenationMatcher.matches(binaryTree, state)) {
-            return null;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        List<ExpressionTree> arguments = new ArrayList<>();
-
-        handleStringConcat(binaryTree, sb, arguments);
-
-        return LogMessage.fromStringFormat(sb.toString(), processArguments(arguments,state,targetLogLevel));
-    }
-
-    private void handleStringConcat(BinaryTree binaryTree, StringBuilder sb, List<ExpressionTree> arguments) {
-        ExpressionTree lhs = binaryTree.getLeftOperand();
-        ExpressionTree rhs = binaryTree.getRightOperand();
-
-        if (lhs instanceof BinaryTree) {
-            handleStringConcat((BinaryTree) lhs, sb, arguments);
-        } else {
-            if( lhs instanceof LiteralTree ) {
-                handleLiteral(sb, arguments, lhs);
-            } else {
-                addArgument(sb, arguments, lhs);
-            }
-        }
-
-        if( rhs instanceof LiteralTree ) {
-            handleLiteral(sb, arguments, rhs);
-        } else {
-            addArgument(sb, arguments, rhs);
-        }
-    }
-
-    private void handleLiteral(StringBuilder sb, List<ExpressionTree> arguments, ExpressionTree node) {
-        LiteralTree literalTree = (LiteralTree) node;
-        Object value = literalTree.getValue();
-        if (value instanceof String) {
-            sb.append(value);
-        } else {
-            addArgument(sb, arguments, node);
-        }
-    }
-
-    private void addArgument(StringBuilder sb, List<ExpressionTree> arguments, ExpressionTree node) {
-        sb.append("%s");
-        arguments.add(node);
-    }
-
-    private LogMessage maybeUnpackMessageFormat(ExpressionTree messageFormatArgument, VisitorState state, TargetLogLevel targetLogLevel) {
-        if (MESSAGE_FORMAT.matches(messageFormatArgument, state)) {
-            MethodInvocationTree messageFormatTree = (MethodInvocationTree) messageFormatArgument;
-            ExpressionTree firstArgument = messageFormatTree.getArguments().get(0);
-            if (firstArgument instanceof LiteralTree) {
-                String messageFormat = (String) ((LiteralTree) firstArgument).getValue();
-                List<? extends ExpressionTree> remainingArguments = Arguments.removeFirst(messageFormatTree.getArguments());
-                remainingArguments = Arguments.maybeUnpackVarArgs(remainingArguments, state);
-                return MessageFormat.convertJavaTextMessageFormat(messageFormatArgument, messageFormat, processArguments(remainingArguments, state, targetLogLevel));
-            }
-        }
-
-        return null;
-    }
-
-    @Nullable
-    private LogMessage maybeUnpackStringFormat(ExpressionTree messageFormatArgument, VisitorState state, TargetLogLevel targetLogLevel) {
-        if (STRING_FORMAT.matches(messageFormatArgument, state)) {
-            MethodInvocationTree stringFormatTree = (MethodInvocationTree) messageFormatArgument;
-            ExpressionTree firstArgument = stringFormatTree.getArguments().get(0);
-            if (firstArgument instanceof LiteralTree) {
-                String messageFormat = (String) ((LiteralTree) firstArgument).getValue();
-                List<? extends ExpressionTree> remainingArguments = Arguments.removeFirst(stringFormatTree.getArguments());
-                remainingArguments = Arguments.maybeUnpackVarArgs(remainingArguments, state);
-                return LogMessage.fromStringFormat(messageFormat,
-                        processArguments(remainingArguments, state, targetLogLevel));
-            }
-        }
-
-        return null;
     }
 
     private List<MessageFormatArgument> processArguments(List<? extends ExpressionTree> arguments,

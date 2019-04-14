@@ -44,7 +44,7 @@ public class TestClassUsingTinyLog2_0 {
         }
     }
     public void testOther() {
-        logger.atInfo().log( "a" + 1 + "b" );
+        logger.atInfo().log( "a%sb", 1 );
 
 // TODO [LoggerApiRefactoringCheck] Unable to convert message format expression - not a string literal
         logger.atInfo().withCause(new Throwable()).log( "a" + 1 + "b {}", "extract" );

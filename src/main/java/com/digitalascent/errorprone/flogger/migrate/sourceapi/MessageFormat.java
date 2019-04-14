@@ -1,7 +1,5 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi;
 
-import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.sun.source.tree.ExpressionTree;
 
 import java.lang.reflect.Field;
@@ -12,9 +10,8 @@ import java.util.List;
 
 public final class MessageFormat {
 
-    public static LogMessage convertJavaTextMessageFormat(ExpressionTree messageFormatArgument,
-                                                          String sourceMessageFormat,
-                                                          List<MessageFormatArgument> formatArguments) {
+    public static MessageFormatConversionResult convertJavaTextMessageFormat(String sourceMessageFormat,
+                                                          List<? extends ExpressionTree> formatArguments) {
         try {
             java.text.MessageFormat messageFormat = new java.text.MessageFormat(sourceMessageFormat);
 
@@ -26,11 +23,11 @@ public final class MessageFormat {
 
             // determine the number of arguments
             int[] argumentNumbers = determineArgumentNumbers(messageFormat);
-            int numArgs = Arrays.stream(argumentNumbers).max().getAsInt() + 1;
+//            int numArgs = Arrays.stream(argumentNumbers).max().getAsInt() + 1;
 
             int maxOffset = determineMaxOffset(messageFormat);
 
-            List<MessageFormatArgument> argumentList = new ArrayList<>();
+            List<ExpressionTree> argumentList = new ArrayList<>();
             List<String> migrationIssues = new ArrayList<>();
             for (int i = 0; i <= maxOffset; i++) {
                 int idx = argumentNumbers[i];
@@ -41,7 +38,7 @@ public final class MessageFormat {
                 }
             }
 
-            for (MessageFormatArgument remainingArgument : formatArguments) {
+            for (ExpressionTree remainingArgument : formatArguments) {
                 if (!argumentList.contains(remainingArgument)) {
                     migrationIssues.add("Unused parameter: " + remainingArgument.toString().replace("\r","\\r").replace("\n","\\n") );
                     argumentList.add(remainingArgument);
@@ -49,12 +46,12 @@ public final class MessageFormat {
             }
 
             // replace placeholders with printf format specifiers
-            Object[] args = new Object[numArgs];
+            Object[] args = new Object[maxOffset + 1];
             Arrays.fill(args, "%s");
-            String fmt = messageFormat.format(args);
-            return LogMessage.fromStringFormat(fmt, argumentList, migrationIssues);
+            String convertedFormatString = messageFormat.format(args);
+            return new MessageFormatConversionResult(convertedFormatString, argumentList, migrationIssues);
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            return LogMessage.unableToConvert(messageFormatArgument, formatArguments);
+            throw new MessageFormatConversionFailedException(e.getMessage());
         }
     }
 

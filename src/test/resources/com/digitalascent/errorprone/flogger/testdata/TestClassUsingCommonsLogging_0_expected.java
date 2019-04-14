@@ -95,7 +95,7 @@ public class TestClassUsingCommonsLogging_0 {
 
     public void testMessageFormat() {
         someLogger.atInfo().log( "%s", 10 );
-        someLogger.atInfo().log( "a" + 1 + "b" );
+        someLogger.atInfo().log( "a%sb", 1 );
     }
 
     public void testException() {

@@ -58,7 +58,7 @@ public class TestClassUsingJUL_0 {
         someLogger.atInfo().log("6. Double-escaped anchor, no parameter: \\\\{0}");
         someLogger.atInfo().log("7. Single parameter, double-escaped anchor: %s \\\\%s", "abc", "abc");
         someLogger.atInfo().log("8. Multi parameters: %s %s %s", "def", "abc", "abc");
-        someLogger.atInfo().log("9. Multi parameters 2: %s %s %s", "abc", "abc", "def", "ghi");
+        someLogger.atInfo().log("9. Multi parameters 2: {9} %s %s", "abc", "abc", "def", "ghi");
     }
 
     public void testException() {
@@ -71,7 +71,7 @@ public class TestClassUsingJUL_0 {
     }
 
     public void testOther() {
-        someLogger.atInfo().log("a" + 1 + "b");
+        someLogger.atInfo().log( "a%sb", 1 );
         someLogger.atInfo().log("%s", "abc");
     }
 }

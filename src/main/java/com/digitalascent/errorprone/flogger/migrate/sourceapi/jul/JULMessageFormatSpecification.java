@@ -1,9 +1,8 @@
 package com.digitalascent.errorprone.flogger.migrate.sourceapi.jul;
 
-import com.digitalascent.errorprone.flogger.migrate.format.MessageFormatArgument;
-import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormat;
+import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatConversionResult;
 import com.digitalascent.errorprone.flogger.migrate.sourceapi.MessageFormatSpecification;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.matchers.Matchers;
@@ -23,7 +22,7 @@ public final class JULMessageFormatSpecification implements MessageFormatSpecifi
     }
 
     @Override
-    public LogMessage convertMessageFormat(ExpressionTree messageFormatArgument, String sourceMessageFormat, List<MessageFormatArgument> formatArguments, MigrationContext migrationContext) {
-        return MessageFormat.convertJavaTextMessageFormat(messageFormatArgument, sourceMessageFormat,formatArguments);
+    public MessageFormatConversionResult convertMessageFormat(ExpressionTree messageFormatArgument, String sourceMessageFormat, List<? extends ExpressionTree> formatArguments, MigrationContext migrationContext) {
+        return MessageFormat.convertJavaTextMessageFormat( sourceMessageFormat,formatArguments);
     }
 }
