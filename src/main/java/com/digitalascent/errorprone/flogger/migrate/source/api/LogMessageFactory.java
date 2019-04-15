@@ -49,6 +49,14 @@ public final class LogMessageFactory {
                 .build();
     }
 
+    final LogMessage create(String messageFormat,
+                            List<? extends ExpressionTree> arguments,
+                            VisitorState state,
+                            TargetLogLevel targetLogLevel) {
+        return LogMessage.fromStringFormat( messageFormat, processArguments(arguments, state, targetLogLevel),
+                ImmutableList.of());
+    }
+
     final LogMessage create(ExpressionTree messageFormatArgument,
                             List<? extends ExpressionTree> remainingArguments,
                             VisitorState state,

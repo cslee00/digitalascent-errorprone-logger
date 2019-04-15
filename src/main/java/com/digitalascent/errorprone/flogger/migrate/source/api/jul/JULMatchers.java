@@ -22,7 +22,8 @@ final class JULMatchers {
     private static final Matcher<Tree> LOGGER_FACTORY_TYPE_MATCHER = isSubtypeOf(LOGGER_FACTORY_CLASS);
     private static final Matcher<ExpressionTree> LOGGING_METHODS = instanceMethod()
             .onDescendantOf(LOGGER_CLASS)
-            .namedAnyOf("finest", "finer", "fine", "config", "info", "warning", "severe", "log" );
+            .namedAnyOf("finest", "finer", "fine", "config", "info", "warning", "severe", "log",
+                    "throwing", "entering", "exiting");
     private static final Matcher<ExpressionTree> IS_ENABLED_METHODS = instanceMethod()
             .onDescendantOf(LOGGER_CLASS)
             .namedAnyOf("isLoggable");

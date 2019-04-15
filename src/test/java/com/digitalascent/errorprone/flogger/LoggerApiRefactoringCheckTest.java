@@ -67,7 +67,7 @@ class LoggerApiRefactoringCheckTest {
     }
 
     @ParameterizedTest( name = "jul: test id {arguments}")
-    @ValueSource(ints = {0,1,2,3,4})
+    @ValueSource(ints = {0,1,2,3,4,5})
     public void testJUL(int id) {
         executeTest("jul", "JUL", id);
     }

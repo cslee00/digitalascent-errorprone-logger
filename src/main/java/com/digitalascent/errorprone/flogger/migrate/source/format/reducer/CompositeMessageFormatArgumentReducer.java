@@ -22,7 +22,8 @@ public final class CompositeMessageFormatArgumentReducer implements MessageForma
                 lastReducedArgument = reducedArgument;
             }
         }
-        // recurse after reduction to enable subsequent reductions
+        // recurse after reduction to enable subsequent reductions;
+        // stop when there are no more reductions for the supplied argument
         return lastReducedArgument == argument ? argument : reduce( lastReducedArgument, visitorState );
     }
 }

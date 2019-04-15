@@ -96,4 +96,14 @@ public final class ArgumentParser {
         }
         return firstMatching(expressionTreePredicate);
     }
+
+    public void skip(int argumentToSkip) {
+        for( int i = 0; i < argumentToSkip; i++ ) {
+            skipIfPresent((argument) -> true);
+        }
+    }
+
+    public boolean isEmpty() {
+        return arguments.isEmpty();
+    }
 }

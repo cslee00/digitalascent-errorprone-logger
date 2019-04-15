@@ -74,7 +74,7 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
     private TargetLogLevel determineTargetLogLevel(MethodInvocation methodInvocation) {
         TargetLogLevel targetLogLevel;
         if (methodInvocation.methodName().equals("isEnabled")) {
-            targetLogLevel = resolveLogLevelFromArgument(methodInvocation.tree().getArguments().get(0));
+            targetLogLevel = resolveLogLevelFromArgument(methodInvocation.firstArgument());
         } else {
             String level = SourceApiUtil.logLevelFromMethodName(methodInvocation);
             targetLogLevel = mapLogLevel(level);

@@ -27,6 +27,13 @@ public abstract class AbstractLoggingApiSpecification implements LoggingApiSpeci
         return targetLogLevelFunction.apply(level);
     }
 
+    protected final LogMessage createLogMessage(String messageFormat,
+                      List<? extends ExpressionTree> arguments,
+                      VisitorState state,
+                      TargetLogLevel targetLogLevel) {
+        return logMessageFactory.create(messageFormat,arguments,state,targetLogLevel);
+    }
+
     protected final LogMessage createLogMessage(ExpressionTree messageFormatArgument,
                                                 List<? extends ExpressionTree> remainingArguments,
                                                 VisitorState state,

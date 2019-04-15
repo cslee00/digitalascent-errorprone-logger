@@ -32,6 +32,14 @@ public class TestClassUsingJUL_0 {
         someLogger.log(CustomJULLevel.LEVEL_1, "test message");
         someLogger.log(CustomJULLevel.LEVEL_2, "test message");
         someLogger.log(CustomJULLevel.LEVEL_3, "test message");
+
+        someLogger.throwing("abc","def", new Throwable());
+        someLogger.entering("abc","def");
+        someLogger.entering("abc","def", "foo");
+        someLogger.entering("abc","def", new Object[] { "foo", "bar", "baz"});
+        someLogger.exiting("abc","def");
+        someLogger.exiting("abc","def", "foo");
+
     }
 
     public void testEnabled() {

@@ -13,7 +13,7 @@ import java.util.List;
 public final class JULMessageFormatSpecification implements MessageFormatSpecification {
 
     private static final com.google.errorprone.matchers.Matcher<ExpressionTree> INVALID_MSG_FORMAT_TYPES = Matchers.anyOf(
-            Matchers.isSubtypeOf("java.util.function.Supplier")
+          //  Matchers.isSubtypeOf("java.util.function.Supplier")
     );
 
     @Override

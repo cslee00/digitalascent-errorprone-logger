@@ -4,6 +4,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.util.ASTHelpers;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.tools.javac.code.Symbol;
 
@@ -39,6 +40,10 @@ public final class MethodInvocation {
 
     public VisitorState state() {
         return state;
+    }
+
+    public ExpressionTree firstArgument() {
+        return tree.getArguments().get(0);
     }
 
     @Override

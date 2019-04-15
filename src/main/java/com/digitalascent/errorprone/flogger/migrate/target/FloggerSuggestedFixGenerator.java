@@ -31,7 +31,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Generates code for Flogger logging constructs - loggers & logger invocations
  */
-public class FloggerSuggestedFixGenerator {
+public final class FloggerSuggestedFixGenerator {
     private final LoggerVariableDefinition loggerVariableDefinition;
 
     public FloggerSuggestedFixGenerator(LoggerVariableDefinition loggerVariableDefinition) {

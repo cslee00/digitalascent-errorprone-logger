@@ -3,6 +3,7 @@ package com.digitalascent.errorprone.flogger.migrate;
 import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.CompositeMessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.LazyMessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.MessageFormatArgumentConverter;
+import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.SupplierMessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.ArraysToStringMessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.CompositeMessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.MessageFormatArgumentReducer;
@@ -204,6 +205,7 @@ final class RefactoringConfigurationLoader {
     private MessageFormatArgumentConverter createMessageFormatArgumentConverter() {
         ImmutableList.Builder<MessageFormatArgumentConverter> builder = ImmutableList.builder();
         // TODO - from configuration
+        builder.add( new SupplierMessageFormatArgumentConverter());
         builder.add(new LazyMessageFormatArgumentConverter(-1));
 
         return new CompositeMessageFormatArgumentConverter(builder.build());

@@ -33,6 +33,13 @@ public class TestClassUsingJUL_0 {
         someLogger.at(CustomJULLevel.LEVEL_1).log("test message");
         someLogger.at(CustomJULLevel.LEVEL_2).log("test message");
         someLogger.at(CustomJULLevel.LEVEL_3).log("test message");
+
+        someLogger.atFiner().withCause(new Throwable()).log( "THROW" );
+        someLogger.atFiner().log( "ENTRY" );
+        someLogger.atFiner().log( "ENTRY %s", "foo" );
+        someLogger.atFiner().log( "ENTRY %s %s %s", "foo", "bar", "baz" );
+        someLogger.atFiner().log( "RETURN" );
+        someLogger.atFiner().log( "RETURN %s", "foo" );
     }
 
     public void testEnabled() {
