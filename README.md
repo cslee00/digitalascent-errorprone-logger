@@ -14,6 +14,7 @@ Refactorings:
 * Remove unnecessary conditionals around logging statements
 * Convert String.format and MessageFormat.format calls
 * Convert string-concatenated messages into parameterized messages
+* Unpack extraneous use of `new Object[] { arg1, ... }`
 * (TODO) make complex formatting arguments lazy
 
 Checks
