@@ -2,8 +2,9 @@ package com.digitalascent.errorprone.flogger.migrate;
 
 import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.CompositeMessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.LazyMessageFormatArgumentConverter;
+import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.Log4j2MessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.MessageFormatArgumentConverter;
-import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.SupplierMessageFormatArgumentConverter;
+import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.LambdaMessageFormatArgumentConverter;
 import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.ArraysToStringMessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.CompositeMessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.MessageFormatArgumentReducer;
@@ -204,8 +205,11 @@ final class RefactoringConfigurationLoader {
 
     private MessageFormatArgumentConverter createMessageFormatArgumentConverter() {
         ImmutableList.Builder<MessageFormatArgumentConverter> builder = ImmutableList.builder();
+
+        builder.add( new LambdaMessageFormatArgumentConverter());
+        builder.add( new Log4j2MessageFormatArgumentConverter());
+
         // TODO - from configuration
-        builder.add( new SupplierMessageFormatArgumentConverter());
         builder.add(new LazyMessageFormatArgumentConverter(-1));
 
         return new CompositeMessageFormatArgumentConverter(builder.build());

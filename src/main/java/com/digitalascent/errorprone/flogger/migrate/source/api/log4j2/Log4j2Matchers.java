@@ -21,7 +21,7 @@ final class Log4j2Matchers {
 
     private static final Matcher<ExpressionTree> LOGGING_METHODS = instanceMethod()
             .onDescendantOf(LOG4J2_LOGGER_CLASS)
-            .namedAnyOf("trace","debug","info","warn","error","fatal","log");
+            .namedAnyOf("trace","debug","info","warn","error","fatal","log", "printf");
 
     private static final Matcher<ExpressionTree> LOG_MANAGER_MATCHER = methodInvocation(staticMethod()
             .onClass(LOG4J2_LOG_MANAGER_CLASS)

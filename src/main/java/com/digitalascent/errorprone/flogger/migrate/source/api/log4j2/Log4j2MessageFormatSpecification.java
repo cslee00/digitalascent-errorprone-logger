@@ -19,19 +19,13 @@ public final class Log4j2MessageFormatSpecification implements MessageFormatSpec
     @Nullable
     private final MessageFormatStyle messageFormatStyle;
 
-    private static final Matcher<ExpressionTree> INVALID_MSG_FORMAT_TYPES = Matchers.anyOf(
-            Matchers.isSubtypeOf("org.apache.logging.log4j.message.Message"),
-            Matchers.isSubtypeOf("org.apache.logging.log4j.util.MessageSupplier"),
-            Matchers.isSubtypeOf("org.apache.logging.log4j.util.Supplier")
-    );
-
     public Log4j2MessageFormatSpecification(@Nullable MessageFormatStyle messageFormatStyle) {
         this.messageFormatStyle = messageFormatStyle;
     }
 
     @Override
     public boolean shouldSkipMessageFormatArgument(ExpressionTree messageFormatArgument, VisitorState state) {
-        return INVALID_MSG_FORMAT_TYPES.matches( messageFormatArgument, state);
+        return false;
     }
 
     @Override

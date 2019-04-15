@@ -29,6 +29,9 @@ import static com.digitalascent.errorprone.flogger.migrate.source.api.log4j.Log4
 import static com.digitalascent.errorprone.flogger.migrate.source.api.log4j.Log4jMatchers.loggingMethod;
 import static com.google.errorprone.matchers.Matchers.isSubtypeOf;
 
+/**
+ * Log4J 1.x API: https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Logger.html
+ */
 public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecification {
     private static final ImmutableSet<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.log4j");
 

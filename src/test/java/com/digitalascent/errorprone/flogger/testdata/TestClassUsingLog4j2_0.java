@@ -4,6 +4,7 @@ package com.digitalascent.errorprone.flogger.testdata;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.Message;
 
 public class TestClassUsingLog4j2_0 {
 
@@ -152,7 +153,33 @@ public class TestClassUsingLog4j2_0 {
         someLogger.info(new Object());
         someLogger.info(new Object(), new Throwable());
         someLogger.info(String.format("%s", "abc"));
+        someLogger.info(() -> "foo");
+        someLogger.info(myMessage);
+        someLogger.printf(Level.TRACE, "abc {}", "param1");
     }
+
+    private final Message myMessage = new Message() {
+
+        @Override
+        public String getFormattedMessage() {
+            return "formatted message";
+        }
+
+        @Override
+        public String getFormat() {
+            return null;
+        }
+
+        @Override
+        public Object[] getParameters() {
+            return new Object[0];
+        }
+
+        @Override
+        public Throwable getThrowable() {
+            return null;
+        }
+    };
 
     private final Logger someLogger = LogManager.getLogger(getClass());
 }

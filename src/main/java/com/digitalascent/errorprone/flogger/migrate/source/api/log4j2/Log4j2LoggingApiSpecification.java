@@ -29,6 +29,9 @@ import static com.digitalascent.errorprone.flogger.migrate.source.api.log4j2.Log
 import static com.digitalascent.errorprone.flogger.migrate.source.api.log4j2.Log4j2Matchers.loggingMethod;
 import static com.digitalascent.errorprone.flogger.migrate.source.api.log4j2.Log4j2Matchers.markerType;
 
+/**
+ * Log4J2 API: https://logging.apache.org/log4j/2.x/log4j-api/apidocs/index.html
+ */
 public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpecification {
 
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.logging.log4j");
@@ -93,6 +96,15 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
         throw new SkipCompilationUnitException("Custom log level not supported: " + levelArgument);
     }
 
+    /*
+     * TODO:
+     *  entry()
+     *  entry( Object... )
+     *  exit()
+     *  exit( Object result )
+     *  traceEntry, traceExit
+     *  throwing
+     */
     @Override
     public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
                                                   MigrationContext migrationContext) {
@@ -122,7 +134,7 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
 
     private TargetLogLevel determineTargetLogLevel(MethodInvocation methodInvocation, ArgumentParser argumentParser) {
         TargetLogLevel targetLogLevel;
-        if (methodInvocation.methodName().equals("log")) {
+        if (methodInvocation.methodName().equals("log") || methodInvocation.methodName().equals("printf")) {
             ExpressionTree logLevelArgument = argumentParser.extract();
             targetLogLevel = resolveLogLevelFromArgument(logLevelArgument);
         } else {

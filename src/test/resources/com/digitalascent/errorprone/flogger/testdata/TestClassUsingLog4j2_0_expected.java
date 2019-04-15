@@ -1,6 +1,8 @@
 package com.digitalascent.errorprone.flogger.testdata;
 
 
+import static com.google.common.flogger.LazyArgs.lazy;
+
 import com.google.common.flogger.FluentLogger;
 
 public class TestClassUsingLog4j2_0 {
@@ -78,14 +80,14 @@ public class TestClassUsingLog4j2_0 {
     }
 
     public void testMessageFormat() {
-        someLogger.atInfo().log("1. Single parameter: %s","abc");
-        someLogger.atInfo().log("2. Escaped formatting anchor: \\{}");
-        someLogger.atInfo().log("3. Escaped anchor and single parameter: {} %s", "abc");
-        someLogger.atInfo().log("4. Escaped anchors and single parameter: {} %s {}", "abc");
-        someLogger.atInfo().log("5. Double-escaped anchor, single parameter: \\%s", "abc");
-        someLogger.atInfo().log("6. Double-escaped anchor, no parameter: \\\\{}");
-        someLogger.atInfo().log("7. Single parameter, double-escaped anchor: %s \\%s", "abc");
-        someLogger.atInfo().log("8. Percent sign: 5%% of %s", "abc");
+        someLogger.atInfo().log( "1. Single parameter: %s", "abc" );
+        someLogger.atInfo().log( "2. Escaped formatting anchor: \\{}" );
+        someLogger.atInfo().log( "3. Escaped anchor and single parameter: {} %s", "abc" );
+        someLogger.atInfo().log( "4. Escaped anchors and single parameter: {} %s {}", "abc" );
+        someLogger.atInfo().log( "5. Double-escaped anchor, single parameter: \\%s", "abc" );
+        someLogger.atInfo().log( "6. Double-escaped anchor, no parameter: \\\\{}" );
+        someLogger.atInfo().log( "7. Single parameter, double-escaped anchor: %s \\%s", "abc" );
+        someLogger.atInfo().log( "8. Percent sign: 5%% of %s", "abc" );
         someLogger.atInfo().log( "9. Object[] %s %s", "abc", "def" );
     }
 
@@ -93,17 +95,45 @@ public class TestClassUsingLog4j2_0 {
         try {
             String s = null;
             s.trim();
-        } catch( NullPointerException e ) {
+        } catch (NullPointerException e) {
             someLogger.atSevere().withCause(e).log( "The %s message", "exception" );
         }
     }
+
     public void testOther() {
         someLogger.atInfo().log( "a%sb", 1 );
-
-// TODO [LoggerApiRefactoringCheck] Unable to convert message format expression - not a string literal
+        // TODO [LoggerApiRefactoring] Unable to convert message format expression - not a string literal
         someLogger.atInfo().withCause(new Throwable()).log( "a" + 1 + "b {}", "extract" );
         someLogger.atInfo().log( "%s", new Object() );
         someLogger.atInfo().withCause(new Throwable()).log( "%s", new Object() );
         someLogger.atInfo().log( "%s", "abc" );
+        someLogger.atInfo().log( "%s", lazy(() -> "foo") );
+        someLogger.atInfo().log( "%s", lazy(() -> myMessage.getFormattedMessage()) );
+        someLogger.atFinest().log( "abc %s", "param1" );
     }
+
+    private final Message myMessage = new Message() {
+
+        @Override
+        public String getFormattedMessage() {
+            return "formatted message";
+        }
+
+        @Override
+        public String getFormat() {
+            return null;
+        }
+
+        @Override
+        public Object[] getParameters() {
+            return new Object[0];
+        }
+
+        @Override
+        public Throwable getThrowable() {
+            return null;
+        }
+    };
+
+
 }
