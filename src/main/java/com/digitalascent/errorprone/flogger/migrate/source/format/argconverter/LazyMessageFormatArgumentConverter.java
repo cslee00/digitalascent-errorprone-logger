@@ -2,7 +2,6 @@ package com.digitalascent.errorprone.flogger.migrate.source.format.argconverter;
 
 import com.digitalascent.errorprone.flogger.migrate.source.format.MessageFormatArgument;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
-import com.google.common.collect.ImmutableList;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.NewArrayTree;
@@ -23,15 +22,13 @@ public final class LazyMessageFormatArgumentConverter extends AbstractLazyArgCon
     }
 
     @Override
-    public MessageFormatArgument convert(ExpressionTree argument, VisitorState visitorState, TargetLogLevel targetLogLevel) {
-        if (isLazyLogLevel(targetLogLevel) && isLazyArgument(argument, visitorState)) {
-            String rawSource = visitorState.getSourceForNode(argument);
-            if (rawSource == null) {
-                return null;
-            }
-            return lazyArgument("() -> " + rawSource );
-        }
-        return null;
+    protected String decorate(String rawSource) {
+        return "() -> " + rawSource ;
+    }
+
+    @Override
+    protected boolean matches(ExpressionTree argument, VisitorState visitorState, TargetLogLevel targetLogLevel) {
+        return isLazyLogLevel(targetLogLevel) && isLazyArgument(argument, visitorState);
     }
 
     private boolean isLazyLogLevel(TargetLogLevel targetLogLevel) {
