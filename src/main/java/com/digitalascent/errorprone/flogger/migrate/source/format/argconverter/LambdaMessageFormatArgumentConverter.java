@@ -9,9 +9,7 @@ import com.sun.source.tree.LambdaExpressionTree;
 
 /**
  */
-public final class LambdaMessageFormatArgumentConverter implements MessageFormatArgumentConverter {
-
-    private static final ImmutableList<String> LAZY_ARG_IMPORT = ImmutableList.of("com.google.common.flogger.LazyArgs.lazy");
+public final class LambdaMessageFormatArgumentConverter extends AbstractLazyArgConverter {
 
     @Override
     public MessageFormatArgument convert(ExpressionTree argument, VisitorState visitorState, TargetLogLevel targetLogLevel) {
@@ -20,8 +18,7 @@ public final class LambdaMessageFormatArgumentConverter implements MessageFormat
             if (rawSource == null) {
                 return null;
             }
-            String source = "lazy(" + rawSource + ")";
-            return MessageFormatArgument.fromCode(source, ImmutableList.of(), LAZY_ARG_IMPORT);
+            return lazyArgument( rawSource );
         }
         return null;
     }

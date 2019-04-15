@@ -11,9 +11,7 @@ import static com.google.errorprone.matchers.Matchers.isSameType;
 
 /**
  */
-public final class Log4j2MessageFormatArgumentConverter implements MessageFormatArgumentConverter {
-
-    private static final ImmutableList<String> LAZY_ARG_IMPORT = ImmutableList.of("com.google.common.flogger.LazyArgs.lazy");
+public final class Log4j2MessageFormatArgumentConverter extends AbstractLazyArgConverter {
 
     @Override
     public MessageFormatArgument convert(ExpressionTree argument, VisitorState visitorState, TargetLogLevel targetLogLevel) {
@@ -22,8 +20,7 @@ public final class Log4j2MessageFormatArgumentConverter implements MessageFormat
             if (rawSource == null) {
                 return null;
             }
-            String source = "lazy(() -> " + rawSource + ".getFormattedMessage())";
-            return MessageFormatArgument.fromCode(source, ImmutableList.of(), LAZY_ARG_IMPORT);
+            return lazyArgument("() -> " + rawSource + ".getFormattedMessage()");
         }
         return null;
     }
