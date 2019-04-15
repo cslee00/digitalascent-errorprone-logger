@@ -27,12 +27,6 @@ class LoggerApiRefactoringCheckTest {
         executeTest("log4j2", "Log4j2", id);
     }
 
-    @ParameterizedTest( name = "common-logging: test id {arguments}")
-    @ValueSource(ints = {0,1,2,3,4,5,6})
-    public void testCommonsLogging( int id ) {
-        executeTest("commons-logging", "CommonsLogging", id);
-    }
-
     @Test
     public void testTinyLog() {
         executeTest("tinylog", "TinyLog", 0);
@@ -65,13 +59,6 @@ class LoggerApiRefactoringCheckTest {
     public void testStringConcatenation(int id) {
         executeTest("slf4j", "StringConcatenation", id);
     }
-
-    @ParameterizedTest( name = "jul: test id {arguments}")
-    @ValueSource(ints = {0,1,2,3,4,5})
-    public void testJUL(int id) {
-        executeTest("jul", "JUL", id);
-    }
-
 
     private void executeTest(String sourceApiName, String loggerName, int index) {
         ErrorProneFlags flags = ErrorProneFlags.builder()

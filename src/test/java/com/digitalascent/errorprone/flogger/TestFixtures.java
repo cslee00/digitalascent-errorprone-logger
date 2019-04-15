@@ -14,10 +14,17 @@ import javax.lang.model.element.Modifier;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.logging.Logger;
 
 import static java.util.Objects.requireNonNull;
 
 public final class TestFixtures {
+
+    private static final FieldSpec JUL_LOGGER = FieldSpec.builder(Logger.class, "logger")
+            .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+            .initializer("$T.getLogger(getClass().getName())", Logger.class)
+            .build();
 
     private static final FieldSpec COMMONS_LOGGING_LOGGER = FieldSpec.builder(Log.class, "logger")
             .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
@@ -28,6 +35,11 @@ public final class TestFixtures {
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
             .initializer("$T.forEnclosingClass()", FluentLogger.class)
             .build();
+
+    public static TestSourceBuilder builderWithJULLogger() {
+        return new TestSourceBuilder(JUL_LOGGER);
+    }
+
 
     public static TestSourceBuilder builderWithCommonsLoggingLogger() {
         return new TestSourceBuilder(COMMONS_LOGGING_LOGGER);
@@ -52,6 +64,9 @@ public final class TestFixtures {
             methodSpecBuilder = MethodSpec.methodBuilder("testMethod")
                     .addModifiers(Modifier.PUBLIC)
                     .addStatement("Object objectVar = new Object()")
+                    .addStatement("String stringVar = \"foo\"")
+                    .addStatement("Object[] arrayVar = new Object[] { stringVar, objectVar }")
+                    .addStatement("$T.toString(arrayVar)", Arrays.class)
                     .addStatement("Throwable throwableVar = new Throwable()")
                     .returns(void.class);
 
