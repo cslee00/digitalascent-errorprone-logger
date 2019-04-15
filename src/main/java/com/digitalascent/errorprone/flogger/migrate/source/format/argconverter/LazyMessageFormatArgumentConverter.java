@@ -1,13 +1,15 @@
 package com.digitalascent.errorprone.flogger.migrate.source.format.argconverter;
 
-import com.digitalascent.errorprone.flogger.migrate.source.format.MessageFormatArgument;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.google.errorprone.VisitorState;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.NewArrayTree;
 import com.sun.source.tree.NewClassTree;
 
+import java.util.function.Predicate;
+
 import static com.google.errorprone.matchers.Matchers.anyMethod;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Wrap method-invoking message format arguments in lazy( extract ) to defer evaluation until it's been determined
@@ -15,15 +17,15 @@ import static com.google.errorprone.matchers.Matchers.anyMethod;
  */
 public final class LazyMessageFormatArgumentConverter extends AbstractLazyArgConverter {
 
-    private final int lazyThresholdOrdinal;
+    private final Predicate<TargetLogLevel> lazyLogLevelPredicate;
 
-    public LazyMessageFormatArgumentConverter(int lazyThresholdOrdinal) {
-        this.lazyThresholdOrdinal = lazyThresholdOrdinal;
+    public LazyMessageFormatArgumentConverter(Predicate<TargetLogLevel> lazyLogLevelPredicate ) {
+        this.lazyLogLevelPredicate = requireNonNull(lazyLogLevelPredicate, "lazyLogLevelPredicate");
     }
 
     @Override
     protected String decorate(String rawSource) {
-        return "() -> " + rawSource ;
+        return "() -> " + rawSource;
     }
 
     @Override
@@ -32,9 +34,10 @@ public final class LazyMessageFormatArgumentConverter extends AbstractLazyArgCon
     }
 
     private boolean isLazyLogLevel(TargetLogLevel targetLogLevel) {
-        return targetLogLevel.ordinal() <= lazyThresholdOrdinal;
+        return lazyLogLevelPredicate.test(targetLogLevel);
     }
 
+    // TODO - handle method invocations
     private boolean isLazyArgument(ExpressionTree argument, VisitorState visitorState) {
         return anyMethod().matches(argument, visitorState) ||
                 argument instanceof NewClassTree ||

@@ -13,7 +13,6 @@ public final class TargetLogLevel {
 
     @Nullable
     private final ExpressionTree customLogLevel;
-    private final int ordinal = 1;
 
     public static TargetLogLevel customLogLevel( ExpressionTree customLogLevel ) {
         return new TargetLogLevel("at", customLogLevel );
@@ -25,10 +24,6 @@ public final class TargetLogLevel {
     private TargetLogLevel(String methodName, @Nullable ExpressionTree customLogLevel) {
         this.methodName = methodName;
         this.customLogLevel = customLogLevel;
-    }
-
-    public int ordinal() {
-        return ordinal;
     }
 
     public String methodName() {

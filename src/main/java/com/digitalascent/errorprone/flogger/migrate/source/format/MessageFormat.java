@@ -26,6 +26,8 @@ public final class MessageFormat {
             // determine the number of arguments
             int[] argumentNumbers = determineArgumentNumbers(messageFormat);
 
+            int max = Arrays.stream(argumentNumbers).max().getAsInt() + 1;
+
             int maxOffset = determineMaxOffset(messageFormat);
 
             List<ExpressionTree> argumentList = new ArrayList<>();
@@ -47,7 +49,7 @@ public final class MessageFormat {
             }
 
             // replace placeholders with printf format specifiers
-            Object[] args = new Object[maxOffset + 1];
+            Object[] args = new Object[max];
             Arrays.fill(args, "%s");
             String convertedFormatString = messageFormat.format(args);
             return new MessageFormatConversionResult(convertedFormatString, argumentList, migrationIssues);

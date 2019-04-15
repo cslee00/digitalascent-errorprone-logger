@@ -16,7 +16,7 @@ class MessageFormatTest {
 
     @Test
     void testPlaceholderReplacement() {
-        assertThat( convert("a {3,number,integer} b {1} c {4} d {0} e") ).isEqualTo("a %s b %s c %s d %s e");
+        assertThat( convert("a {3,number,integer} b {1} c {6} d {0} e") ).isEqualTo("a %s b %s c %s d %s e");
     }
 
     @Test

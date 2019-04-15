@@ -55,6 +55,9 @@ dependencies {
     testCompile group: 'com.google.flogger', name: 'flogger', version: '0.4'
     testRuntime group: 'com.google.flogger', name: 'flogger-system-backend', version: '0.4'
 
+    // for generating sample code for tests
+    testCompile group: 'com.squareup', name: 'javapoet', version: '1.11.1'
+
     // for sample classes used as test inputs
     // SLF4J
     testCompile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.26'

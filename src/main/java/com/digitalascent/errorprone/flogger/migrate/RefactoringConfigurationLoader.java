@@ -210,7 +210,7 @@ final class RefactoringConfigurationLoader {
         builder.add( new Log4j2MessageFormatArgumentConverter());
 
         // TODO - from configuration
-        builder.add(new LazyMessageFormatArgumentConverter(-1));
+        builder.add(new LazyMessageFormatArgumentConverter((targetLogLevel) -> false));
 
         return new CompositeMessageFormatArgumentConverter(builder.build());
     }
