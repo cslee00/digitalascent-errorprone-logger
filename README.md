@@ -72,28 +72,26 @@ The tool attempts to migrate common, idiomatic use cases for the source logging 
 | Log levels | trace -> finest, debug -> fine, info -> info, warn -> warning, error -> severe |
 
 Notes:
-* Classes with multiple logger member variables are not migrated
-  * e.g. `LoggerFactory.getLogger(getClass())` & `LoggerFactory.getLogger("myLogger")` would not be migrated
+* Only loggers matching the class name are migrated
 
 ### Log4J (v1.x)
 | Log Construct | Migration Notes |
 | --- | --- |
 | `LogManager.getLogger( Class<?> )` | Migrated to `FluentLogger.forEnclosingClass()`| 
-| `LogManager.getLogger( String )` | *Not migrated* |
+| `LogManager.getLogger( String )` | Only loggers matching the class name are migrated |
 | `Throwable` arguments | Trailing arguments of type `java.lang.Throwable` are migrated to `.withCause(t)`
 | `is*Enabled` methods | Migrated to `logger.at*().isEnabled()` |
 | Log levels | trace -> finest, debug -> fine, info -> info, warn -> warning, error -> severe, fatal -> severe |
 
 Notes:
-* Classes with multiple logger member variables are not migrated
-    * e.g. `LogManager.getLogger(getClass())` & `LogManager.getLogger("myLogger")` would not be migrated
+* Only loggers matching the class name are migrated
 * Classes that use custom log levels are not migrated
 
 ### Log4J2 (v2.x)
 | Log Construct | Migration Notes |
 | --- | --- |
 | `LogManager.getLogger( Class<?> )` | Migrated to `FluentLogger.forEnclosingClass()`| 
-| `LogManager.getLogger( String )` | *Not migrated* |
+| `LogManager.getLogger( String )` | Only loggers matching the class name are migrated |
 | Marker parameters | *Marker parameters are silently ignored during migration* |
 | Message format | Log4J2 parameter placeholders `{}` are migrated to `%s`, honoring escaping logic from Log4J2 |
 | `Throwable` arguments | Trailing arguments of type `java.lang.Throwable` are migrated to `.withCause(t)`
@@ -101,8 +99,7 @@ Notes:
 | Log levels | trace -> finest, debug -> fine, info -> info, warn -> warning, error -> severe, fatal -> severe |
 
 Notes:
-* Classes with multiple logger member variables are not migrated
-    * e.g. `LogManager.getLogger(getClass())` & `LogManager.getLogger("myLogger")` would not be migrated
+* Only loggers matching the class name are migrated
 * Classes that use custom log levels are not migrated
 * TODO Migration will attempt to determine which parameter format style is in use and adjust on a per-class basis; 
 this may not always work correctly (especially when loggers are inherited).  See the Configuration section for options to
@@ -119,14 +116,13 @@ force the resolution to be 'braces' (for `LogManager.getLogger()`) or 'printf' (
 | `isEnabledFor` method | Migrated to `logger.at( Level ).isEnabled()` |
 | Log levels | directly migrated one-to-one |
 | Custom log levels | directly migrated (log levels don't change, they are passed into Flogger) |
-| Methods `entering, exiting` | *Not migrated* |
+| Methods `entering, exiting` | Code is migrated to emit these at FINER level (as JUL logger does) |
 | Methods `logp, logrb` | *Not migrated* |
-| Method `throwing` | *Not migrated* |
+| Method `throwing` | Code is migrated to emit this at FINER level (as JUL logger does) |
 | Method `log( LogRecord )` | *Not migrated* |
-| Methods taking a `Supplier<String>` parameter | *Not migrated* |
 
 Notes:
-* Classes with multiple logger member variables are not migrated
+* Only loggers matching the class name are migrated
 
 
 # Configuration
