@@ -30,18 +30,6 @@ class LoggerApiRefactoringCheckTest {
         executeTest("slf4j", "MultipleLoggers", id);
     }
 
-    @ParameterizedTest( name = "conditionals: test id {arguments}")
-    @ValueSource(ints = {0,1})
-    public void testConditionals(int id) {
-        executeTest("slf4j", "Conditionals", id);
-    }
-
-    @ParameterizedTest( name = "string-concatenation: test id {arguments}")
-    @ValueSource(ints = {0})
-    public void testStringConcatenation(int id) {
-        executeTest("slf4j", "StringConcatenation", id);
-    }
-
     private void executeTest(String sourceApiName, String loggerName, int index) {
         ErrorProneFlags flags = ErrorProneFlags.builder()
                 .putFlag("LoggerApiRefactoring:SourceApi", sourceApiName)

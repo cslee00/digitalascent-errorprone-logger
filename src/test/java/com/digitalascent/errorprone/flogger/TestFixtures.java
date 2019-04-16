@@ -112,12 +112,12 @@ final class TestFixtures {
             typeSpecBuilder.addMethod(dummyMethod);
         }
 
-        public TestSourceBuilder code(MethodBodyCallback callback) {
+        TestSourceBuilder code(MethodBodyCallback callback) {
             callback.callback(methodSpecBuilder, logger);
             return this;
         }
 
-        public String build() {
+        String build() {
 
             typeSpecBuilder.addMethod(methodSpecBuilder.build());
 

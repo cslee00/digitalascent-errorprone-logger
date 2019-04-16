@@ -1,4 +1,4 @@
-package com.digitalascent.errorprone.flogger;
+package com.digitalascent.errorprone.flogger.migrate.source;
 
 import com.google.common.flogger.FluentLogger;
 
