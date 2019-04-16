@@ -65,8 +65,8 @@ public final class JULLoggingApiSpecification extends AbstractLoggingApiSpecific
     }
 
     @Override
-    public Set<String> loggingPackagePrefixes() {
-        return LOGGING_PACKAGE_PREFIXES;
+    public boolean shouldRemoveImport(String importString) {
+        return LOGGING_PACKAGE_PREFIXES.stream().anyMatch(importString::startsWith);
     }
 
     @Override

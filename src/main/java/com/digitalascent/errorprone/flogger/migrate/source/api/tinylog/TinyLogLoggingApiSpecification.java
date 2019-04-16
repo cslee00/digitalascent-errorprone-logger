@@ -58,10 +58,9 @@ public final class TinyLogLoggingApiSpecification extends AbstractLoggingApiSpec
     }
 
     @Override
-    public Set<String> loggingPackagePrefixes() {
-        return LOGGING_PACKAGE_PREFIXES;
+    public boolean shouldRemoveImport(String importString) {
+        return LOGGING_PACKAGE_PREFIXES.stream().anyMatch(importString::startsWith);
     }
-
 
     @Override
     public FloggerLogStatement parseLoggingMethod(MethodInvocation methodInvocation,
@@ -82,4 +81,5 @@ public final class TinyLogLoggingApiSpecification extends AbstractLoggingApiSpec
         builder.logMessage(logMessage);
         return builder.build();
     }
+
 }

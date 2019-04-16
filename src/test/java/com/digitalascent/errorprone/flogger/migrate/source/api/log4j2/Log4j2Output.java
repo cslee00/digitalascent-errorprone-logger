@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger.migrate.source.api.log4j2;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,5 +17,7 @@ public class Log4j2Output {
         logger.info("5. Double-escaped anchor, single parameter: \\\\{}", "abc");
         logger.info("6. Double-escaped anchor, no parameter: \\\\{}");
         logger.info("7. Single parameter, double-escaped anchor: {} \\\\{}", "abc");
+
+        logger.printf(Level.INFO,"%s foo %s {}", "abc", "bar");
     }
 }

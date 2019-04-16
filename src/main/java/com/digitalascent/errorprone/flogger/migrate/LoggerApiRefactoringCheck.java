@@ -134,10 +134,10 @@ public final class LoggerApiRefactoringCheck extends BugChecker implements BugCh
             return floggerSuggestedFixGenerator.removeImport(importTree);
         }
 
-        if (loggingApiSpecification.loggingPackagePrefixes().stream()
-                .anyMatch(x -> importTree.getQualifiedIdentifier().toString().startsWith(x))) {
+        if( loggingApiSpecification.shouldRemoveImport( importTree.getQualifiedIdentifier().toString() )) {
             return floggerSuggestedFixGenerator.removeImport(importTree);
         }
+
         return SuggestedFix.builder().build();
     }
 

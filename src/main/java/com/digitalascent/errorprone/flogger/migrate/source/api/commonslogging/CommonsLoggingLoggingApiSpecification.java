@@ -8,8 +8,8 @@ import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
-import com.digitalascent.errorprone.flogger.migrate.source.api.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.source.ArgumentParser;
+import com.digitalascent.errorprone.flogger.migrate.source.api.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.source.api.LogMessageFactory;
 import com.digitalascent.errorprone.flogger.migrate.source.api.SourceApiUtil;
 import com.google.common.base.Verify;
@@ -19,7 +19,6 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 
-import java.util.Set;
 import java.util.function.Function;
 
 import static com.digitalascent.errorprone.flogger.migrate.source.api.commonslogging.CommonsLoggingMatchers.logFactoryMethod;
@@ -60,10 +59,9 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
     }
 
     @Override
-    public Set<String> loggingPackagePrefixes() {
-        return LOGGING_PACKAGE_PREFIXES;
+    public boolean shouldRemoveImport(String importString) {
+        return LOGGING_PACKAGE_PREFIXES.stream().anyMatch(importString::startsWith);
     }
-
 
     @Override
     public FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation) {
@@ -96,4 +94,5 @@ public class CommonsLoggingLoggingApiSpecification extends AbstractLoggingApiSpe
         builder.logMessage(logMessage);
         return builder.build();
     }
+
 }

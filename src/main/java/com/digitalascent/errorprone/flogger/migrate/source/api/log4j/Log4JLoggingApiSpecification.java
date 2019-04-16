@@ -61,8 +61,8 @@ public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecif
     }
 
     @Override
-    public Set<String> loggingPackagePrefixes() {
-        return LOGGING_PACKAGE_PREFIXES;
+    public boolean shouldRemoveImport(String importString) {
+        return LOGGING_PACKAGE_PREFIXES.stream().anyMatch(importString::startsWith);
     }
 
     @Override
@@ -106,12 +106,12 @@ public final class Log4JLoggingApiSpecification extends AbstractLoggingApiSpecif
         ImmutableFloggerLogStatement.Builder builder = ImmutableFloggerLogStatement.builder();
         builder.targetLogLevel(targetLogLevel);
 
-        // extract message format extract
-        ExpressionTree messageFormatArgument = argumentParser.extract();
-
         // extract throwable as last extract, if present
         ExpressionTree throwableArgument = argumentParser.trailingThrowable();
         builder.thrown(throwableArgument);
+
+        // extract message format extract
+        ExpressionTree messageFormatArgument = argumentParser.extractOrElse(throwableArgument);
 
         LogMessage logMessage = createLogMessage(messageFormatArgument,
                 argumentParser.remainingArguments(), methodInvocation.state(), throwableArgument, migrationContext, targetLogLevel);

@@ -15,8 +15,6 @@ public interface LoggingApiSpecification {
 
     boolean matchImport(Tree qualifiedIdentifier, VisitorState visitorState);
 
-    Set<String> loggingPackagePrefixes();
-
     boolean matchConditionalMethod(ExpressionTree expressionTree, VisitorState state);
 
     boolean matchLoggingMethod(ExpressionTree expressionTree, VisitorState state);
@@ -26,4 +24,6 @@ public interface LoggingApiSpecification {
     FloggerConditionalStatement parseConditionalMethod(MethodInvocation methodInvocation);
 
     FloggerLogStatement parseLoggingMethod(MethodInvocation loggingMethodInvocation, MigrationContext migrationContext);
+
+    boolean shouldRemoveImport(String importString);
 }

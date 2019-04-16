@@ -8,6 +8,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.LogManager;
+import org.apache.logging.log4j.message.Message;
 import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.Modifier;
@@ -19,7 +21,7 @@ import java.util.logging.Logger;
 
 import static java.util.Objects.requireNonNull;
 
-public final class TestFixtures {
+final class TestFixtures {
 
     private static final FieldSpec JUL_LOGGER = FieldSpec.builder(Logger.class, "logger")
             .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
@@ -29,6 +31,16 @@ public final class TestFixtures {
     private static final FieldSpec COMMONS_LOGGING_LOGGER = FieldSpec.builder(Log.class, "logger")
             .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
             .initializer("$T.getLog(getClass())", LogFactory.class)
+            .build();
+
+    private static final FieldSpec LOG4J_LOGGER = FieldSpec.builder(org.apache.log4j.Logger.class, "logger")
+            .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+            .initializer("$T.getLogger(getClass())", LogManager.class)
+            .build();
+
+    private static final FieldSpec LOG4J2_LOGGER = FieldSpec.builder(org.apache.logging.log4j.Logger.class, "logger")
+            .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+            .initializer("$T.getLogger(getClass())", org.apache.logging.log4j.LogManager.class)
             .build();
 
     private static final FieldSpec SLF4J_LOGGER = FieldSpec.builder(org.slf4j.Logger.class, "logger")
@@ -41,24 +53,32 @@ public final class TestFixtures {
             .initializer("$T.forEnclosingClass()", FluentLogger.class)
             .build();
 
-    public static TestSourceBuilder builderWithJULLogger() {
+    static TestSourceBuilder builderWithJULLogger() {
         return new TestSourceBuilder(JUL_LOGGER);
     }
 
 
-    public static TestSourceBuilder builderWithCommonsLoggingLogger() {
+    static TestSourceBuilder builderWithCommonsLoggingLogger() {
         return new TestSourceBuilder(COMMONS_LOGGING_LOGGER);
     }
 
-    public static TestSourceBuilder builderWithSLF4JLogger() {
+    static TestSourceBuilder builderWithLog4JLogger() {
+        return new TestSourceBuilder(LOG4J_LOGGER);
+    }
+
+    static TestSourceBuilder builderWithLog4J2Logger() {
+        return new TestSourceBuilder(LOG4J2_LOGGER);
+    }
+
+    static TestSourceBuilder builderWithSLF4JLogger() {
         return new TestSourceBuilder(SLF4J_LOGGER);
     }
 
-    public static TestSourceBuilder builderWithFloggerLogger() {
+    static TestSourceBuilder builderWithFloggerLogger() {
         return new TestSourceBuilder(FLOGGER_LOGGER);
     }
 
-    public static final class TestSourceBuilder {
+    static final class TestSourceBuilder {
 
         private final TypeSpec.Builder typeSpecBuilder;
         private final MethodSpec.Builder methodSpecBuilder;
@@ -76,6 +96,7 @@ public final class TestFixtures {
                     .addStatement("String stringVar = \"foo\"")
                     .addStatement("Object[] arrayVar = new Object[] { stringVar, objectVar }")
                     .addStatement("Throwable throwableVar = new Throwable()")
+                    .addStatement("$T log4j2Message = new $T()", Message.class, DummyLog4j2Message.class)
                     .returns(void.class);
 
 
@@ -84,7 +105,8 @@ public final class TestFixtures {
                     .returns(void.class)
                     .addStatement("$T.format($S,$S)", MessageFormat.class, "{0}", "abc")
                     .addStatement("$T.toString(new Object[0])", Arrays.class)
-                    .addStatement("Object obj = $T.INSTANCE", DummySlf4JMarker.class)
+                    .addStatement("Object dummySlf4JMarker = $T.INSTANCE", DummySlf4JMarker.class)
+                    .addStatement("Object dummyLog4j2Marker = $T.INSTANCE", DummyLog4J2Marker.class)
                     .build();
 
             typeSpecBuilder.addMethod(dummyMethod);

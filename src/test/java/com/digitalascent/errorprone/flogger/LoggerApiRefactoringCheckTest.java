@@ -9,18 +9,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class LoggerApiRefactoringCheckTest {
 
-    @ParameterizedTest( name = "log4j: test id {arguments}")
-    @ValueSource(ints = {0,1,2,3,4,5,6,7})
-    public void testLog4j(int id) {
-        executeTest("log4j", "Log4j", id);
-    }
-
-    @ParameterizedTest( name = "log4j2: test id {arguments}")
-    @ValueSource(ints = {0,1,2,3,4,5,6})
-    public void testLog4j2(int id) {
-        executeTest("log4j2", "Log4j2", id);
-    }
-
     @Test
     public void testTinyLog() {
         executeTest("tinylog", "TinyLog", 0);

@@ -9,8 +9,8 @@ import com.digitalascent.errorprone.flogger.migrate.model.LogMessage;
 import com.digitalascent.errorprone.flogger.migrate.model.MethodInvocation;
 import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
-import com.digitalascent.errorprone.flogger.migrate.source.api.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.source.ArgumentParser;
+import com.digitalascent.errorprone.flogger.migrate.source.api.AbstractLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.source.api.LogMessageFactory;
 import com.digitalascent.errorprone.flogger.migrate.source.api.SourceApiUtil;
 import com.google.common.collect.ImmutableSet;
@@ -35,6 +35,7 @@ import static com.digitalascent.errorprone.flogger.migrate.source.api.log4j2.Log
 public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpecification {
 
     private static final Set<String> LOGGING_PACKAGE_PREFIXES = ImmutableSet.of("org.apache.logging.log4j");
+    private static final Set<String> LOGGING_IMPORTS_TO_RETAIN = ImmutableSet.of("org.apache.logging.log4j.message.Message");
 
     public Log4j2LoggingApiSpecification(Function<String, TargetLogLevel> targetLogLevelFunction,
                                          LogMessageFactory logMessageFactory) {
@@ -52,8 +53,12 @@ public final class Log4j2LoggingApiSpecification extends AbstractLoggingApiSpeci
     }
 
     @Override
-    public Set<String> loggingPackagePrefixes() {
-        return LOGGING_PACKAGE_PREFIXES;
+    public boolean shouldRemoveImport(String importString) {
+        if( LOGGING_IMPORTS_TO_RETAIN.contains(importString)) {
+            return false;
+        }
+
+        return LOGGING_PACKAGE_PREFIXES.stream().anyMatch(importString::startsWith);
     }
 
     @Override
