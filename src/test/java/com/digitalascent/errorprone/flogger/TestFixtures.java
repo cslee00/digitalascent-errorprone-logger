@@ -8,7 +8,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.junit.Test;
+import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.Modifier;
 import java.io.IOException;
@@ -31,6 +31,11 @@ public final class TestFixtures {
             .initializer("$T.getLog(getClass())", LogFactory.class)
             .build();
 
+    private static final FieldSpec SLF4J_LOGGER = FieldSpec.builder(org.slf4j.Logger.class, "logger")
+            .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+            .initializer("$T.getLogger(getClass())", LoggerFactory.class)
+            .build();
+
     private static final FieldSpec FLOGGER_LOGGER = FieldSpec.builder(FluentLogger.class, "logger")
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
             .initializer("$T.forEnclosingClass()", FluentLogger.class)
@@ -43,6 +48,10 @@ public final class TestFixtures {
 
     public static TestSourceBuilder builderWithCommonsLoggingLogger() {
         return new TestSourceBuilder(COMMONS_LOGGING_LOGGER);
+    }
+
+    public static TestSourceBuilder builderWithSLF4JLogger() {
+        return new TestSourceBuilder(SLF4J_LOGGER);
     }
 
     public static TestSourceBuilder builderWithFloggerLogger() {
@@ -66,7 +75,6 @@ public final class TestFixtures {
                     .addStatement("Object objectVar = new Object()")
                     .addStatement("String stringVar = \"foo\"")
                     .addStatement("Object[] arrayVar = new Object[] { stringVar, objectVar }")
-                    .addStatement("$T.toString(arrayVar)", Arrays.class)
                     .addStatement("Throwable throwableVar = new Throwable()")
                     .returns(void.class);
 
@@ -75,6 +83,8 @@ public final class TestFixtures {
                     .addModifiers(Modifier.PUBLIC)
                     .returns(void.class)
                     .addStatement("$T.format($S,$S)", MessageFormat.class, "{0}", "abc")
+                    .addStatement("$T.toString(new Object[0])", Arrays.class)
+                    .addStatement("Object obj = $T.INSTANCE", DummySlf4JMarker.class)
                     .build();
 
             typeSpecBuilder.addMethod(dummyMethod);

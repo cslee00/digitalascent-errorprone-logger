@@ -9,12 +9,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class LoggerApiRefactoringCheckTest {
 
-    @ParameterizedTest( name = "slf4j: test id {arguments}")
-    @ValueSource(ints = {0,1,2,3,4,5,6,7,8})
-    public void testSlf4j(int id) {
-        executeTest("slf4j", "Slf4j", id );
-    }
-
     @ParameterizedTest( name = "log4j: test id {arguments}")
     @ValueSource(ints = {0,1,2,3,4,5,6,7})
     public void testLog4j(int id) {
