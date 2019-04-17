@@ -15,16 +15,12 @@ final class TestSpec {
         this.expectedSource = expectedSource;
     }
 
-    public String testSource() {
+    String testSource() {
         return testSource;
     }
 
-    public String expectedSource() {
+    String expectedSource() {
         return expectedSource;
-    }
-
-    public String name() {
-        return name;
     }
 
     @Override
