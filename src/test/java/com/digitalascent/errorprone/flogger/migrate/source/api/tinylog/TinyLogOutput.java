@@ -6,6 +6,8 @@ import org.pmw.tinylog.Logger;
 public class TinyLogOutput {
 
     public static void main(String[] args) {
+        Logger.info(new Throwable());
+        Logger.info("message", new Throwable());
         Logger.info("1. Single parameter: {}", "abc");
         Logger.info("2. Escaped formatting anchor: \\{}");
         Logger.info("3. Escaped anchor and single parameter: \\{} {}", "abc");
