@@ -1,5 +1,6 @@
 package com.digitalascent.errorprone.flogger;
 
+import com.google.common.base.Verify;
 import com.google.common.flogger.FluentLogger;
 import com.google.common.flogger.LazyArgs;
 import com.squareup.javapoet.FieldSpec;
@@ -12,14 +13,13 @@ import org.apache.log4j.LogManager;
 import org.apache.logging.log4j.message.Message;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.logging.Logger;
-
-import static java.util.Objects.requireNonNull;
 
 final class TestFixtures {
 
@@ -58,6 +58,11 @@ final class TestFixtures {
     }
 
 
+    static TestSourceBuilder builderWithoutLogger() {
+        return new TestSourceBuilder(null);
+    }
+
+
     static TestSourceBuilder builderWithCommonsLoggingLogger() {
         return new TestSourceBuilder(COMMONS_LOGGING_LOGGER);
     }
@@ -82,13 +87,18 @@ final class TestFixtures {
 
         private final TypeSpec.Builder typeSpecBuilder;
         private final MethodSpec.Builder methodSpecBuilder;
+
+        @Nullable
         private final FieldSpec logger;
 
-        private TestSourceBuilder(FieldSpec logger) {
-            this.logger = requireNonNull(logger, "logger");
+        private TestSourceBuilder(@Nullable FieldSpec logger) {
+            this.logger = logger;
             typeSpecBuilder = TypeSpec.classBuilder("TestClass")
-                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                    .addField(logger);
+                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+
+            if (logger != null) {
+                typeSpecBuilder.addField(logger);
+            }
 
             methodSpecBuilder = MethodSpec.methodBuilder("testMethod")
                     .addModifiers(Modifier.PUBLIC)
@@ -113,7 +123,13 @@ final class TestFixtures {
         }
 
         TestSourceBuilder code(MethodBodyCallback callback) {
+            Verify.verify(logger != null);
             callback.callback(methodSpecBuilder, logger);
+            return this;
+        }
+
+        TestSourceBuilder code(MethodBodyCallbackNoLogger callback) {
+            callback.callback(methodSpecBuilder);
             return this;
         }
 
@@ -138,6 +154,11 @@ final class TestFixtures {
     @FunctionalInterface
     public interface MethodBodyCallback {
         void callback(MethodSpec.Builder builder, FieldSpec logger);
+    }
+
+    @FunctionalInterface
+    public interface MethodBodyCallbackNoLogger {
+        void callback(MethodSpec.Builder builder);
     }
 
     private TestFixtures() {

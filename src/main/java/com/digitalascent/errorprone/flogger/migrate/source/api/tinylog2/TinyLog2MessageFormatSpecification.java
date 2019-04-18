@@ -4,20 +4,14 @@ import com.digitalascent.errorprone.flogger.migrate.model.MigrationContext;
 import com.digitalascent.errorprone.flogger.migrate.source.format.MessageFormatConversionResult;
 import com.digitalascent.errorprone.flogger.migrate.source.format.MessageFormatSpecification;
 import com.google.errorprone.VisitorState;
-import com.google.errorprone.matchers.Matcher;
-import com.google.errorprone.matchers.Matchers;
 import com.sun.source.tree.ExpressionTree;
 
 import java.util.List;
 
 public final class TinyLog2MessageFormatSpecification implements MessageFormatSpecification {
-    private static final Matcher<ExpressionTree> INVALID_MSG_FORMAT_TYPES = Matchers.anyOf(
-            Matchers.isSubtypeOf("org.tinylog.Supplier")
-    );
-
     @Override
     public boolean shouldSkipMessageFormatArgument(ExpressionTree messageFormatArgument, VisitorState state) {
-        return INVALID_MSG_FORMAT_TYPES.matches( messageFormatArgument, state);
+        return false;
     }
 
     @Override

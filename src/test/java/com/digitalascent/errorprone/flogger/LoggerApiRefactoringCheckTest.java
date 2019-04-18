@@ -3,26 +3,10 @@ package com.digitalascent.errorprone.flogger;
 import com.digitalascent.errorprone.flogger.migrate.LoggerApiRefactoringCheck;
 import com.google.errorprone.BugCheckerRefactoringTestHelper;
 import com.google.errorprone.ErrorProneFlags;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class LoggerApiRefactoringCheckTest {
-
-    @Test
-    public void testTinyLog() {
-        executeTest("tinylog", "TinyLog", 0);
-    }
-
-    @Test
-    public void testTinyLog2() {
-        executeTest("tinylog2", "TinyLog2", 0);
-    }
-
-    @Test
-    public void testMessageFormatArguments() {
-        executeTest("slf4j", "MessageFormatArguments", 0);
-    }
 
     @ParameterizedTest( name = "multiple-loggers: test id {arguments}")
     @ValueSource(ints = {0,1, 2})

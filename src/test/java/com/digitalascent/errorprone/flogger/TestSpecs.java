@@ -28,6 +28,17 @@ class TestSpecs {
         testSpecs.add(new TestSpec(logLevel, name, testCode, expectedCode));
     }
 
+    void add(LogLevel logLevel, String name, TestFixtures.MethodBodyCallbackNoLogger test, TestFixtures.MethodBodyCallback expected) {
+        String testCode = testSupplier.get()
+                .code(test)
+                .build();
+        String expectedCode = expectedSupplier.get()
+                .code(expected)
+                .build();
+
+        testSpecs.add(new TestSpec(logLevel, name, testCode, expectedCode));
+    }
+
     List<TestSpec> testSpecs() {
         return ImmutableList.copyOf(testSpecs);
     }
