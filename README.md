@@ -15,7 +15,7 @@ Refactorings:
 * Convert `String.format` and `MessageFormat.format` calls
 * Convert string-concatenated messages into parameterized messages
 * Unpack extraneous use of `new Object[] { arg1, ... }`
-* (TODO) make complex formatting arguments lazy
+* Make expensive formatting arguments (method invocations, allocations) lazy
 
 Checks
 * (TODO) Validate format strings used in log messages

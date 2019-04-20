@@ -22,12 +22,12 @@ class Log4j2LoggingRefactoringTests extends AbstractLoggerApiFactoringTest {
     static Stream<TestSpec> testDataProvider() {
 
         Set<LogLevel> logLevels = ImmutableSet.of(
-                new LogLevel("trace", "atFinest"),
-                new LogLevel("debug", "atFine"),
-                new LogLevel("info", "atInfo"),
-                new LogLevel("warn", "atWarning"),
-                new LogLevel("error", "atSevere"),
-                new LogLevel("fatal", "atSevere")
+                new LogLevel("trace", "atFinest", true),
+                new LogLevel("debug", "atFine", true),
+                new LogLevel("info", "atInfo", true),
+                new LogLevel("warn", "atWarning", false),
+                new LogLevel("error", "atSevere", false),
+                new LogLevel("fatal", "atSevere", false)
         );
 
         Supplier<TestFixtures.TestSourceBuilder> floggerTestSourceBuilderSupplier = TestFixtures::builderWithFloggerLogger;
@@ -153,6 +153,24 @@ class Log4j2LoggingRefactoringTests extends AbstractLoggerApiFactoringTest {
                     (builder, logger) ->
                             builder.addStatement("$N.$L().log($S,10)", logger, logLevel.targetLogLevel(), "%s")
             );
+
+            if (logLevel.lazyArgs()) {
+                testSpecs.add(logLevel,
+                        "expensive argument",
+                        (builder, logger) ->
+                                builder.addStatement("$N.$L($S,dummyMethod())", logger, logLevel.sourceLogLevel(), "{}"),
+                        (builder, logger) ->
+                                builder.addStatement("$N.$L().log($S,lazy(() -> dummyMethod()))", logger, logLevel.targetLogLevel(), "%s")
+                );
+            } else {
+                testSpecs.add(logLevel,
+                        "expensive argument",
+                        (builder, logger) ->
+                                builder.addStatement("$N.$L($S,dummyMethod())", logger, logLevel.sourceLogLevel(), "{}"),
+                        (builder, logger) ->
+                                builder.addStatement("$N.$L().log($S,dummyMethod())", logger, logLevel.targetLogLevel(), "%s")
+                );
+            }
 
             testSpecs.add(logLevel,
                     "single argument w/ Object[]",

@@ -23,16 +23,16 @@ class JULRefactoringTests extends AbstractLoggerApiFactoringTest {
     static Stream<TestSpec> testDataProvider() {
 
         Set<LogLevel> logLevels = ImmutableSet.of(
-                new LogLevel("finest", "atFinest"),
-                new LogLevel("finer", "atFiner"),
-                new LogLevel("fine", "atFine"),
-                new LogLevel("config", "atConfig"),
-                new LogLevel("info", "atInfo"),
-                new LogLevel("warning", "atWarning"),
-                new LogLevel("severe", "atSevere")
+                new LogLevel("finest", "atFinest", true),
+                new LogLevel("finer", "atFiner", true),
+                new LogLevel("fine", "atFine", true),
+                new LogLevel("config", "atConfig", true),
+                new LogLevel("info", "atInfo", true),
+                new LogLevel("warning", "atWarning", false),
+                new LogLevel("severe", "atSevere", false)
         );
 
-        LogLevel finer = new LogLevel("finer", "atFiner");
+        LogLevel finer = new LogLevel("finer", "atFiner", true);
 
         Supplier<TestFixtures.TestSourceBuilder> floggerTestSourceBuilderSupplier = TestFixtures::builderWithFloggerLogger;
         Supplier<TestFixtures.TestSourceBuilder> sourceTestSourceBuilderSupplier = TestFixtures::builderWithJULLogger;
@@ -200,6 +200,28 @@ class JULRefactoringTests extends AbstractLoggerApiFactoringTest {
                             builder.addStatement("$N.$L().log($S, objectVar)",
                                     logger, logLevel.targetLogLevel(), "%s")
             );
+
+            if( logLevel.lazyArgs()) {
+                testSpecs.add(logLevel,
+                        "expensive formatting argument",
+                        (builder, logger) ->
+                                builder.addStatement("$N.$L(String.format($S,dummyMethod()))",
+                                        logger, logLevel.sourceLogLevel(), "%s"),
+                        (builder, logger) ->
+                                builder.addStatement("$N.$L().log($S, lazy(() -> dummyMethod()))",
+                                        logger, logLevel.targetLogLevel(), "%s")
+                );
+            } else {
+                testSpecs.add(logLevel,
+                        "expensive formatting argument",
+                        (builder, logger) ->
+                                builder.addStatement("$N.$L(String.format($S,dummyMethod()))",
+                                        logger, logLevel.sourceLogLevel(), "%s"),
+                        (builder, logger) ->
+                                builder.addStatement("$N.$L().log($S, dummyMethod())",
+                                        logger, logLevel.targetLogLevel(), "%s")
+                );
+            }
 
             testSpecs.add(logLevel,
                     "unpack String.format w/ Throwable",

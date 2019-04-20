@@ -3,26 +3,31 @@ package com.digitalascent.errorprone.flogger;
 class LogLevel {
     private final String sourceLogLevel;
     private final String targetLogLevel;
+    private boolean lazyArgs;
 
-    LogLevel(String sourceLogLevel, String targetLogLevel) {
+    LogLevel(String sourceLogLevel, String targetLogLevel, boolean lazyArgs) {
         this.sourceLogLevel = sourceLogLevel;
         this.targetLogLevel = targetLogLevel;
+        this.lazyArgs = lazyArgs;
     }
 
-    public String sourceLogLevel() {
+    String sourceLogLevel() {
         return sourceLogLevel;
     }
 
-    public String targetLogLevel() {
+    String targetLogLevel() {
         return targetLogLevel;
     }
 
-    public String sourceLogLevelTitleCase() {
+    String sourceLogLevelTitleCase() {
         return Character.toUpperCase(sourceLogLevel().charAt(0)) + sourceLogLevel().substring(1);
     }
 
-    public String sourceLogLevelUpperCase() {
+    String sourceLogLevelUpperCase() {
         return sourceLogLevel.toUpperCase();
     }
 
+    boolean lazyArgs() {
+        return lazyArgs;
+    }
 }

@@ -112,11 +112,12 @@ final class TestFixtures {
 
             MethodSpec dummyMethod = MethodSpec.methodBuilder("dummyMethod")
                     .addModifiers(Modifier.PUBLIC)
-                    .returns(void.class)
+                    .returns(String.class)
                     .addStatement("$T.format($S,$S)", MessageFormat.class, "{0}", "abc")
                     .addStatement("$T.toString(new Object[0])", Arrays.class)
                     .addStatement("Object dummySlf4JMarker = $T.INSTANCE", DummySlf4JMarker.class)
                     .addStatement("Object dummyLog4j2Marker = $T.INSTANCE", DummyLog4J2Marker.class)
+                    .addStatement("return $S", "")
                     .build();
 
             typeSpecBuilder.addMethod(dummyMethod);

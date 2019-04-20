@@ -32,9 +32,12 @@ import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.Compos
 import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.MessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.ToStringMessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.target.FloggerSuggestedFixGenerator;
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
@@ -46,6 +49,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.google.common.collect.ImmutableMap.builder;
@@ -68,7 +72,8 @@ final class RefactoringConfigurationLoader {
         MessageFormatStyle messageFormatStyle = determineMessageFormatStyle(sourceApi, properties);
 
         Function<String, TargetLogLevel> targetLogLevelFunction = readLogLevelMappings(properties);
-        LoggingApiSpecification loggingApiSpecification = determineSourceApiConverter(sourceApi, targetLogLevelFunction, messageFormatStyle);
+        Set<String> lazyLogLevels = readLazyLogLevels(properties);
+        LoggingApiSpecification loggingApiSpecification = determineSourceApiConverter(sourceApi, targetLogLevelFunction, messageFormatStyle, lazyLogLevels);
         builder.loggingApiSpecification(loggingApiSpecification);
 
         return builder.build();
@@ -102,6 +107,11 @@ final class RefactoringConfigurationLoader {
         return new TargetLogLevelMapper(logLevelMap);
     }
 
+    private Set<String> readLazyLogLevels( Properties properties ) {
+        String lazyLevelsStr = properties.getProperty("lazy.levels", "");
+        return ImmutableSet.copyOf( Splitter.on(CharMatcher.anyOf(",\t ")).omitEmptyStrings().trimResults().split(lazyLevelsStr) );
+    }
+
     private LoggerVariableDefinition readLoggerDefinition(Properties properties) {
         ImmutableLoggerVariableDefinition.Builder builder = ImmutableLoggerVariableDefinition.builder();
         builder.name(properties.getProperty("logger.name"));
@@ -130,8 +140,9 @@ final class RefactoringConfigurationLoader {
 
     private LoggingApiSpecification determineSourceApiConverter(String sourceApi,
                                                                 Function<String, TargetLogLevel> targetLogLevelFunction,
-                                                                @Nullable MessageFormatStyle messageFormatStyle) {
-        Map<String, LoggingApiSpecification> converterMap = createLoggingApiSpecifications(targetLogLevelFunction, messageFormatStyle);
+                                                                @Nullable MessageFormatStyle messageFormatStyle,
+                                                                Set<String> lazyLogLevels) {
+        Map<String, LoggingApiSpecification> converterMap = createLoggingApiSpecifications(targetLogLevelFunction, messageFormatStyle, lazyLogLevels);
         LoggingApiSpecification converter = converterMap.get(sourceApi.toLowerCase().trim());
         if (converter == null) {
             throw new IllegalArgumentException("Unknown source API specified: " + sourceApi);
@@ -141,9 +152,9 @@ final class RefactoringConfigurationLoader {
 
     private ImmutableMap<String, LoggingApiSpecification> createLoggingApiSpecifications(
             Function<String, TargetLogLevel> targetLogLevelFunction,
-            @Nullable MessageFormatStyle messageFormatStyle) {
+            @Nullable MessageFormatStyle messageFormatStyle, Set<String> lazyLogLevels) {
 
-        MessageFormatArgumentConverter messageFormatArgumentConverter = createMessageFormatArgumentConverter();
+        MessageFormatArgumentConverter messageFormatArgumentConverter = createMessageFormatArgumentConverter(lazyLogLevels);
         MessageFormatArgumentReducer messageFormatArgumentReducer = createMessageFormatArgumentReducer();
 
         ImmutableMap.Builder<String, LoggingApiSpecification> converterMapBuilder = builder();
@@ -200,14 +211,12 @@ final class RefactoringConfigurationLoader {
         return new CompositeMessageFormatArgumentReducer(builder.build());
     }
 
-    private MessageFormatArgumentConverter createMessageFormatArgumentConverter() {
+    private MessageFormatArgumentConverter createMessageFormatArgumentConverter(Set<String> lazyLogLevels) {
         ImmutableList.Builder<MessageFormatArgumentConverter> builder = ImmutableList.builder();
 
         builder.add( new LambdaMessageFormatArgumentConverter());
         builder.add( new Log4j2MessageFormatArgumentConverter());
-
-        // TODO - from configuration
-        builder.add(new LazyMessageFormatArgumentConverter((targetLogLevel) -> false));
+        builder.add(new LazyMessageFormatArgumentConverter((targetLogLevel) -> lazyLogLevels.contains(targetLogLevel.methodName())));
 
         return new CompositeMessageFormatArgumentConverter(builder.build());
     }

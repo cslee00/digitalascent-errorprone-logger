@@ -12,7 +12,7 @@ import static com.google.errorprone.matchers.Matchers.anyMethod;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Wrap method-invoking message format arguments in lazy( extract ) to defer evaluation until it's been determined
+ * Wrap method-invoking message format arguments in lazy( argument ) to defer evaluation until it's been determined
  * that the log level is enabled
  */
 public final class LazyMessageFormatArgumentConverter extends AbstractLazyArgConverter {
@@ -37,7 +37,6 @@ public final class LazyMessageFormatArgumentConverter extends AbstractLazyArgCon
         return lazyLogLevelPredicate.test(targetLogLevel);
     }
 
-    // TODO - handle method invocations
     private boolean isLazyArgument(ExpressionTree argument, VisitorState visitorState) {
         return anyMethod().matches(argument, visitorState) ||
                 argument instanceof NewClassTree ||
