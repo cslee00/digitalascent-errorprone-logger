@@ -14,7 +14,7 @@ Refactorings:
 * Remove unnecessary conditionals around logging statements
 * Convert `String.format` and `MessageFormat.format` calls
 * Convert string-concatenated messages into parameterized messages
-* Unpack extraneous use of `new Object[] { arg1, ... }`
+* Unpack extraneous use of `new Object[] { arg1, arg2, ... }`
 * Make expensive formatting arguments (method invocations, allocations) lazy
 
 Checks
@@ -66,10 +66,10 @@ The tool attempts to migrate common, idiomatic use cases for the source logging 
 | --- | --- |
 | `LoggerFactory.getLogger( Class<?> )` | Migrated to `FluentLogger.forEnclosingClass()`| 
 | `LoggerFactory.getLogger( String )` | *Not migrated* |
-| Marker parameters | *Marker parameters are silently ignored during migration* |
+| Marker parameters | *Marker parameters are ignored during migration* |
 | Message format | SLF4J parameter placeholders `{}` are migrated to `%s`, honoring escaping logic from SLF4J |
 | `Throwable` arguments | Trailing arguments of type `java.lang.Throwable` are migrated to `.withCause(t)`
-| `is*Enabled` methods | Migrated to `logger.at*().isEnabled()` |
+| `is*Enabled` methods | Migrated to `logger.at*().isEnabled()`, and removed entirely where redundant |
 | Log levels | trace -> finest, debug -> fine, info -> info, warn -> warning, error -> severe |
 
 Notes:
@@ -81,7 +81,7 @@ Notes:
 | `LogManager.getLogger( Class<?> )` | Migrated to `FluentLogger.forEnclosingClass()`| 
 | `LogManager.getLogger( String )` | Only loggers matching the class name are migrated |
 | `Throwable` arguments | Trailing arguments of type `java.lang.Throwable` are migrated to `.withCause(t)`
-| `is*Enabled` methods | Migrated to `logger.at*().isEnabled()` |
+| `is*Enabled` methods | Migrated to `logger.at*().isEnabled()`, and removed entirely where redundant |
 | Log levels | trace -> finest, debug -> fine, info -> info, warn -> warning, error -> severe, fatal -> severe |
 
 Notes:
@@ -96,13 +96,13 @@ Notes:
 | Marker parameters | *Marker parameters are silently ignored during migration* |
 | Message format | Log4J2 parameter placeholders `{}` are migrated to `%s`, honoring escaping logic from Log4J2 |
 | `Throwable` arguments | Trailing arguments of type `java.lang.Throwable` are migrated to `.withCause(t)`
-| `is*Enabled` methods | Migrated to `logger.at*().isEnabled()` |
+| `is*Enabled` methods | Migrated to `logger.at*().isEnabled()`, and removed entirely where redundant |
 | Log levels | trace -> finest, debug -> fine, info -> info, warn -> warning, error -> severe, fatal -> severe |
 
 Notes:
 * Only loggers matching the class name are migrated
 * Classes that use custom log levels are not migrated
-* TODO Migration will attempt to determine which parameter format style is in use and adjust on a per-class basis; 
+* Migration will attempt to determine which parameter format style is in use and adjust on a per-class basis; 
 this may not always work correctly (especially when loggers are inherited).  See the Configuration section for options to
 force the resolution to be 'braces' (for `LogManager.getLogger()`) or 'printf' (for `LogManager.getFormatterLogger()`) 
 
@@ -114,7 +114,7 @@ force the resolution to be 'braces' (for `LogManager.getLogger()`) or 'printf' (
 | `Logger.getLogger( String )` | Migrated to `FluentLogger.forEnclosingClass()`| 
 | Message format | JUL MessageFormat placeholders `{0}` are migrated to `%s`, honoring escaping logic from MessageFormat |
 | `Throwable` arguments | Trailing arguments of type `java.lang.Throwable` are migrated to `.withCause(t)`
-| `isEnabledFor` method | Migrated to `logger.at( Level ).isEnabled()` |
+| `isEnabledFor` method | Migrated to `logger.at( Level ).isEnabled()`, and removed entirely where redundant |
 | Log levels | directly migrated one-to-one |
 | Custom log levels | directly migrated (log levels don't change, they are passed into Flogger) |
 | Methods `entering, exiting` | Code is migrated to emit these at FINER level (as JUL logger does) |
