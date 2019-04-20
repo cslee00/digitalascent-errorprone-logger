@@ -1,6 +1,7 @@
 package com.digitalascent.errorprone.flogger.migrate.source.api.tinylog;
 
 
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableSet;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,8 @@ class TinyLogMessageFormatterTest {
                 .level(Level.DEBUG)
                 .activate();
         Logger.info(formatString.replace("%", "%%"), args);
-        String expected = capturingWriter.getMessage().replace("\r\n","");
+        CharMatcher newLineMatcher = CharMatcher.anyOf("\r\n");
+        String expected = newLineMatcher.removeFrom(capturingWriter.getMessage());
 
         String actual = argsToReplace > 0 ? TinyLogMessageFormatter.format(formatString) : formatString;
 

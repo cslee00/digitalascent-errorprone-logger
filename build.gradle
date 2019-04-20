@@ -33,6 +33,18 @@ repositories {
 processTestResources {
     from 'src/test/java'
 }
+configurations {
+    testErrorProneJavac {
+        description = "Error prone Javac compiler for running tests"
+    }
+}
+
+gradle.projectsEvaluated {
+    test {
+        useJUnitPlatform()
+        jvmArgs "-Xbootclasspath/p:${configurations.testErrorProneJavac.asPath}"
+    }
+}
 
 dependencies {
     compileOnly group: 'com.google.errorprone', name: 'error_prone_core', version: '2.3.3'
@@ -46,8 +58,12 @@ dependencies {
     compile group: 'com.google.flogger', name: 'flogger', version: '0.4'
     runtime group: 'com.google.flogger', name: 'flogger-system-backend', version: '0.4'
     
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.1.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.1.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.3.1")
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.3.1")
+
+    testErrorProneJavac("com.google.errorprone:javac:9+181-r4173-1")
+
     testImplementation("org.assertj:assertj-core:3.11.1")
 
     testCompile group: 'com.google.errorprone', name: 'error_prone_test_helpers', version: '2.3.3'
