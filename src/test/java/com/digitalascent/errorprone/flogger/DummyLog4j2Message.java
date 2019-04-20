@@ -3,6 +3,8 @@ package com.digitalascent.errorprone.flogger;
 import org.apache.logging.log4j.message.Message;
 
 public class DummyLog4j2Message implements Message {
+    private static final long serialVersionUID = 42L;
+
     @Override
     public String getFormattedMessage() {
         return "abc";

@@ -39,6 +39,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
         severity = BugPattern.SeverityLevel.SUGGESTION,
         tags = BugPattern.StandardTags.REFACTORING)
 public final class LoggerApiRefactoringCheck extends BugChecker implements BugChecker.CompilationUnitTreeMatcher {
+    private static final long serialVersionUID = 42L;
     private final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     private static final String CONFIGURATION_NAMESPACE = "LoggerApiRefactoring";

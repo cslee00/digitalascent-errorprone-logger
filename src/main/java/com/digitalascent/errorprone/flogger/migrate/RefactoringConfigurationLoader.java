@@ -1,14 +1,5 @@
 package com.digitalascent.errorprone.flogger.migrate;
 
-import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.CompositeMessageFormatArgumentConverter;
-import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.LazyMessageFormatArgumentConverter;
-import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.Log4j2MessageFormatArgumentConverter;
-import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.MessageFormatArgumentConverter;
-import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.LambdaMessageFormatArgumentConverter;
-import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.ArraysToStringMessageFormatArgumentReducer;
-import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.CompositeMessageFormatArgumentReducer;
-import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.MessageFormatArgumentReducer;
-import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.ToStringMessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableLoggerVariableDefinition;
 import com.digitalascent.errorprone.flogger.migrate.model.ImmutableRefactoringConfiguration;
 import com.digitalascent.errorprone.flogger.migrate.model.LoggerVariableDefinition;
@@ -16,7 +7,6 @@ import com.digitalascent.errorprone.flogger.migrate.model.RefactoringConfigurati
 import com.digitalascent.errorprone.flogger.migrate.model.TargetLogLevel;
 import com.digitalascent.errorprone.flogger.migrate.source.api.LogMessageFactory;
 import com.digitalascent.errorprone.flogger.migrate.source.api.LoggingApiSpecification;
-import com.digitalascent.errorprone.flogger.migrate.source.format.MessageFormatStyle;
 import com.digitalascent.errorprone.flogger.migrate.source.api.commonslogging.CommonsLoggingLoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.source.api.commonslogging.CommonsLoggingMessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.source.api.jul.JULLoggingApiSpecification;
@@ -31,6 +21,16 @@ import com.digitalascent.errorprone.flogger.migrate.source.api.tinylog.TinyLogLo
 import com.digitalascent.errorprone.flogger.migrate.source.api.tinylog.TinyLogMessageFormatSpecification;
 import com.digitalascent.errorprone.flogger.migrate.source.api.tinylog2.TinyLog2LoggingApiSpecification;
 import com.digitalascent.errorprone.flogger.migrate.source.api.tinylog2.TinyLog2MessageFormatSpecification;
+import com.digitalascent.errorprone.flogger.migrate.source.format.MessageFormatStyle;
+import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.CompositeMessageFormatArgumentConverter;
+import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.LambdaMessageFormatArgumentConverter;
+import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.LazyMessageFormatArgumentConverter;
+import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.Log4j2MessageFormatArgumentConverter;
+import com.digitalascent.errorprone.flogger.migrate.source.format.argconverter.MessageFormatArgumentConverter;
+import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.ArraysToStringMessageFormatArgumentReducer;
+import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.CompositeMessageFormatArgumentReducer;
+import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.MessageFormatArgumentReducer;
+import com.digitalascent.errorprone.flogger.migrate.source.format.reducer.ToStringMessageFormatArgumentReducer;
 import com.digitalascent.errorprone.flogger.migrate.target.FloggerSuggestedFixGenerator;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -70,9 +70,6 @@ final class RefactoringConfigurationLoader {
         Function<String, TargetLogLevel> targetLogLevelFunction = readLogLevelMappings(properties);
         LoggingApiSpecification loggingApiSpecification = determineSourceApiConverter(sourceApi, targetLogLevelFunction, messageFormatStyle);
         builder.loggingApiSpecification(loggingApiSpecification);
-
-        // TODO
-        builder.lazyThresholdOrdinal(-1);
 
         return builder.build();
     }

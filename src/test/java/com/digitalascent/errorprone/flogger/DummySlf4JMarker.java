@@ -5,6 +5,8 @@ import org.slf4j.Marker;
 import java.util.Iterator;
 
 public class DummySlf4JMarker implements Marker {
+    private static final long serialVersionUID = 42L;
+
     public static final Marker INSTANCE = new DummySlf4JMarker();
 
     @Override
@@ -23,6 +25,7 @@ public class DummySlf4JMarker implements Marker {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean hasChildren() {
         return false;
     }

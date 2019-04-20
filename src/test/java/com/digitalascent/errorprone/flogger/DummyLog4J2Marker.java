@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Marker;
 
 
 public class DummyLog4J2Marker implements Marker {
+    private static final long serialVersionUID = 42L;
+
     public static final Marker INSTANCE = new DummyLog4J2Marker();
 
     @Override
